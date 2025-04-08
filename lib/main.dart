@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:provider/provider.dart';
 import 'package:tagiary/component/slide_up_container.dart';
+import 'package:tagiary/provider.dart';
 import 'package:tagiary/time_line/add_schedule.dart';
 import 'package:tagiary/time_line/time_line.dart';
 import 'package:tagiary/tables/check/check_item.dart';
@@ -52,7 +54,16 @@ Future<void> main() async {
   // checkRepo.init();
   // checkRRepo.init();
 
-  runApp(const MyApp());
+  // DataProvider 초기화 및 설정 로드
+  final dataProvider = DataProvider();
+  await dataProvider.loadTimelineSettings();
+  
+  runApp(
+    ChangeNotifierProvider.value(
+      value: dataProvider,
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {

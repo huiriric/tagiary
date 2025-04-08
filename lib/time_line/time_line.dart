@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+import 'package:provider/provider.dart';
 import 'package:tagiary/component/slide_up_container.dart';
+import 'package:tagiary/provider.dart';
 import 'package:tagiary/tables/data_models/event.dart';
 import 'package:tagiary/tables/schedule/schedule_item.dart';
 import 'package:tagiary/tables/schedule_routine/schedule_routine_item.dart';
@@ -18,8 +20,8 @@ class TimeLine extends StatefulWidget {
 class _TimeLineState extends State<TimeLine> {
   //타임 라인 설정
   late ScrollController _timelineCont;
-  final int _startHour = 8; // 타임라인 시작 시간
-  final int _endHour = 20; // 타임라인 종료 시간
+  late int _startHour; // Provider에서 가져올 시작 시간
+  late int _endHour; // Provider에서 가져올 종료 시간
   final double _hourHeight = 70.0; // 시간당 높이
   final double _timelineWidth = 40.0; // 타임라인 폭
   final double padding = 12.0;
@@ -34,6 +36,11 @@ class _TimeLineState extends State<TimeLine> {
   @override
   void initState() {
     super.initState();
+
+    // Provider에서 시작/종료 시간 가져오기
+    final provider = Provider.of<DataProvider>(context, listen: false);
+    _startHour = provider.startHour;
+    _endHour = provider.endHour;
 
     // 비동기 초기화를 별도 메서드로 분리
     _initializeData();
@@ -87,6 +94,11 @@ class _TimeLineState extends State<TimeLine> {
 
   @override
   Widget build(BuildContext context) {
+    // 최신 시작/종료 시간 가져오기 (Provider에서 변경되었을 경우 반영)
+    final provider = Provider.of<DataProvider>(context);
+    _startHour = provider.startHour;
+    _endHour = provider.endHour;
+    
     final double screenWidth = MediaQuery.of(context).size.width;
     final double eventWidth = (screenWidth / 2) - padding - _timelineWidth; // 일정 카드 폭
     final int totalHours = _endHour - _startHour + 1;
