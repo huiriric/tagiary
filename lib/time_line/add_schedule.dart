@@ -15,13 +15,7 @@ class AddSchedule extends StatefulWidget {
   TimeOfDay end;
   final VoidCallback? onScheduleAdded; // 일정 추가 후 호출할 콜백 함수
 
-  AddSchedule({
-    super.key, 
-    required this.date, 
-    required this.start, 
-    required this.end, 
-    this.onScheduleAdded
-  });
+  AddSchedule({super.key, required this.date, required this.start, required this.end, this.onScheduleAdded});
 
   @override
   State<AddSchedule> createState() => _AddScheduleState();
@@ -230,13 +224,13 @@ class _AddScheduleState extends State<AddSchedule> {
                     itemExtent: 30,
                     scrollController: FixedExtentScrollController(initialItem: start.minute),
                     onSelectedItemChanged: (i) => setState(() {
-                      start = TimeOfDay(hour: start.hour, minute: i);
+                      start = TimeOfDay(hour: start.hour, minute: i * 10);
                     }),
                     children: List.generate(
-                      60,
+                      6,
                       (int i) => Center(
                         child: Text(
-                          _formatEachTime(i),
+                          _formatEachTime(i * 10),
                           style: const TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 16,
@@ -292,13 +286,13 @@ class _AddScheduleState extends State<AddSchedule> {
                     itemExtent: 30,
                     scrollController: FixedExtentScrollController(initialItem: end.minute),
                     onSelectedItemChanged: (i) => setState(() {
-                      end = TimeOfDay(hour: end.hour, minute: i);
+                      end = TimeOfDay(hour: end.hour, minute: i * 10);
                     }),
                     children: List.generate(
-                      60,
+                      6,
                       (int i) => Center(
                         child: Text(
-                          _formatEachTime(i),
+                          _formatEachTime(i * 10),
                           style: const TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 16,
@@ -425,7 +419,7 @@ class _AddScheduleState extends State<AddSchedule> {
       if (widget.onScheduleAdded != null) {
         widget.onScheduleAdded!();
       }
-      
+
       Navigator.pop(context); // 저장 성공 시 화면 닫기
     } catch (e) {
       _showToast('저장 중 오류가 발생했습니다: $e');

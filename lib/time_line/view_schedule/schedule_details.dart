@@ -13,10 +13,10 @@ class ScheduleDetails extends StatefulWidget {
   final Function onUpdate; // 일정 변경시 호출할 콜백 함수
 
   const ScheduleDetails({
-    Key? key,
+    super.key,
     required this.event,
     required this.onUpdate,
-  }) : super(key: key);
+  });
 
   @override
   State<ScheduleDetails> createState() => _ScheduleDetailsState();
@@ -69,10 +69,10 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
 
       // 삭제 성공 알림
       _showToast('일정이 삭제되었습니다');
-      
+
       // 콜백 호출하여 메인 화면 업데이트
       widget.onUpdate();
-      
+
       // 상세 화면 닫기
       if (mounted) {
         Navigator.of(context).pop();
@@ -103,8 +103,7 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
       return;
     }
 
-    if (_startTime.hour > _endTime.hour || 
-        (_startTime.hour == _endTime.hour && _startTime.minute >= _endTime.minute)) {
+    if (_startTime.hour > _endTime.hour || (_startTime.hour == _endTime.hour && _startTime.minute >= _endTime.minute)) {
       _showToast('종료 시간은 시작 시간보다 나중이어야 합니다');
       return;
     }
@@ -124,22 +123,22 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
 
       // 수정 성공 알림
       _showToast('일정이 수정되었습니다');
-      
+
       // 콜백 호출하여 메인 화면 업데이트
       widget.onUpdate();
-      
+
       // 상세 화면 닫기 후 다시 열기 (이렇게 하면 최신 정보로 갱신됨)
       Navigator.of(context).pop();
     } catch (e) {
       _showToast('수정 중 오류가 발생했습니다: $e');
-      
+
       // 원래 값으로 되돌리기
       _titleController.text = originalTitle;
       _descriptionController.text = originalDescription;
       _startTime = originalStartTime;
       _endTime = originalEndTime;
       _selectedColor = originalColor;
-      
+
       // 편집 모드 종료 및 로딩 상태 해제
       if (mounted) {
         setState(() {
@@ -154,7 +153,7 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
   Future<bool> _checkNormalScheduleConflict(int eventId, DateTime date) async {
     final scheduleRepo = ScheduleRepository();
     await scheduleRepo.init();
-    
+
     final routineRepo = ScheduleRoutineRepository();
     await routineRepo.init();
 
@@ -166,11 +165,11 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
     if (_hasTimeConflict(dateEvents)) {
       return true;
     }
-    
+
     // 2. 해당 날짜의 요일에 해당하는 루틴 일정 확인
     final dayOfWeek = date.weekday % 7; // 0(일)~6(토) 범위로 변환
     final routineEvents = routineRepo.getItemsByDay(dayOfWeek);
-    
+
     // 루틴 일정과의 시간 충돌 확인
     return _hasTimeConflict(routineEvents);
   }
@@ -179,7 +178,7 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
   Future<bool> _checkRoutineScheduleConflict(int eventId, List<bool> daysOfWeek) async {
     final routineRepo = ScheduleRoutineRepository();
     await routineRepo.init();
-    
+
     final scheduleRepo = ScheduleRepository();
     await scheduleRepo.init();
 
@@ -190,23 +189,23 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
       // 1. 해당 요일의 모든 루틴 가져오기 (현재 수정 중인 루틴 제외)
       final allRoutineEvents = routineRepo.getItemsByDay(i);
       final routineEvents = allRoutineEvents.where((e) => e.id != eventId);
-      
+
       // 시간 충돌 확인
       if (_hasTimeConflict(routineEvents)) {
         return true;
       }
-      
+
       // 2. 해당 요일에 해당하는 일반 일정 확인 (3개월 범위로 검색)
       final today = DateTime.now();
       final threeMonthsLater = today.add(const Duration(days: 90));
-      
+
       // 오늘부터 3개월 동안의 날짜 중 선택한 요일에 해당하는 날짜들 찾기
       for (DateTime date = today; date.isBefore(threeMonthsLater); date = date.add(const Duration(days: 1))) {
         // 날짜의 요일이 현재 확인 중인 요일과 일치하는지 확인
         if (date.weekday % 7 == i) {
           // 해당 날짜의 일반 일정 가져오기
           final scheduleEvents = scheduleRepo.getDateItems(date);
-          
+
           // 시간 충돌 확인
           if (_hasTimeConflict(scheduleEvents)) {
             return true;
@@ -222,22 +221,22 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
   Future<void> _updateNormalSchedule() async {
     final scheduleRepo = ScheduleRepository();
     await scheduleRepo.init();
-    
+
     // 기존 일정 가져오기
     ScheduleItem? item = scheduleRepo.getItem(widget.event.id);
-    
+
     if (item == null) {
       throw Exception('일정을 찾을 수 없습니다');
     }
-    
+
     // 일정 날짜 가져오기
     final date = DateTime(item.year, item.month, item.date);
-    
+
     // 중복 체크
     if (await _checkNormalScheduleConflict(widget.event.id, date)) {
       throw Exception('해당 시간에 중복되는 일정이 있습니다');
     }
-    
+
     // 새 일정 정보로 업데이트
     final updatedItem = ScheduleItem(
       year: item.year,
@@ -251,10 +250,10 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
       endMinute: _endTime.minute,
       colorValue: _selectedColor.value,
     );
-    
+
     // ID 설정 (Hive에서 필요)
     updatedItem.id = item.id;
-    
+
     // 저장
     await scheduleRepo.updateItem(updatedItem);
   }
@@ -263,19 +262,19 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
   Future<void> _updateRoutineSchedule() async {
     final routineRepo = ScheduleRoutineRepository();
     await routineRepo.init();
-    
+
     // 기존 루틴 가져오기
     ScheduleRoutineItem? item = routineRepo.getItem(widget.event.id);
-    
+
     if (item == null) {
       throw Exception('루틴을 찾을 수 없습니다');
     }
-    
+
     // 중복 체크
     if (await _checkRoutineScheduleConflict(widget.event.id, item.daysOfWeek)) {
       throw Exception('선택한 요일에 중복되는 일정이 있습니다');
     }
-    
+
     // 새 루틴 정보로 업데이트
     final updatedItem = ScheduleRoutineItem(
       title: _titleController.text,
@@ -287,10 +286,10 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
       endMinute: _endTime.minute,
       colorValue: _selectedColor.value,
     );
-    
+
     // ID 설정 (Hive에서 필요)
     updatedItem.id = item.id;
-    
+
     // 저장
     await routineRepo.updateItem(updatedItem);
   }
@@ -334,15 +333,15 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('확인'),
             style: TextButton.styleFrom(
               foregroundColor: Colors.red,
             ),
+            child: const Text('확인'),
           ),
         ],
       ),
     );
-    
+
     return result ?? false;
   }
 
@@ -353,7 +352,7 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
     if (message.contains('Exception:')) {
       cleanMessage = message.replaceAll('Exception:', '').trim();
     }
-    
+
     Fluttertoast.showToast(
       msg: cleanMessage,
       toastLength: Toast.LENGTH_LONG, // 더 긴 시간 표시
@@ -368,7 +367,7 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
   Widget build(BuildContext context) {
     final isRoutine = widget.event.isRoutine;
     final typeText = isRoutine ? '루틴 일정' : '일반 일정';
-    
+
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -427,10 +426,8 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
                       onPressed: _isLoading
                           ? null
                           : () async {
-                              final confirm = await _showConfirmDialog(
-                                '정말 이 일정을 삭제하시겠습니까?'
-                              );
-                              
+                              final confirm = await _showConfirmDialog('정말 이 일정을 삭제하시겠습니까?');
+
                               if (confirm) {
                                 _deleteSchedule();
                               }
@@ -442,17 +439,17 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 10),
-            
+
             // 일정 유형 표시
             Chip(
               label: Text(typeText),
               backgroundColor: isRoutine ? Colors.purple.shade100 : Colors.blue.shade100,
             ),
-            
+
             const SizedBox(height: 20),
-            
+
             // 제목
             if (_isEditing)
               TextField(
@@ -482,9 +479,9 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
                   ),
                 ],
               ),
-            
+
             const SizedBox(height: 20),
-            
+
             // 설명
             if (_isEditing)
               TextField(
@@ -513,9 +510,9 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
                   ),
                 ],
               ),
-            
+
             const SizedBox(height: 20),
-            
+
             // 시간
             const Text(
               '시간',
@@ -524,7 +521,7 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
                 color: Colors.grey,
               ),
             ),
-            
+
             Row(
               children: [
                 if (_isEditing) ...[
@@ -566,16 +563,16 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
                           child: CupertinoPicker(
                             itemExtent: 30,
                             scrollController: FixedExtentScrollController(
-                              initialItem: _startTime.minute,
+                              initialItem: (_startTime.minute / 10).floor(),
                             ),
                             onSelectedItemChanged: (i) => setState(() {
-                              _startTime = TimeOfDay(hour: _startTime.hour, minute: i);
+                              _startTime = TimeOfDay(hour: _startTime.hour, minute: i * 10);
                             }),
                             children: List.generate(
-                              60,
+                              6,
                               (int i) => Center(
                                 child: Text(
-                                  i.toString().padLeft(2, '0'),
+                                  (i * 10).toString().padLeft(2, '0'),
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w600,
                                     fontSize: 16,
@@ -585,9 +582,9 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
                             ),
                           ),
                         ),
-                        
+
                         const Text(' ~ '),
-                        
+
                         // 종료 시간
                         SizedBox(
                           width: 50,
@@ -622,16 +619,16 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
                           child: CupertinoPicker(
                             itemExtent: 30,
                             scrollController: FixedExtentScrollController(
-                              initialItem: _endTime.minute,
+                              initialItem: (_endTime.minute / 10).floor(),
                             ),
                             onSelectedItemChanged: (i) => setState(() {
-                              _endTime = TimeOfDay(hour: _endTime.hour, minute: i);
+                              _endTime = TimeOfDay(hour: _endTime.hour, minute: i * 10);
                             }),
                             children: List.generate(
-                              60,
+                              6,
                               (int i) => Center(
                                 child: Text(
-                                  i.toString().padLeft(2, '0'),
+                                  (i * 10).toString().padLeft(2, '0'),
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w600,
                                     fontSize: 16,
@@ -655,10 +652,10 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
                   ),
               ],
             ),
-            
+
             if (_isEditing) ...[
               const SizedBox(height: 20),
-              
+
               // 색상 선택
               const Text(
                 '색상',
@@ -668,7 +665,7 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
                 ),
               ),
               const SizedBox(height: 10),
-              
+
               Wrap(
                 spacing: 10,
                 runSpacing: 10,
@@ -686,18 +683,16 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
                         decoration: BoxDecoration(
                           color: color,
                           shape: BoxShape.circle,
-                          border: _selectedColor.value == color.value
-                              ? Border.all(color: Colors.black, width: 2)
-                              : null,
+                          border: _selectedColor.value == color.value ? Border.all(color: Colors.black, width: 2) : null,
                         ),
                       ),
                     ),
                 ],
               ),
             ],
-            
+
             const SizedBox(height: 20),
-            
+
             // 로딩 표시
             if (_isLoading)
               const Center(

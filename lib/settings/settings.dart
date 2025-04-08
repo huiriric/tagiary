@@ -15,7 +15,7 @@ class Settings extends StatefulWidget {
 class _SettingsState extends State<Settings> {
   // 타임라인 설정을 확장할지 여부
   bool _isTimelineSettingsExpanded = false;
-  
+
   // 확장 가능한 타임라인 설정 위젯
   Widget _buildExpandableTimelineSettings() {
     return Column(
@@ -36,22 +36,17 @@ class _SettingsState extends State<Settings> {
               children: [
                 const Text(
                   '타임라인 설정',
-                  style: TextStyle(
-                    fontSize: 18, 
-                    fontWeight: FontWeight.bold
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 Icon(
-                  _isTimelineSettingsExpanded 
-                    ? Icons.keyboard_arrow_up 
-                    : Icons.keyboard_arrow_down,
+                  _isTimelineSettingsExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
                   color: Colors.grey.shade700,
                 ),
               ],
             ),
           ),
         ),
-        
+
         // 확장된 내용 (펼쳐졌을 때만 표시)
         if (_isTimelineSettingsExpanded) ...[
           // 시작 시간 설정
@@ -63,7 +58,7 @@ class _SettingsState extends State<Settings> {
               context: context,
               title: '시작 시간 설정',
               initialValue: context.read<DataProvider>().startHour,
-              minValue: 0, 
+              minValue: 0,
               maxValue: context.read<DataProvider>().endHour - 1,
               onChanged: (value) {
                 if (value < context.read<DataProvider>().endHour) {
@@ -72,9 +67,9 @@ class _SettingsState extends State<Settings> {
               },
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // 종료 시간 설정
           _buildTimelineSetting(
             title: '종료 시간',
@@ -94,13 +89,13 @@ class _SettingsState extends State<Settings> {
             ),
           ),
         ],
-        
+
         // 구분선
         Divider(color: Colors.grey.shade300, height: 32),
       ],
     );
   }
-  
+
   // 타임라인 설정 위젯 생성
   Widget _buildTimelineSetting({
     required String title,
@@ -140,7 +135,7 @@ class _SettingsState extends State<Settings> {
                   ],
                 ),
               ),
-              
+
               // 오른쪽: 현재값 + 화살표
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -172,7 +167,7 @@ class _SettingsState extends State<Settings> {
       ),
     );
   }
-  
+
   // 시간 설정 다이얼로그 표시
   void _showTimePickerDialog({
     required BuildContext context,
@@ -183,12 +178,15 @@ class _SettingsState extends State<Settings> {
     required Function(int) onChanged,
   }) {
     int selectedValue = initialValue;
-    
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(title),
+          title: Text(
+            title,
+            style: const TextStyle(fontSize: 18),
+          ),
           content: StatefulBuilder(
             builder: (context, setState) {
               return Column(
@@ -201,11 +199,10 @@ class _SettingsState extends State<Settings> {
                     children: [
                       // 마이너스 버튼 (더 깔끔한 아이콘)
                       IconButton(
+                        iconSize: 16,
                         icon: const Icon(Icons.remove),
                         style: IconButton.styleFrom(
-                          backgroundColor: selectedValue > minValue 
-                            ? Colors.grey.shade200 
-                            : Colors.grey.shade100,
+                          backgroundColor: selectedValue > minValue ? Colors.grey.shade200 : Colors.grey.shade100,
                         ),
                         onPressed: selectedValue > minValue
                             ? () {
@@ -215,7 +212,7 @@ class _SettingsState extends State<Settings> {
                               }
                             : null,
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10),
                       // 선택된 시간 표시
                       Container(
                         width: 80,
@@ -227,17 +224,16 @@ class _SettingsState extends State<Settings> {
                         child: Text(
                           '$selectedValue:00',
                           textAlign: TextAlign.center,
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10),
                       // 플러스 버튼 (더 깔끔한 아이콘)
                       IconButton(
+                        iconSize: 16,
                         icon: const Icon(Icons.add),
                         style: IconButton.styleFrom(
-                          backgroundColor: selectedValue < maxValue 
-                            ? Colors.grey.shade200 
-                            : Colors.grey.shade100,
+                          backgroundColor: selectedValue < maxValue ? Colors.grey.shade200 : Colors.grey.shade100,
                         ),
                         onPressed: selectedValue < maxValue
                             ? () {
@@ -298,7 +294,7 @@ class _SettingsState extends State<Settings> {
                     children: [
                       // 확장 가능한 타임라인 설정
                       _buildExpandableTimelineSettings(),
-                      
+
                       // 여기에 다른 설정 섹션들을 추가할 수 있습니다
                       // 예: 알림 설정, 테마 설정, 계정 설정 등
                     ],
