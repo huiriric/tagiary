@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:tagiary/constants/colors.dart';
 import 'package:tagiary/tables/check_routine/check_routine_item.dart';
 import 'package:tagiary/tables/check_routine/routine_history.dart';
 import 'package:tagiary/todo_routine_widget/routine_history_view.dart';
@@ -237,37 +238,63 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
               ),
             ),
             const SizedBox(height: 16),
-            // 간단한 색상 선택기
-            Wrap(
-              spacing: 8,
+            // 간단한 색상 선택기 - 6개씩 두 줄로 표시
+            Column(
               children: [
-                Colors.blue,
-                Colors.red,
-                Colors.green,
-                Colors.orange,
-                Colors.purple,
-                Colors.teal,
-              ].map((color) {
-                return GestureDetector(
-                  onTap: () {
-                    selectedColor = color.value;
-                    // 리빌드 트리거
-                    (context as Element).markNeedsBuild();
-                  },
-                  child: Container(
-                    width: 30,
-                    height: 30,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: color.value == selectedColor ? Colors.black : Colors.transparent,
-                        width: 2,
+                // 첫 번째 줄 (색상 0-5)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: List.generate(6, (index) {
+                    final color = scheduleColors[index];
+                    return GestureDetector(
+                      onTap: () {
+                        selectedColor = color.value;
+                        // 리빌드 트리거
+                        (context as Element).markNeedsBuild();
+                      },
+                      child: Container(
+                        width: 30,
+                        height: 30,
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: color.value == selectedColor ? Colors.black : Colors.transparent,
+                            width: 2,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                );
-              }).toList(),
+                    );
+                  }),
+                ),
+                const SizedBox(height: 8),
+                // 두 번째 줄 (색상 6-11)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: List.generate(6, (index) {
+                    final color = scheduleColors[index + 6];
+                    return GestureDetector(
+                      onTap: () {
+                        selectedColor = color.value;
+                        // 리빌드 트리거
+                        (context as Element).markNeedsBuild();
+                      },
+                      child: Container(
+                        width: 30,
+                        height: 30,
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: color.value == selectedColor ? Colors.black : Colors.transparent,
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ],
             ),
           ],
         ),

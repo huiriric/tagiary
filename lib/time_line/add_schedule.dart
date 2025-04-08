@@ -5,6 +5,8 @@ import 'package:hive/hive.dart';
 import 'package:tagiary/component/day_picker/day_picker.dart';
 import 'package:tagiary/constants/colors.dart';
 import 'package:tagiary/main.dart';
+import 'package:tagiary/tables/check/check_item.dart';
+import 'package:tagiary/tables/check_routine/check_routine_item.dart';
 import 'package:tagiary/tables/data_models/event.dart';
 import 'package:tagiary/tables/schedule/schedule_item.dart';
 import 'package:tagiary/tables/schedule_routine/schedule_routine_item.dart';
@@ -43,6 +45,8 @@ class _AddScheduleState extends State<AddSchedule> {
 
   bool isRoutine = false;
   List<bool> selectedDays = List.generate(7, (index) => false);
+  bool addToTodoRoutine = false; // 반복이 체크되었을 때 Todo Routine에도 추가하기 옵션
+  bool addToTodo = false; // 반복이 체크되지 않았을 때 Todo에도 추가하기 옵션
 
   late TimeOfDay start;
   late TimeOfDay end;
@@ -76,308 +80,378 @@ class _AddScheduleState extends State<AddSchedule> {
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.start,
+        child: Stack(
           children: [
-            TextFormField(
-              onChanged: (value) {
-                title = value;
-              },
-              controller: titleCont,
-              decoration: const InputDecoration(
-                hintText: '일정 제목',
-                // 언더라인 완전 제거
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                // 힌트 스타일 커스터마이징
-                hintStyle: TextStyle(
-                  color: Colors.grey,
-                ),
-              ),
-              style: const TextStyle(
-                color: Colors.black87,
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            TextFormField(
-              onChanged: (value) {
-                description = value;
-              },
-              controller: descriptionCont,
-              decoration: const InputDecoration(
-                hintText: '노트',
-                // 언더라인 완전 제거
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                // 힌트 스타일 커스터마이징
-                hintStyle: TextStyle(
-                  color: Colors.grey,
-                ),
-              ),
-              style: const TextStyle(
-                color: Colors.black,
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-            Divider(
-              height: 5,
-              thickness: 1,
-              color: Colors.grey.shade300,
-            ),
-            Row(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                const Text(
-                  '반복',
-                  style: TextStyle(
+                TextFormField(
+                  onChanged: (value) {
+                    title = value;
+                  },
+                  controller: titleCont,
+                  decoration: const InputDecoration(
+                    hintText: '일정 제목',
+                    // 언더라인 완전 제거
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    // 힌트 스타일 커스터마이징
+                    hintStyle: TextStyle(
+                      color: Colors.grey,
+                    ),
+                  ),
+                  style: const TextStyle(
+                    color: Colors.black87,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                TextFormField(
+                  onChanged: (value) {
+                    description = value;
+                  },
+                  controller: descriptionCont,
+                  decoration: const InputDecoration(
+                    hintText: '노트',
+                    // 언더라인 완전 제거
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    // 힌트 스타일 커스터마이징
+                    hintStyle: TextStyle(
+                      color: Colors.grey,
+                    ),
+                  ),
+                  style: const TextStyle(
                     color: Colors.black,
-                    fontSize: 16,
+                    fontSize: 14,
                     fontWeight: FontWeight.w400,
                   ),
                 ),
-                Checkbox(
-                  value: isRoutine,
-                  activeColor: Colors.indigo,
-                  shape: const CircleBorder(),
-                  onChanged: (value) {
-                    setState(() {
-                      isRoutine = value!;
-                    });
-                  },
+                Divider(
+                  height: 5,
+                  thickness: 1,
+                  color: Colors.grey.shade300,
                 ),
-              ],
-            ),
-            // 날짜 선택 (isRoutine이 false일 때) 또는 요일 선택 (isRoutine이 true일 때)
-            !isRoutine
-                ? TextButton(
-                    onPressed: () async {
-                      final selectedDate = await showBlackWhiteDatePicker(
-                        context: context,
-                        initialDate: widget.date,
-                      );
-                      if (selectedDate != null) {
+
+                // 반복 옵션
+                Row(
+                  children: [
+                    const Text(
+                      '반복',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                    Checkbox(
+                      value: isRoutine,
+                      activeColor: Colors.indigo,
+                      shape: const CircleBorder(),
+                      onChanged: (value) {
                         setState(() {
-                          widget.date = selectedDate;
+                          isRoutine = value!;
+
+                          // 반복 체크 상태가 바뀌면 관련 옵션 초기화
+                          addToTodoRoutine = false;
+                          addToTodo = false;
                         });
-                      }
-                    },
-                    child: Text(
-                      _formatDate(widget.date),
-                      style: const TextStyle(
+                      },
+                    ),
+                    const Spacer(),
+
+                    // 반복이 체크되었을 때만 "루틴에도 추가하기" 옵션 표시
+                    if (isRoutine) ...[
+                      const Text(
+                        '루틴에도 추가하기',
+                        style: TextStyle(
+                          color: Colors.black54,
+                          fontSize: 14,
+                        ),
+                      ),
+                      Checkbox(
+                        value: addToTodoRoutine,
+                        activeColor: Colors.indigo,
+                        shape: const CircleBorder(),
+                        onChanged: (value) {
+                          setState(() {
+                            addToTodoRoutine = value!;
+                          });
+                        },
+                      ),
+                    ],
+
+                    // 반복이 체크되지 않았을 때만 "할 일에도 추가하기" 옵션 표시
+                    if (!isRoutine) ...[
+                      const Text(
+                        '할 일에도 추가하기',
+                        style: TextStyle(
+                          color: Colors.black54,
+                          fontSize: 14,
+                        ),
+                      ),
+                      Checkbox(
+                        value: addToTodo,
+                        activeColor: Colors.indigo,
+                        shape: const CircleBorder(),
+                        onChanged: (value) {
+                          setState(() {
+                            addToTodo = value!;
+                          });
+                        },
+                      ),
+                    ],
+                  ],
+                ),
+                // 날짜 선택 (isRoutine이 false일 때) 또는 요일 선택 (isRoutine이 true일 때)
+                !isRoutine
+                    ? TextButton(
+                        onPressed: () async {
+                          final selectedDate = await showBlackWhiteDatePicker(
+                            context: context,
+                            initialDate: widget.date,
+                          );
+                          if (selectedDate != null) {
+                            setState(() {
+                              widget.date = selectedDate;
+                            });
+                          }
+                        },
+                        child: Text(
+                          _formatDate(widget.date),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                            color: Color(0xFF40608A),
+                          ),
+                        ),
+                      )
+                    : DayPicker(
+                        selectedDays: selectedDays,
+                        onDaysChanged: (days) {
+                          setState(() {
+                            selectedDays = days;
+                          });
+                        },
+                      ),
+                // 시간 선택
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // start hour
+                    SizedBox(
+                      width: 50,
+                      height: 55,
+                      child: CupertinoPicker(
+                        itemExtent: 30,
+                        scrollController: FixedExtentScrollController(initialItem: start.hour),
+                        onSelectedItemChanged: (i) => setState(() {
+                          start = TimeOfDay(hour: i, minute: start.minute);
+                        }),
+                        children: List.generate(
+                          24,
+                          (int i) => Center(
+                            child: Text(
+                              _formatEachTime(i),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                                color: Color(0xFF40608A),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const Text(
+                      ':',
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                    ),
+                    // start minute
+                    SizedBox(
+                      width: 50,
+                      height: 55,
+                      child: CupertinoPicker(
+                        itemExtent: 30,
+                        scrollController: FixedExtentScrollController(initialItem: start.minute),
+                        onSelectedItemChanged: (i) => setState(() {
+                          start = TimeOfDay(hour: start.hour, minute: i * 10);
+                        }),
+                        children: List.generate(
+                          6,
+                          (int i) => Center(
+                            child: Text(
+                              _formatEachTime(i * 10),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                                color: Color(0xFF40608A),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const Text(
+                      ' ~ ',
+                      style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 16,
                         color: Color(0xFF40608A),
                       ),
                     ),
-                  )
-                : DayPicker(
-                    selectedDays: selectedDays,
-                    onDaysChanged: (days) {
-                      setState(() {
-                        selectedDays = days;
-                      });
-                    },
-                  ),
-            // 시간 선택
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // start hour
-                SizedBox(
-                  width: 50,
-                  height: 55,
-                  child: CupertinoPicker(
-                    itemExtent: 30,
-                    scrollController: FixedExtentScrollController(initialItem: start.hour),
-                    onSelectedItemChanged: (i) => setState(() {
-                      start = TimeOfDay(hour: i, minute: start.minute);
-                    }),
-                    children: List.generate(
-                      24,
-                      (int i) => Center(
-                        child: Text(
-                          _formatEachTime(i),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
-                            color: Color(0xFF40608A),
+                    // end hour
+                    SizedBox(
+                      width: 50,
+                      height: 55,
+                      child: CupertinoPicker(
+                        itemExtent: 30,
+                        scrollController: FixedExtentScrollController(initialItem: end.hour),
+                        onSelectedItemChanged: (i) => setState(() {
+                          end = TimeOfDay(hour: i, minute: end.minute);
+                        }),
+                        children: List.generate(
+                          24,
+                          (int i) => Center(
+                            child: Text(
+                              _formatEachTime(i),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                                color: Color(0xFF40608A),
+                              ),
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ),
-                const Text(
-                  ':',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
-                ),
-                // start minute
-                SizedBox(
-                  width: 50,
-                  height: 55,
-                  child: CupertinoPicker(
-                    itemExtent: 30,
-                    scrollController: FixedExtentScrollController(initialItem: start.minute),
-                    onSelectedItemChanged: (i) => setState(() {
-                      start = TimeOfDay(hour: start.hour, minute: i * 10);
-                    }),
-                    children: List.generate(
-                      6,
-                      (int i) => Center(
-                        child: Text(
-                          _formatEachTime(i * 10),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
-                            color: Color(0xFF40608A),
+                    const Text(
+                      ':',
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                    ),
+                    // end minute
+                    SizedBox(
+                      width: 50,
+                      height: 55,
+                      child: CupertinoPicker(
+                        itemExtent: 30,
+                        scrollController: FixedExtentScrollController(initialItem: end.minute),
+                        onSelectedItemChanged: (i) => setState(() {
+                          end = TimeOfDay(hour: end.hour, minute: i * 10);
+                        }),
+                        children: List.generate(
+                          6,
+                          (int i) => Center(
+                            child: Text(
+                              _formatEachTime(i * 10),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                                color: Color(0xFF40608A),
+                              ),
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
-                const Text(
-                  ' ~ ',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                    color: Color(0xFF40608A),
-                  ),
-                ),
-                // end hour
-                SizedBox(
-                  width: 50,
-                  height: 55,
-                  child: CupertinoPicker(
-                    itemExtent: 30,
-                    scrollController: FixedExtentScrollController(initialItem: end.hour),
-                    onSelectedItemChanged: (i) => setState(() {
-                      end = TimeOfDay(hour: i, minute: end.minute);
-                    }),
-                    children: List.generate(
-                      24,
-                      (int i) => Center(
-                        child: Text(
-                          _formatEachTime(i),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
-                            color: Color(0xFF40608A),
-                          ),
+                // 색상 선택
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '색상',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ),
-                  ),
-                ),
-                const Text(
-                  ':',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
-                ),
-                // end minute
-                SizedBox(
-                  width: 50,
-                  height: 55,
-                  child: CupertinoPicker(
-                    itemExtent: 30,
-                    scrollController: FixedExtentScrollController(initialItem: end.minute),
-                    onSelectedItemChanged: (i) => setState(() {
-                      end = TimeOfDay(hour: end.hour, minute: i * 10);
-                    }),
-                    children: List.generate(
-                      6,
-                      (int i) => Center(
-                        child: Text(
-                          _formatEachTime(i * 10),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
-                            color: Color(0xFF40608A),
+                      const SizedBox(height: 8),
+                      Column(
+                        children: [
+                          // 첫 번째 줄 (색상 0-5)
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: List.generate(6, (index) {
+                              final color = scheduleColors[index];
+                              return GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    selectedColor = color;
+                                  });
+                                },
+                                child: Container(
+                                  width: 35,
+                                  height: 35,
+                                  decoration: BoxDecoration(
+                                    color: color,
+                                    shape: BoxShape.circle,
+                                    border: selectedColor == color ? Border.all(color: Colors.black, width: 2) : null,
+                                  ),
+                                ),
+                              );
+                            }),
                           ),
-                        ),
+                          const SizedBox(height: 12),
+                          // 두 번째 줄 (색상 6-11)
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: List.generate(6, (index) {
+                              final color = scheduleColors[index + 6];
+                              return GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    selectedColor = color;
+                                  });
+                                },
+                                child: Container(
+                                  width: 35,
+                                  height: 35,
+                                  decoration: BoxDecoration(
+                                    color: color,
+                                    shape: BoxShape.circle,
+                                    border: selectedColor == color ? Border.all(color: Colors.black, width: 2) : null,
+                                  ),
+                                ),
+                              );
+                            }),
+                          ),
+                        ],
                       ),
-                    ),
+                    ],
                   ),
                 ),
               ],
             ),
-            // 색상 선택
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    '색상',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: scheduleColors.map((color) {
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            selectedColor = color;
-                          });
-                        },
-                        child: Container(
-                          width: 35,
-                          height: 35,
-                          decoration: BoxDecoration(
-                            color: color,
-                            shape: BoxShape.circle,
-                            border: selectedColor == color ? Border.all(color: Colors.black, width: 2) : null,
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ],
-              ),
-            ),
 
-            // 저장 버튼
-            Padding(
-              padding: const EdgeInsets.only(top: 16.0),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: isLoading ? null : _saveSchedule,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+            // 우측 상단에 저장 버튼 (초록색 체크 아이콘)
+            Positioned(
+              top: 0,
+              right: 0,
+              child: isLoading
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
+                      ),
+                    )
+                  : IconButton(
+                      onPressed: _saveSchedule,
+                      icon: const Icon(
+                        Icons.check,
+                        color: Colors.green,
+                        size: 32,
+                      ),
                     ),
-                  ),
-                  child: isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : const Text(
-                          '저장',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                ),
-              ),
             ),
           ],
         ),
@@ -410,9 +484,19 @@ class _AddScheduleState extends State<AddSchedule> {
       if (isRoutine) {
         // 루틴 저장 로직
         await _saveRoutineSchedule();
+
+        // 루틴에도 추가 옵션이 선택된 경우 (Todo Routine에 추가)
+        if (addToTodoRoutine) {
+          await _addToTodoRoutine();
+        }
       } else {
         // 일반 일정 저장 로직
         await _saveNormalSchedule();
+
+        // 할 일에도 추가 옵션이 선택된 경우 (Todo에 추가)
+        if (addToTodo) {
+          await _addToTodo();
+        }
       }
 
       // 저장 성공 시 콜백 함수 호출
@@ -428,6 +512,38 @@ class _AddScheduleState extends State<AddSchedule> {
         isLoading = false;
       });
     }
+  }
+
+  // Todo에 추가하는 메서드 (일반 일정일 때)
+  Future<void> _addToTodo() async {
+    final checkRepository = CheckRepository();
+    await checkRepository.init();
+
+    final newTodo = CheckItem(
+      id: 0, // 저장소에서 할당
+      content: title,
+      endDate: widget.date.toIso8601String(), // 현재 날짜 사용
+      colorValue: selectedColor.value,
+      check: false,
+    );
+
+    await checkRepository.addItem(newTodo);
+  }
+
+  // Todo Routine에 추가하는 메서드 (루틴 일정일 때)
+  Future<void> _addToTodoRoutine() async {
+    final checkRoutineRepository = CheckRoutineRepository();
+    await checkRoutineRepository.init();
+
+    final newRoutine = CheckRoutineItem(
+      id: 0, // 저장소에서 할당
+      content: title,
+      colorValue: selectedColor.value,
+      check: false,
+      updated: DateTime.now(),
+    );
+
+    await checkRoutineRepository.addItem(newRoutine);
   }
 
   Future<void> _saveNormalSchedule() async {
