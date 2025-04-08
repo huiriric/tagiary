@@ -65,18 +65,29 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Align(
-              alignment: Alignment.topRight,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 8, right: 8),
-                child: GestureDetector(
-                  onTap: () => _showAddRoutineDialog(context),
-                  child: const Icon(
-                    Icons.add,
-                    size: 20,
-                    color: Colors.grey,
+            Padding(
+              padding: const EdgeInsets.only(top: 8, left: 16, right: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // 왼쪽에 제목 추가
+                  const Text(
+                    '루틴',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
+                  // 오른쪽에 추가 버튼
+                  GestureDetector(
+                    onTap: () => _showAddRoutineDialog(context),
+                    child: const Icon(
+                      Icons.add,
+                      size: 20,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
               ),
             ),
             if (routines.isEmpty)
@@ -100,15 +111,20 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
                     final routine = routines[index];
 
                     return ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
-                      title: Text(
-                        routine.content,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          decoration: routine.check ? TextDecoration.lineThrough : null,
-                          color: routine.check ? Colors.grey : Colors.black,
-                          fontSize: 13,
+                      dense: true,
+                      visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
+                      contentPadding: const EdgeInsets.only(left: 4, right: 4),
+                      title: Padding(
+                        padding: const EdgeInsets.only(left: 4),
+                        child: Text(
+                          routine.content,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            decoration: routine.check ? TextDecoration.lineThrough : null,
+                            color: routine.check ? Colors.grey : Colors.black,
+                            fontSize: 13,
+                          ),
                         ),
                       ),
                       leading: Checkbox(
@@ -123,6 +139,8 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
                       ),
                       trailing: IconButton(
                         icon: const Icon(Icons.delete_outline, size: 20),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
                         onPressed: () {
                           _deleteRoutine(routine);
                         },

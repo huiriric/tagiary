@@ -52,39 +52,49 @@ class _TodoWidgetState extends State<TodoWidget> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Align(
-              alignment: Alignment.topRight,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 8, right: 8),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        '$uncheckedCount개',
-                        style: const TextStyle(
-                          color: Colors.blue,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
+            Padding(
+              padding: const EdgeInsets.only(top: 8, left: 16, right: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // 왼쪽에 제목 추가
+                  const Text(
+                    '할 일',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  // 오른쪽에 카운터와 추가 버튼
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '$uncheckedCount개',
+                          style: const TextStyle(
+                            color: Colors.blue,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: () => _showAddTodoDialog(context),
-                      child: const Icon(
-                        Icons.add,
-                        size: 20,
-                        color: Colors.grey,
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () => _showAddTodoDialog(context),
+                        child: const Icon(
+                          Icons.add,
+                          size: 20,
+                          color: Colors.grey,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                ],
               ),
             ),
             if (todos.isEmpty)
@@ -125,7 +135,7 @@ class _TodoWidgetState extends State<TodoWidget> {
       });
 
     // Show at most 3 items in preview
-    final previewTodos = uncheckedTodos.take(3).toList();
+    final previewTodos = uncheckedTodos;
 
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
@@ -135,6 +145,8 @@ class _TodoWidgetState extends State<TodoWidget> {
 
         return ListTile(
           contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+          dense: true,
+          visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
           title: Text(
             todo.content,
             maxLines: 1,
