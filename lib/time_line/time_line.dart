@@ -25,6 +25,7 @@ class _TimeLineState extends State<TimeLine> {
   final double padding = 12.0;
   final double eventHorizontalPadding = 10;
   final double eventFontSize = 12;
+  final double timelineOffset = 9.0; // 시간 라인 위치 보정값 상수화
 
   final ScheduleRoutineRepository srRepo = ScheduleRoutineRepository();
   final ScheduleRepository sRepo = ScheduleRepository();
@@ -136,7 +137,7 @@ class _TimeLineState extends State<TimeLine> {
           // 시간 사이 버튼 (터치 시 일정 추가)
           ...List.generate(totalHours - 1, (index) {
             return Positioned(
-                top: 9 + index * _hourHeight,
+                top: timelineOffset + index * _hourHeight,
                 left: 0 - padding,
                 child: InkWell(
                   // borderRadius: BorderRadius.circular(5),
@@ -186,7 +187,7 @@ class _TimeLineState extends State<TimeLine> {
 
             return Positioned(
               left: _timelineWidth + eventHorizontalPadding,
-              top: topPosition + 9,
+              top: topPosition + timelineOffset, // 일관된 오프셋 사용
               child: GestureDetector(
                 onTap: () => _showEvent(context, event),
                 child: Container(
