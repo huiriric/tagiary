@@ -1,6 +1,12 @@
-# tagiary
+# Tagiary
 
-A new Flutter project.
+A personal Flutter project for diary management with tagging functionality.
+
+## Project Status
+
+**⚠️ PERSONAL PROJECT - NO EXTERNAL CONTRIBUTIONS ⚠️**
+
+This repository is maintained as a public repository for portfolio and reference purposes, but is intended for personal use only. External contributions, pull requests, or issue submissions will not be accepted at this time.
 
 ## Getting Started
 
