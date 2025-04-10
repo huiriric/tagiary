@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tagiary/tables/check_routine/routine_migration.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -44,6 +45,9 @@ Future<void> main() async {
   await Hive.openBox<CheckRoutineItem>('checkRoutineBox');
   await Hive.openBox<RoutineHistory>('routineHistoryBox');
 
+  // 체크 루틴 마이그레이션 실행 (daysOfWeek 필드 추가)
+  await RoutineMigrationHelper.migrateCheckRoutines();
+
   // ScheduleRepository scheduleRepo = ScheduleRepository();
   // ScheduleRoutineRepository scheduleRRepo = ScheduleRoutineRepository();
   // CheckRepository checkRepo = CheckRepository();
@@ -57,7 +61,7 @@ Future<void> main() async {
   // DataProvider 초기화 및 설정 로드
   final dataProvider = DataProvider();
   await dataProvider.loadTimelineSettings();
-  
+
   runApp(
     ChangeNotifierProvider.value(
       value: dataProvider,
@@ -129,6 +133,7 @@ class _MyHomePageState extends State<MyHomePage> {
               curve: Curves.decelerate,
               child: SingleChildScrollView(
                 child: SlideUpContainer(
+                  height: 450,
                   child: AddSchedule(
                     date: date,
                     start: TimeOfDay(hour: TimeOfDay.now().hour + 1, minute: 0),
