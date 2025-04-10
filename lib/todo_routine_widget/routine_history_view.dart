@@ -17,6 +17,7 @@ class RoutineHistoryView extends StatefulWidget {
 
 class _RoutineHistoryViewState extends State<RoutineHistoryView> {
   late RoutineHistoryRepository _historyRepository;
+  late CheckRoutineRepository _routineRepository;
   List<RoutineHistory> _history = [];
   DateTime _selectedMonth = DateTime.now();
   
@@ -24,9 +25,132 @@ class _RoutineHistoryViewState extends State<RoutineHistoryView> {
   void initState() {
     super.initState();
     _historyRepository = RoutineHistoryRepository();
-    _historyRepository.init().then((_) {
+    _routineRepository = CheckRoutineRepository();
+    
+    Future.wait([
+      _historyRepository.init(),
+      _routineRepository.init(),
+    ]).then((_) {
       _loadHistory();
     });
+  }
+  
+  // 루틴 요일 편집 다이얼로그
+  void _editRoutineDays() {
+    // 현재 루틴의 요일 설정 복사
+    List<bool> selectedDays = List.from(widget.routine.daysOfWeek);
+    
+    // 요일 없는 경우 기본값 설정
+    if (selectedDays.length != 7) {
+      selectedDays = List.generate(7, (index) => true);
+    }
+    
+    // 요일 표시용 라벨
+    final dayLabels = ['일', '월', '화', '수', '목', '금', '토'];
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('반복 요일 편집'),
+        content: StatefulBuilder(
+          builder: (context, setState) {
+            return SizedBox(
+              width: double.maxFinite,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('루틴을 반복할 요일을 선택하세요'),
+                  const SizedBox(height: 16),
+                  Wrap(
+                    spacing: 8,
+                    children: List.generate(7, (index) {
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            selectedDays[index] = !selectedDays[index];
+                          });
+                        },
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: selectedDays[index] ? Colors.black : Colors.transparent,
+                            border: Border.all(
+                              color: selectedDays[index] ? Colors.black : Colors.grey,
+                              width: 1,
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              dayLabels[index],
+                              style: TextStyle(
+                                color: selectedDays[index] ? Colors.white : Colors.grey,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () {
+              // 선택한 요일 중 하나라도 선택되어 있는지 확인
+              if (!selectedDays.contains(true)) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('최소 하나의 요일을 선택해주세요')),
+                );
+                return;
+              }
+              
+              // 루틴 업데이트
+              _updateRoutineDays(selectedDays);
+              Navigator.pop(context);
+            },
+            child: const Text('저장'),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  // 루틴 요일 업데이트
+  Future<void> _updateRoutineDays(List<bool> newDays) async {
+    // 새 루틴 객체 생성
+    final updatedRoutine = CheckRoutineItem(
+      id: widget.routine.id,
+      content: widget.routine.content,
+      colorValue: widget.routine.colorValue,
+      check: widget.routine.check,
+      updated: widget.routine.updated,
+      daysOfWeek: newDays,
+    );
+    
+    // 저장소에 업데이트
+    await _routineRepository.updateItem(updatedRoutine);
+    
+    // UI에 반영
+    setState(() {
+      // widget.routine = updatedRoutine; // 직접 widget 속성은 변경 불가능하므로 루틴 새로 불러오기
+    });
+    
+    // 업데이트 메시지
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('반복 요일이 업데이트되었습니다')),
+      );
+    }
   }
   
   Future<void> _loadHistory() async {
@@ -46,6 +170,14 @@ class _RoutineHistoryViewState extends State<RoutineHistoryView> {
     return Scaffold(
       appBar: AppBar(
         title: Text('루틴 기록: ${widget.routine.content}'),
+        actions: [
+          // 요일 편집 버튼 추가
+          IconButton(
+            icon: const Icon(Icons.edit),
+            tooltip: '반복 요일 편집',
+            onPressed: _editRoutineDays,
+          ),
+        ],
       ),
       body: Column(
         children: [

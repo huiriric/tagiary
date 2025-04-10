@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:tagiary/component/slide_up_container.dart';
 import 'package:tagiary/constants/colors.dart';
 import 'package:tagiary/tables/check_routine/check_routine_item.dart';
 import 'package:tagiary/tables/check_routine/routine_history.dart';
+import 'package:tagiary/todo_routine_widget/add_routine/add_routine.dart';
 import 'package:tagiary/todo_routine_widget/routine_history_view.dart';
 
 class TodoRoutineWidget extends StatefulWidget {
@@ -44,9 +46,25 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
     );
   }
 
-  Widget _buildRoutineWidget(List<CheckRoutineItem> routines) {
+  Widget _buildRoutineWidget(List<CheckRoutineItem> allRoutines) {
+    // 오늘 날짜의 요일 가져오기 (0: 일요일, 1: 월요일, ... 6: 토요일)
+    final today = DateTime.now();
+    final todayDayOfWeek = today.weekday % 7; // 0(일)~6(토) 범위로 변환
+    
+    // 오늘 요일에 해당하는 루틴만 필터링
+    final todayRoutines = allRoutines.where((routine) {
+      // daysOfWeek가 null이거나 길이가 7이 아닌 경우 기본값 처리
+      if (routine.daysOfWeek == null || routine.daysOfWeek.length != 7) {
+        return true; // 기존 데이터는 모든 요일에 표시
+      }
+      // 오늘 요일에 해당하는 값이 true인 루틴만 반환
+      return routine.daysOfWeek[todayDayOfWeek];
+    }).toList();
+    
+    // 요일 라벨 배열
+    final dayLabels = ['일', '월', '화', '수', '목', '금', '토'];
     return GestureDetector(
-      onTap: routines.isEmpty
+      onTap: todayRoutines.isEmpty
           ? () {
               _showAddRoutineDialog(context);
             }
@@ -71,12 +89,26 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // 왼쪽에 제목 추가
-                  const Text(
-                    '루틴',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
+                  // 왼쪽에 제목 추가 (오늘 요일 표시)
+                  RichText(
+                    text: TextSpan(
+                      children: [
+                        const TextSpan(
+                          text: '루틴',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                        TextSpan(
+                          text: ' (${dayLabels[todayDayOfWeek]})',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   // 오른쪽에 추가 버튼
@@ -91,11 +123,11 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
                 ],
               ),
             ),
-            if (routines.isEmpty)
+            if (todayRoutines.isEmpty)
               const Expanded(
                 child: Center(
                   child: Text(
-                    '루틴을 추가하세요',
+                    '오늘의 루틴이 없습니다',
                     style: TextStyle(
                       color: Colors.grey,
                       fontSize: 14,
@@ -107,9 +139,9 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
               Expanded(
                 child: ListView.builder(
                   padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 0),
-                  itemCount: routines.length,
+                  itemCount: todayRoutines.length,
                   itemBuilder: (context, index) {
-                    final routine = routines[index];
+                    final routine = todayRoutines[index];
 
                     return ListTile(
                       dense: true,
@@ -177,6 +209,7 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
       colorValue: routine.colorValue,
       check: checked,
       updated: DateTime.now(), // 타임스탬프 업데이트
+      daysOfWeek: routine.daysOfWeek, // 요일 정보 유지
     );
 
     await _repository.updateItem(updatedRoutine);
@@ -194,7 +227,7 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
       await _deleteRoutineHistoryForToday(routine.id);
     }
   }
-  
+
   // 오늘 날짜의, 특정 루틴 기록만 삭제하는 메서드
   Future<void> _deleteRoutineHistoryForToday(int routineId) async {
     // 히스토리 삭제 메서드 호출
@@ -228,108 +261,25 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
   }
 
   void _showAddRoutineDialog(BuildContext context) {
-    final TextEditingController contentController = TextEditingController();
-    int selectedColor = Colors.blue.value;
-
-    showDialog(
+    // SlideUpContainer를 사용하여 일정 추가와 유사한 UI로 변경
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('루틴 추가'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              autofocus: true,
-              controller: contentController,
-              decoration: const InputDecoration(
-                labelText: '루틴 내용',
-                border: OutlineInputBorder(),
-              ),
+      isScrollControlled: true,
+      builder: (context) => AnimatedPadding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        duration: const Duration(milliseconds: 0),
+        curve: Curves.decelerate,
+        child: SingleChildScrollView(
+          child: SlideUpContainer(
+            height: 350,
+            child: AddRoutine(
+              onRoutineAdded: () {
+                // 루틴 목록 새로고침
+                setState(() {});
+              },
             ),
-            const SizedBox(height: 16),
-            // 간단한 색상 선택기 - 6개씩 두 줄로 표시
-            Column(
-              children: [
-                // 첫 번째 줄 (색상 0-5)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: List.generate(6, (index) {
-                    final color = scheduleColors[index];
-                    return GestureDetector(
-                      onTap: () {
-                        selectedColor = color.value;
-                        // 리빌드 트리거
-                        (context as Element).markNeedsBuild();
-                      },
-                      child: Container(
-                        width: 30,
-                        height: 30,
-                        decoration: BoxDecoration(
-                          color: color,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: color.value == selectedColor ? Colors.black : Colors.transparent,
-                            width: 2,
-                          ),
-                        ),
-                      ),
-                    );
-                  }),
-                ),
-                const SizedBox(height: 8),
-                // 두 번째 줄 (색상 6-11)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: List.generate(6, (index) {
-                    final color = scheduleColors[index + 6];
-                    return GestureDetector(
-                      onTap: () {
-                        selectedColor = color.value;
-                        // 리빌드 트리거
-                        (context as Element).markNeedsBuild();
-                      },
-                      child: Container(
-                        width: 30,
-                        height: 30,
-                        decoration: BoxDecoration(
-                          color: color,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: color.value == selectedColor ? Colors.black : Colors.transparent,
-                            width: 2,
-                          ),
-                        ),
-                      ),
-                    );
-                  }),
-                ),
-              ],
-            ),
-          ],
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () {
-              if (contentController.text.isNotEmpty) {
-                final newRoutine = CheckRoutineItem(
-                  id: 0, // 저장소에서 ID 할당
-                  content: contentController.text,
-                  colorValue: selectedColor,
-                  check: false,
-                  updated: DateTime.now(),
-                );
-
-                _repository.addItem(newRoutine);
-                Navigator.pop(context);
-              }
-            },
-            child: const Text('추가'),
-          ),
-        ],
       ),
     );
   }
