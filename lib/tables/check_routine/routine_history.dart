@@ -80,4 +80,22 @@ class RoutineHistoryRepository {
       await _item.delete(key);
     }
   }
+  
+  // Delete history for a specific routine on a specific date
+  Future<void> deleteHistoryForRoutineOnDate(int routineId, DateTime date) async {
+    final startOfDay = DateTime(date.year, date.month, date.day);
+    final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59, 999);
+    
+    final keysToDelete = _item.keys.where((key) {
+      final item = _item.get(key);
+      return item != null && 
+             item.routineId == routineId &&
+             item.completedDate.isAfter(startOfDay) &&
+             item.completedDate.isBefore(endOfDay);
+    }).toList();
+    
+    for (var key in keysToDelete) {
+      await _item.delete(key);
+    }
+  }
 }

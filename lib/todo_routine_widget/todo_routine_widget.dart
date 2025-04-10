@@ -181,15 +181,24 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
 
     await _repository.updateItem(updatedRoutine);
 
-    // 체크 시에만 (언체크가 아닐 때) 기록에 추가
     if (checked) {
+      // 체크 시에 기록 추가
       final history = RoutineHistory(
         id: 0, // 저장소에서 ID 할당
         routineId: routine.id,
         completedDate: DateTime.now(),
       );
       await _historyRepository.addItem(history);
+    } else {
+      // 체크 해제 시 오늘 날짜의 기록 삭제
+      await _deleteRoutineHistoryForToday(routine.id);
     }
+  }
+  
+  // 오늘 날짜의, 특정 루틴 기록만 삭제하는 메서드
+  Future<void> _deleteRoutineHistoryForToday(int routineId) async {
+    // 히스토리 삭제 메서드 호출
+    await _historyRepository.deleteHistoryForRoutineOnDate(routineId, DateTime.now());
   }
 
   void _deleteRoutine(CheckRoutineItem routine) {
