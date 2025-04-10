@@ -563,16 +563,16 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
                           child: CupertinoPicker(
                             itemExtent: 30,
                             scrollController: FixedExtentScrollController(
-                              initialItem: (_startTime.minute / 10).floor(),
+                              initialItem: (_startTime.minute / 5).floor(),
                             ),
                             onSelectedItemChanged: (i) => setState(() {
-                              _startTime = TimeOfDay(hour: _startTime.hour, minute: i * 10);
+                              _startTime = TimeOfDay(hour: _startTime.hour, minute: i * 5);
                             }),
                             children: List.generate(
-                              6,
+                              12,
                               (int i) => Center(
                                 child: Text(
-                                  (i * 10).toString().padLeft(2, '0'),
+                                  (i * 5).toString().padLeft(2, '0'),
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w600,
                                     fontSize: 16,
@@ -619,16 +619,16 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
                           child: CupertinoPicker(
                             itemExtent: 30,
                             scrollController: FixedExtentScrollController(
-                              initialItem: (_endTime.minute / 10).floor(),
+                              initialItem: (_endTime.minute / 5).floor(),
                             ),
                             onSelectedItemChanged: (i) => setState(() {
-                              _endTime = TimeOfDay(hour: _endTime.hour, minute: i * 10);
+                              _endTime = TimeOfDay(hour: _endTime.hour, minute: i * 5);
                             }),
                             children: List.generate(
-                              6,
+                              12,
                               (int i) => Center(
                                 child: Text(
-                                  (i * 10).toString().padLeft(2, '0'),
+                                  (i * 5).toString().padLeft(2, '0'),
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w600,
                                     fontSize: 16,
