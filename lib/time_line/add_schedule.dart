@@ -43,6 +43,10 @@ class _AddScheduleState extends State<AddSchedule> {
   late TextEditingController titleCont;
   late TextEditingController descriptionCont;
 
+  // FocusNode 추가
+  final FocusNode titleFocus = FocusNode();
+  final FocusNode descriptionFocus = FocusNode();
+
   bool isRoutine = false;
   List<bool> selectedDays = List.generate(7, (index) => false);
   bool addToTodoRoutine = false; // 반복이 체크되었을 때 Todo Routine에도 추가하기 옵션
@@ -70,16 +74,25 @@ class _AddScheduleState extends State<AddSchedule> {
 
   @override
   void dispose() {
-    super.dispose();
+    // FocusNode 해제
+    titleFocus.dispose();
+    descriptionFocus.dispose();
+
+    // 컨트롤러 해제
     titleCont.dispose();
     descriptionCont.dispose();
+
+    super.dispose(); // super.dispose()를 마지막에 호출
   }
 
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
+        child: Padding(
+      padding: const EdgeInsets.all(20.0),
+      child: GestureDetector(
+        // 빈 영역 터치 시 키보드 숨기기
+        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
         child: Stack(
           children: [
             Column(
@@ -91,6 +104,12 @@ class _AddScheduleState extends State<AddSchedule> {
                     title = value;
                   },
                   controller: titleCont,
+                  focusNode: titleFocus, // FocusNode 연결
+                  autofocus: true,
+                  // 키 이벤트 처리 추가
+                  onEditingComplete: () {
+                    descriptionFocus.requestFocus(); // 다음 필드로 포커스 이동
+                  },
                   decoration: const InputDecoration(
                     hintText: '일정 제목',
                     // 언더라인 완전 제거
@@ -113,6 +132,16 @@ class _AddScheduleState extends State<AddSchedule> {
                     description = value;
                   },
                   controller: descriptionCont,
+                  focusNode: descriptionFocus, // FocusNode 연결
+                  // 키보드 유형 명시적 설정 (멀티라인)
+                  keyboardType: TextInputType.multiline,
+                  maxLines: null, // 여러 줄 입력 가능
+                  // 다음 액션 설정
+                  textInputAction: TextInputAction.done,
+                  onEditingComplete: () {
+                    // 키보드 숨기기
+                    FocusManager.instance.primaryFocus?.unfocus();
+                  },
                   decoration: const InputDecoration(
                     hintText: '노트',
                     // 언더라인 완전 제거
@@ -279,13 +308,13 @@ class _AddScheduleState extends State<AddSchedule> {
                         itemExtent: 30,
                         scrollController: FixedExtentScrollController(initialItem: start.minute),
                         onSelectedItemChanged: (i) => setState(() {
-                          start = TimeOfDay(hour: start.hour, minute: i * 10);
+                          start = TimeOfDay(hour: start.hour, minute: i * 5);
                         }),
                         children: List.generate(
-                          6,
+                          12,
                           (int i) => Center(
                             child: Text(
-                              _formatEachTime(i * 10),
+                              _formatEachTime(i * 5),
                               style: const TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 16,
@@ -341,13 +370,13 @@ class _AddScheduleState extends State<AddSchedule> {
                         itemExtent: 30,
                         scrollController: FixedExtentScrollController(initialItem: end.minute),
                         onSelectedItemChanged: (i) => setState(() {
-                          end = TimeOfDay(hour: end.hour, minute: i * 10);
+                          end = TimeOfDay(hour: end.hour, minute: i * 5);
                         }),
                         children: List.generate(
-                          6,
+                          12,
                           (int i) => Center(
                             child: Text(
-                              _formatEachTime(i * 10),
+                              _formatEachTime(i * 5),
                               style: const TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 16,
@@ -456,7 +485,7 @@ class _AddScheduleState extends State<AddSchedule> {
           ],
         ),
       ),
-    );
+    ));
   }
 
   Future<void> _saveSchedule() async {
@@ -536,12 +565,12 @@ class _AddScheduleState extends State<AddSchedule> {
     await checkRoutineRepository.init();
 
     final newRoutine = CheckRoutineItem(
-      id: 0, // 저장소에서 할당
-      content: title,
-      colorValue: selectedColor.value,
-      check: false,
-      updated: DateTime.now(),
-    );
+        id: 0, // 저장소에서 할당
+        content: title,
+        colorValue: selectedColor.value,
+        check: false,
+        updated: DateTime.now(),
+        daysOfWeek: selectedDays);
 
     await checkRoutineRepository.addItem(newRoutine);
   }
