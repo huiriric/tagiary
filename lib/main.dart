@@ -6,6 +6,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:tagiary/component/slide_up_container.dart';
 import 'package:tagiary/provider.dart';
+import 'package:tagiary/tables/schedule_links/schedule_link_item.dart';
 import 'package:tagiary/time_line/add_schedule.dart';
 import 'package:tagiary/time_line/time_line.dart';
 import 'package:tagiary/tables/check/check_item.dart';
@@ -37,6 +38,8 @@ Future<void> main() async {
   Hive.registerAdapter(CheckItemAdapter());
   Hive.registerAdapter(CheckRoutineItemAdapter());
   Hive.registerAdapter(RoutineHistoryAdapter());
+  Hive.registerAdapter(ScheduleLinkItemAdapter());
+  Hive.registerAdapter(LinkItemTypeAdapter());
 
   // 박스 열기
   await Hive.openBox<ScheduleItem>('scheduleBox');
@@ -44,6 +47,7 @@ Future<void> main() async {
   await Hive.openBox<CheckItem>('checkBox');
   await Hive.openBox<CheckRoutineItem>('checkRoutineBox');
   await Hive.openBox<RoutineHistory>('routineHistoryBox');
+  await Hive.openBox<ScheduleLinkItem>('scheduleLinkBox');
 
   // 체크 루틴 마이그레이션 실행 (daysOfWeek 필드 추가)
   await RoutineMigrationHelper.migrateCheckRoutines();
@@ -107,11 +111,16 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   List<String> week = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
   late DateTime date;
+  final scheduleRepo = ScheduleRepository();
+  late List<dynamic> list;
 
   @override
   void initState() {
     super.initState();
     date = DateTime.now();
+    scheduleRepo.init();
+    list = scheduleRepo.getAllItems();
+    // list<>.map((e) => print(e));
   }
 
   @override
