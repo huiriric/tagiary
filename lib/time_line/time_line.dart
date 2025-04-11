@@ -31,7 +31,8 @@ class _TimeLineState extends State<TimeLine> {
 
   final ScheduleRoutineRepository srRepo = ScheduleRoutineRepository();
   final ScheduleRepository sRepo = ScheduleRepository();
-  List<Event> _events = [];
+  List<Event> _events = []; // 시간이 있는 이벤트들
+  List<Event> _noTimeEvents = []; // 시간 정보가 없는 이벤트들
 
   // 드래그 관련 변수
   Event? _draggingEvent;
@@ -90,16 +91,23 @@ class _TimeLineState extends State<TimeLine> {
 
     // 데이터 박스 최신화 (새로운 아이템이 추가되었을 수 있음)
     if (mounted) {
-      // 데이터 로드 후 상태 업데이트
+      // 선택된 날짜의 모든 일정 이벤트 가져오기
+      final allScheduleEvents = sRepo.getDateItems(widget.date).toList();
+      // 선택된 요일의 루틴 이벤트 가져오기
+      final routineEvents = srRepo.getItemsByDay(dayOfWeek).toList();
+
+      // 시간 있는 이벤트와 없는 이벤트 구분
+      final timeEvents = allScheduleEvents.where((e) => e.hasTimeSet).toList();
+      final noTimeEvents = allScheduleEvents.where((e) => !e.hasTimeSet).toList();
+
       setState(() {
-        // 선택된 요일의 루틴 이벤트 가져오기
-        _events = srRepo.getItemsByDay(dayOfWeek).toList();
-
-        // 선택된 날짜의 일반 일정 이벤트 가져오기
-        _events = [..._events, ...sRepo.getDateItems(widget.date)];
-
+        // 시간 정보가 있는 일정만 타임라인에 표시
+        _events = [...routineEvents, ...timeEvents];
         // 이벤트를 시작 시간순으로 정렬
         _events.sort((a, b) => a.startMinutes.compareTo(b.startMinutes));
+
+        // 시간 정보가 없는 일정
+        _noTimeEvents = noTimeEvents;
       });
     }
   }
@@ -116,328 +124,370 @@ class _TimeLineState extends State<TimeLine> {
     final int totalHours = _endHour - _startHour + 1;
     final double totalHeight = totalHours * _hourHeight;
 
-    return SingleChildScrollView(
-      controller: _timelineCont,
-      child: Stack(
-        children: [
-          Container(
-            height: totalHeight,
-            margin: EdgeInsets.only(left: _timelineWidth),
-            // decoration: BoxDecoration(
-            //   border: Border(
-            //     left: BorderSide(
-            //       color: Colors.grey.shade300,
-            //       width: 2,
-            //     ),
-            //   ),
-            // ),
+    return Column(
+      children: [
+        // 시간 정보 없는 일정 섹션 (있을 경우에만 표시)
+        if (_noTimeEvents.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _noTimeEvents.take(3).map((event) {
+                // 타임 테이블 항목과 비슷한 컨테이너 생성
+                return GestureDetector(
+                  onTap: () => _showEvent(context, event),
+                  child: Container(
+                    width: (screenWidth / 2) - 24, // 화면 절반에서 여백 제외
+                    height: 35, // 요청한 높이
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: event.color,
+                      borderRadius: BorderRadius.circular(5),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 2,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Text(
+                        event.title,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          fontSize: 12,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
           ),
 
-          // 시간 마커와 구분선
-          ...List.generate(totalHours, (index) {
-            final hour = _startHour + index;
-            return Positioned(
-              left: 0,
-              top: index * _hourHeight,
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: _timelineWidth,
-                    child: Text(
-                      '$hour:00',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey.shade700, fontSize: eventFontSize),
-                    ),
-                  ),
-                  Container(
-                    width: MediaQuery.of(context).size.width - _timelineWidth,
-                    height: 1,
-                    color: Colors.grey.shade300,
-                  ),
-                ],
-              ),
-            );
-          }),
-          // 시간 사이 버튼 (터치 시 일정 추가)
-          ...List.generate(totalHours - 1, (index) {
-            return Positioned(
-                top: timelineOffset + index * _hourHeight,
-                left: 0 - padding,
-                child: InkWell(
-                  // borderRadius: BorderRadius.circular(5),
-                  onLongPress: () {
-                    TimeOfDay start = TimeOfDay(hour: _startHour + index, minute: 0);
-                    TimeOfDay end = TimeOfDay(hour: _startHour + index + 1, minute: 0);
-
-                    showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      builder: (context) => AnimatedPadding(
-                        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-                        duration: const Duration(milliseconds: 0),
-                        curve: Curves.decelerate,
-                        child: SingleChildScrollView(
-                          child: SlideUpContainer(
-                            height: 450,
-                            child: AddSchedule(
-                              date: widget.date,
-                              start: start,
-                              end: end,
-                              onScheduleAdded: _loadEventsForDate, // 일정 추가 후 이벤트 다시 로드
-                            ),
+        // 타임라인 섹션
+        Expanded(
+          child: SingleChildScrollView(
+            controller: _timelineCont,
+            child: Stack(
+              children: [
+                Container(
+                  height: totalHeight,
+                  margin: EdgeInsets.only(left: _timelineWidth),
+                ),
+                // 시간 마커와 구분선
+                ...List.generate(totalHours, (index) {
+                  final hour = _startHour + index;
+                  return Positioned(
+                    left: 0,
+                    top: index * _hourHeight,
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: _timelineWidth,
+                          child: Text(
+                            '$hour:00',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey.shade700, fontSize: eventFontSize),
                           ),
                         ),
-                      ),
-                    );
-                  },
-                  child: Container(
-                    width: (screenWidth / 2),
-                    height: _hourHeight - 1,
-                    decoration: BoxDecoration(
-                      // color: const Color(0xFFFAFAFA),
-                      borderRadius: BorderRadius.circular(5),
+                        Container(
+                          width: MediaQuery.of(context).size.width - _timelineWidth,
+                          height: 1,
+                          color: Colors.grey.shade300,
+                        ),
+                      ],
                     ),
-                  ),
-                ));
-          }),
-          // 일정 아이템
-          ...List.generate(_events.length, (index) {
-            final event = _events[index];
-            final startMinutes = event.startMinutes;
-            final endMinutes = event.endMinutes;
-
-            // 타임라인 기준으로 위치 계산
-            final topPosition = (startMinutes - _startHour * 60) / 60 * _hourHeight;
-            final height = (endMinutes - startMinutes) / 60 * _hourHeight;
-
-            // 메인 일정 위젯 반환
-            return Positioned(
-              left: _timelineWidth + eventHorizontalPadding,
-              top: topPosition + timelineOffset, // 일관된 오프셋 사용
-              child: GestureDetector(
-                onTap: () => _showEvent(context, event),
-                onLongPressStart: (details) {
-                  // 루틴은 드래그 불가
-                  if (event.isRoutine) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('루틴은 드래그할 수 없습니다'),
-                        duration: Duration(seconds: 1),
-                      ),
-                    );
-                    return;
-                  }
-
-                  setState(() {
-                    _draggingEvent = event;
-                    _dragStartY = details.globalPosition.dy;
-                    _originalTopPosition = topPosition;
-                    _originalStartTime = event.startTime;
-                    _originalEndTime = event.endTime;
-                    _hasConflict = false;
-                    _conflictEvent = null;
-                  });
-                },
-                onLongPressMoveUpdate: (details) {
-                  if (_draggingEvent != event || _dragStartY == null || _originalTopPosition == null) {
-                    return;
-                  }
-
-                  // 현재 드래그 위치 저장
-                  _dragCurrentY = details.globalPosition.dy;
-
-                  // 이동한 거리 계산
-                  final dragDeltaY = _dragCurrentY! - _dragStartY!;
-
-                  // 5분 단위 스냅 계산 (5분 = _hourHeight / 12)
-                  final snapToGridDeltaY = (dragDeltaY / (_hourHeight / 12)).round() * (_hourHeight / 12);
-
-                  // 새 위치 계산
-                  final newTopPosition = _originalTopPosition! + snapToGridDeltaY;
-
-                  // 범위 검사 (타임라인 밖으로 나가지 않도록)
-                  if (newTopPosition < 0 || newTopPosition + height > totalHeight) {
-                    return;
-                  }
-
-                  // 새 시간 계산 (분 단위)
-                  final newStartMinutes = (newTopPosition - timelineOffset) / _hourHeight * 60 + _startHour * 60;
-
-                  // 5분 단위로 반올림
-                  final roundedStartMinutes = (newStartMinutes / 5).round() * 5;
-
-                  // 이벤트 길이 유지 (분 단위)
-                  final durationMinutes = event.durationMinutes;
-                  final newEndMinutes = roundedStartMinutes + durationMinutes;
-
-                  // 새 시간 객체 생성
-                  final newStartTime = TimeOfDay(
-                    hour: (roundedStartMinutes / 60).floor(),
-                    minute: roundedStartMinutes % 60,
                   );
+                }),
+                // 시간 사이 버튼 (터치 시 일정 추가)
+                ...List.generate(totalHours - 1, (index) {
+                  return Positioned(
+                      top: timelineOffset + index * _hourHeight,
+                      left: 0 - padding,
+                      child: InkWell(
+                        // borderRadius: BorderRadius.circular(5),
+                        onLongPress: () {
+                          TimeOfDay start = TimeOfDay(hour: _startHour + index, minute: 0);
+                          TimeOfDay end = TimeOfDay(hour: _startHour + index + 1, minute: 0);
 
-                  final newEndTime = TimeOfDay(
-                    hour: (newEndMinutes / 60).floor(),
-                    minute: newEndMinutes % 60,
-                  );
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            builder: (context) => AnimatedPadding(
+                              padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+                              duration: const Duration(milliseconds: 0),
+                              curve: Curves.decelerate,
+                              child: SingleChildScrollView(
+                                child: SlideUpContainer(
+                                  height: 450,
+                                  child: AddSchedule(
+                                    date: widget.date,
+                                    start: start,
+                                    end: end,
+                                    onScheduleAdded: _loadEventsForDate, // 일정 추가 후 이벤트 다시 로드
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          width: (screenWidth / 2),
+                          height: _hourHeight - 1,
+                          decoration: BoxDecoration(
+                            // color: const Color(0xFFFAFAFA),
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                        ),
+                      ));
+                }),
+                // 일정 아이템
+                ...List.generate(_events.length, (index) {
+                  final event = _events[index];
+                  final startMinutes = event.startMinutes;
+                  final endMinutes = event.endMinutes;
 
-                  // 충돌 감지
-                  _checkConflictForDrag(event, newStartTime, newEndTime);
+                  // 타임라인 기준으로 위치 계산
+                  final topPosition = (startMinutes - _startHour * 60) / 60 * _hourHeight;
+                  final height = (endMinutes - startMinutes) / 60 * _hourHeight;
 
-                  // 화면 업데이트 (드래그 중인 이벤트 위치 변경)
-                  setState(() {});
-                },
-                onLongPressEnd: (details) {
-                  if (_draggingEvent != event ||
-                      _dragStartY == null ||
-                      _originalTopPosition == null ||
-                      _originalStartTime == null ||
-                      _originalEndTime == null) {
-                    return;
-                  }
+                  // 메인 일정 위젯 반환
+                  return Positioned(
+                    left: _timelineWidth + eventHorizontalPadding,
+                    top: topPosition + timelineOffset, // 일관된 오프셋 사용
+                    child: GestureDetector(
+                      child: Stack(
+                        children: [
+                          // 드래그 중에는 원래 이벤트 위에 그림자 표시
+                          if (_draggingEvent == event && _dragCurrentY != null && _dragStartY != null) _buildDragShadow(event, eventWidth, height),
 
-                  // 이동한 거리 계산
-                  final dragDeltaY = details.globalPosition.dy - _dragStartY!;
+                          // 기존 컨테이너 (실제 이벤트 표시)
+                          Container(
+                            width: eventWidth - (2 * eventHorizontalPadding),
+                            height: height,
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: (_draggingEvent == event && _hasConflict)
+                                  ? Colors.red.withOpacity(0.7) // 충돌 시 빨간색 표시
+                                  : (_draggingEvent == event)
+                                      ? event.color.withOpacity(0.7) // 드래그 중
+                                      : event.color, // 일반 상태
+                              borderRadius: BorderRadius.circular(5),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: LayoutBuilder(
+                              builder: (context, constraints) {
+                                // 텍스트를 그릴 때 사용할 TextPainter
+                                final textPainter = TextPainter(
+                                  text: TextSpan(
+                                    text: event.title,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                      fontSize: eventFontSize,
+                                    ),
+                                  ),
+                                  maxLines: 1,
+                                  textDirection: TextDirection.ltr,
+                                );
 
-                  // 5분 단위 스냅 계산
-                  final snapToGridDeltaY = (dragDeltaY / (_hourHeight / 12)).round() * (_hourHeight / 12);
+                                // 레이아웃 계산
+                                textPainter.layout(maxWidth: constraints.maxWidth);
 
-                  // 새 위치 계산
-                  final newTopPosition = _originalTopPosition! + snapToGridDeltaY;
+                                // 텍스트가 너비를 초과하는지 확인
+                                final overflowed = textPainter.didExceedMaxLines;
 
-                  // 범위 검사
-                  if (newTopPosition < 0 || newTopPosition + height > totalHeight) {
-                    _resetDragState();
-                    return;
-                  }
-
-                  // 새 시간 계산 (분 단위)
-                  final newStartMinutes = (newTopPosition - timelineOffset) / _hourHeight * 60 + _startHour * 60;
-
-                  // 5분 단위로 반올림
-                  final roundedStartMinutes = (newStartMinutes / 5).round() * 5;
-
-                  // 이벤트 길이 유지 (분 단위)
-                  final durationMinutes = event.durationMinutes;
-                  final newEndMinutes = roundedStartMinutes + durationMinutes;
-
-                  // 새 시간 객체 생성
-                  final newStartTime = TimeOfDay(
-                    hour: (roundedStartMinutes / 60).floor(),
-                    minute: roundedStartMinutes % 60,
-                  );
-
-                  final newEndTime = TimeOfDay(
-                    hour: (newEndMinutes / 60).floor(),
-                    minute: newEndMinutes % 60,
-                  );
-
-                  // 충돌 확인
-                  if (_hasConflict) {
-                    // 충돌이 있으면 원래 시간으로 복원
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(_conflictEvent != null
-                            ? '${_formatTime(_conflictEvent!.startTime)}~${_formatTime(_conflictEvent!.endTime)}의 "${_conflictEvent!.title}" 일정과 충돌합니다'
-                            : '다른 일정과 시간이 중복됩니다'),
-                        backgroundColor: Colors.red,
-                        duration: const Duration(seconds: 2),
-                      ),
-                    );
-                    _resetDragState();
-                    return;
-                  }
-
-                  // 이벤트 시간 업데이트
-                  _updateEventTime(event, newStartTime, newEndTime);
-
-                  // 드래그 상태 초기화
-                  _resetDragState();
-                },
-                child: Stack(
-                  children: [
-                    // 드래그 중에는 원래 이벤트 위에 그림자 표시
-                    if (_draggingEvent == event && _dragCurrentY != null && _dragStartY != null) _buildDragShadow(event, eventWidth, height),
-
-                    // 기존 컨테이너 (실제 이벤트 표시)
-                    Container(
-                      width: eventWidth - (2 * eventHorizontalPadding),
-                      height: height,
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: (_draggingEvent == event && _hasConflict)
-                            ? Colors.red.withOpacity(0.7) // 충돌 시 빨간색 표시
-                            : (_draggingEvent == event)
-                                ? event.color.withOpacity(0.7) // 드래그 중
-                                : event.color, // 일반 상태
-                        borderRadius: BorderRadius.circular(5),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      event.title,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                        fontSize: eventFontSize,
+                                      ),
+                                      overflow: overflowed ? TextOverflow.clip : TextOverflow.ellipsis,
+                                    ),
+                                    // 드래그 중에는 원래 시간 표시 (더이상 변경된 시간을 텍스트로 표시하지 않음)
+                                    // 40분 초과 일정에만 시간 표시 (높이 기준이 아닌 실제 기간으로 판단)
+                                    if (event.durationMinutes > 40)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 4),
+                                        child: Text(
+                                          '${_formatTime(event.startTime)} - ${_formatTime(event.endTime)}',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 10,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                );
+                              },
+                            ),
                           ),
                         ],
                       ),
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          // 텍스트를 그릴 때 사용할 TextPainter
-                          final textPainter = TextPainter(
-                            text: TextSpan(
-                              text: event.title,
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                fontSize: eventFontSize,
-                              ),
+                      onTap: () => _showEvent(context, event),
+                      onLongPressStart: (details) {
+                        // 루틴은 드래그 불가
+                        if (event.isRoutine) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('루틴은 드래그할 수 없습니다'),
+                              duration: Duration(seconds: 1),
                             ),
-                            maxLines: 1,
-                            textDirection: TextDirection.ltr,
                           );
+                          return;
+                        }
 
-                          // 레이아웃 계산
-                          textPainter.layout(maxWidth: constraints.maxWidth);
+                        setState(() {
+                          _draggingEvent = event;
+                          _dragStartY = details.globalPosition.dy;
+                          _originalTopPosition = topPosition;
+                          _originalStartTime = event.startTime;
+                          _originalEndTime = event.endTime;
+                          _hasConflict = false;
+                          _conflictEvent = null;
+                        });
+                      },
+                      onLongPressMoveUpdate: (details) {
+                        if (_draggingEvent != event || _dragStartY == null || _originalTopPosition == null) {
+                          return;
+                        }
 
-                          // 텍스트가 너비를 초과하는지 확인
-                          final overflowed = textPainter.didExceedMaxLines;
+                        // 현재 드래그 위치 저장
+                        _dragCurrentY = details.globalPosition.dy;
 
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                event.title,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                  fontSize: eventFontSize,
-                                ),
-                                overflow: overflowed ? TextOverflow.clip : TextOverflow.ellipsis,
-                              ),
-                              // 드래그 중에는 원래 시간 표시 (더이상 변경된 시간을 텍스트로 표시하지 않음)
-                              // 40분 초과 일정에만 시간 표시 (높이 기준이 아닌 실제 기간으로 판단)
-                              if (event.durationMinutes > 40)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 4),
-                                  child: Text(
-                                    '${_formatTime(event.startTime)} - ${_formatTime(event.endTime)}',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 10,
-                                    ),
-                                  ),
-                                ),
-                            ],
+                        // 이동한 거리 계산
+                        final dragDeltaY = _dragCurrentY! - _dragStartY!;
+
+                        // 5분 단위 스냅 계산 (5분 = _hourHeight / 12)
+                        final snapToGridDeltaY = (dragDeltaY / (_hourHeight / 12)).round() * (_hourHeight / 12);
+
+                        // 새 위치 계산
+                        final newTopPosition = _originalTopPosition! + snapToGridDeltaY;
+
+                        // 범위 검사 (타임라인 밖으로 나가지 않도록)
+                        if (newTopPosition < 0 || newTopPosition + height > totalHeight) {
+                          return;
+                        }
+
+                        // 새 시간 계산 (분 단위)
+                        final newStartMinutes = (newTopPosition - timelineOffset) / _hourHeight * 60 + _startHour * 60;
+
+                        // 5분 단위로 반올림
+                        final roundedStartMinutes = (newStartMinutes / 5).round() * 5;
+
+                        // 이벤트 길이 유지 (분 단위)
+                        final durationMinutes = event.durationMinutes;
+                        final newEndMinutes = roundedStartMinutes + durationMinutes;
+
+                        // 새 시간 객체 생성
+                        final newStartTime = TimeOfDay(
+                          hour: (roundedStartMinutes / 60).floor(),
+                          minute: roundedStartMinutes % 60,
+                        );
+
+                        final newEndTime = TimeOfDay(
+                          hour: (newEndMinutes / 60).floor(),
+                          minute: newEndMinutes % 60,
+                        );
+
+                        // 충돌 감지
+                        _checkConflictForDrag(event, newStartTime, newEndTime);
+
+                        // 화면 업데이트 (드래그 중인 이벤트 위치 변경)
+                        setState(() {});
+                      },
+                      onLongPressEnd: (details) {
+                        if (_draggingEvent != event ||
+                            _dragStartY == null ||
+                            _originalTopPosition == null ||
+                            _originalStartTime == null ||
+                            _originalEndTime == null) {
+                          return;
+                        }
+
+                        // 이동한 거리 계산
+                        final dragDeltaY = details.globalPosition.dy - _dragStartY!;
+
+                        // 5분 단위 스냅 계산
+                        final snapToGridDeltaY = (dragDeltaY / (_hourHeight / 12)).round() * (_hourHeight / 12);
+
+                        // 새 위치 계산
+                        final newTopPosition = _originalTopPosition! + snapToGridDeltaY;
+
+                        // 범위 검사
+                        if (newTopPosition < 0 || newTopPosition + height > totalHeight) {
+                          _resetDragState();
+                          return;
+                        }
+
+                        // 새 시간 계산 (분 단위)
+                        final newStartMinutes = (newTopPosition - timelineOffset) / _hourHeight * 60 + _startHour * 60;
+
+                        // 5분 단위로 반올림
+                        final roundedStartMinutes = (newStartMinutes / 5).round() * 5;
+
+                        // 이벤트 길이 유지 (분 단위)
+                        final durationMinutes = event.durationMinutes;
+                        final newEndMinutes = roundedStartMinutes + durationMinutes;
+
+                        // 새 시간 객체 생성
+                        final newStartTime = TimeOfDay(
+                          hour: (roundedStartMinutes / 60).floor(),
+                          minute: roundedStartMinutes % 60,
+                        );
+
+                        final newEndTime = TimeOfDay(
+                          hour: (newEndMinutes / 60).floor(),
+                          minute: newEndMinutes % 60,
+                        );
+
+                        // 충돌 확인
+                        if (_hasConflict) {
+                          // 충돌이 있으면 원래 시간으로 복원
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(_conflictEvent != null
+                                  ? '${_formatTime(_conflictEvent!.startTime)}~${_formatTime(_conflictEvent!.endTime)}의 "${_conflictEvent!.title}" 일정과 충돌합니다'
+                                  : '다른 일정과 시간이 중복됩니다'),
+                              backgroundColor: Colors.red,
+                              duration: const Duration(seconds: 2),
+                            ),
                           );
-                        },
-                      ),
+                          _resetDragState();
+                          return;
+                        }
+
+                        // 이벤트 시간 업데이트
+                        _updateEventTime(event, newStartTime, newEndTime);
+
+                        // 드래그 상태 초기화
+                        _resetDragState();
+                      },
                     ),
-                  ],
-                ),
-              ),
-            );
-          }),
-        ],
-      ),
+                  );
+                }),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
