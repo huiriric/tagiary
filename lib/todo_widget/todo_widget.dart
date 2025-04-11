@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:tagiary/component/slide_up_container.dart';
 import 'package:tagiary/constants/colors.dart';
 import 'package:tagiary/tables/check/check_item.dart';
+import 'package:tagiary/todo_widget/add_todo/add_todo.dart';
 
 class TodoWidget extends StatefulWidget {
   const TodoWidget({super.key});
@@ -372,318 +374,50 @@ class _TodoWidgetState extends State<TodoWidget> {
   }
 
   void _showAddTodoDialog(BuildContext context) {
-    final TextEditingController contentController = TextEditingController();
-    DateTime? selectedDate;
-    int selectedColor = Colors.blue.value;
-
-    showDialog(
+    // SlideUpContainer를 사용하여 루틴 추가와 유사한 UI로 변경
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('할 일 추가'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              autofocus: true,
-              controller: contentController,
-              decoration: const InputDecoration(
-                labelText: '할 일 내용',
-                border: OutlineInputBorder(),
-              ),
+      isScrollControlled: true,
+      builder: (context) => AnimatedPadding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        duration: const Duration(milliseconds: 0),
+        curve: Curves.decelerate,
+        child: SingleChildScrollView(
+          child: SlideUpContainer(
+            height: 450,
+            child: AddTodo(
+              onTodoAdded: () {
+                // 할 일 목록 새로고침
+                setState(() {});
+              },
             ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () async {
-                      final date = await showDatePicker(
-                        context: context,
-                        initialDate: DateTime(DateTime.now().year, DateTime.now().month, 1),
-                        firstDate: DateTime(DateTime.now().year, DateTime.now().month, 1),
-                        lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
-                      );
-
-                      if (date != null) {
-                        selectedDate = date;
-                        // Trigger rebuild
-                        (context as Element).markNeedsBuild();
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            selectedDate != null ? '${selectedDate!.year}-${selectedDate!.month}-${selectedDate!.day}' : '마감일 선택 (선택사항)',
-                            style: TextStyle(
-                              color: selectedDate != null ? Colors.black : Colors.grey,
-                            ),
-                          ),
-                          const Icon(Icons.calendar_today, size: 16),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                if (selectedDate != null)
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () {
-                      selectedDate = null;
-                      // Trigger rebuild
-                      (context as Element).markNeedsBuild();
-                    },
-                  ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            // Simple color picker row - 6개씩 두 줄로 표시
-            Column(
-              children: [
-                // 첫 번째 줄 (색상 0-5)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: List.generate(6, (index) {
-                    final color = scheduleColors[index];
-                    return GestureDetector(
-                      onTap: () {
-                        selectedColor = color.value;
-                        // Trigger rebuild
-                        (context as Element).markNeedsBuild();
-                      },
-                      child: Container(
-                        width: 30,
-                        height: 30,
-                        decoration: BoxDecoration(
-                          color: color,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: color.value == selectedColor ? Colors.black : Colors.transparent,
-                            width: 2,
-                          ),
-                        ),
-                      ),
-                    );
-                  }),
-                ),
-                const SizedBox(height: 8),
-                // 두 번째 줄 (색상 6-11)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: List.generate(6, (index) {
-                    final color = scheduleColors[index + 6];
-                    return GestureDetector(
-                      onTap: () {
-                        selectedColor = color.value;
-                        // Trigger rebuild
-                        (context as Element).markNeedsBuild();
-                      },
-                      child: Container(
-                        width: 30,
-                        height: 30,
-                        decoration: BoxDecoration(
-                          color: color,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: color.value == selectedColor ? Colors.black : Colors.transparent,
-                            width: 2,
-                          ),
-                        ),
-                      ),
-                    );
-                  }),
-                ),
-              ],
-            ),
-          ],
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () {
-              if (contentController.text.isNotEmpty) {
-                final newTodo = CheckItem(
-                  id: 0, // Repository will assign ID
-                  content: contentController.text,
-                  endDate: selectedDate?.toIso8601String(),
-                  colorValue: selectedColor,
-                  check: false,
-                );
-
-                _repository.addItem(newTodo);
-                Navigator.pop(context);
-              }
-            },
-            child: const Text('추가'),
-          ),
-        ],
       ),
     );
   }
 
   void _showEditTodoDialog(BuildContext context, CheckItem todo) {
-    final TextEditingController contentController = TextEditingController(text: todo.content);
-    DateTime? selectedDate = todo.endDate != null ? DateTime.parse(todo.endDate!) : null;
-    int selectedColor = todo.colorValue;
-
-    showDialog(
+    // SlideUpContainer를 사용하여 루틴 추가와 유사한 UI로 변경
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('할 일 수정'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: contentController,
-              decoration: const InputDecoration(
-                labelText: '할 일 내용',
-                border: OutlineInputBorder(),
-              ),
+      isScrollControlled: true,
+      builder: (context) => AnimatedPadding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        duration: const Duration(milliseconds: 0),
+        curve: Curves.decelerate,
+        child: SingleChildScrollView(
+          child: SlideUpContainer(
+            height: 450,
+            child: AddTodo(
+              todoToEdit: todo,
+              onTodoAdded: () {
+                // 할 일 목록 새로고침
+                setState(() {});
+              },
             ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () async {
-                      final date = await showDatePicker(
-                        context: context,
-                        initialDate: selectedDate ?? DateTime.now(),
-                        firstDate: DateTime.now(),
-                        lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
-                      );
-
-                      if (date != null) {
-                        selectedDate = date;
-                        // Trigger rebuild
-                        (context as Element).markNeedsBuild();
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            selectedDate != null ? '${selectedDate!.year}-${selectedDate!.month}-${selectedDate!.day}' : '마감일 선택 (선택사항)',
-                            style: TextStyle(
-                              color: selectedDate != null ? Colors.black : Colors.grey,
-                            ),
-                          ),
-                          const Icon(Icons.calendar_today, size: 16),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                if (selectedDate != null)
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () {
-                      selectedDate = null;
-                      // Trigger rebuild
-                      (context as Element).markNeedsBuild();
-                    },
-                  ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            // Simple color picker row - 6개씩 두 줄로 표시
-            Column(
-              children: [
-                // 첫 번째 줄 (색상 0-5)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: List.generate(6, (index) {
-                    final color = scheduleColors[index];
-                    return GestureDetector(
-                      onTap: () {
-                        selectedColor = color.value;
-                        // Trigger rebuild
-                        (context as Element).markNeedsBuild();
-                      },
-                      child: Container(
-                        width: 30,
-                        height: 30,
-                        decoration: BoxDecoration(
-                          color: color,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: color.value == selectedColor ? Colors.black : Colors.transparent,
-                            width: 2,
-                          ),
-                        ),
-                      ),
-                    );
-                  }),
-                ),
-                const SizedBox(height: 8),
-                // 두 번째 줄 (색상 6-11)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: List.generate(6, (index) {
-                    final color = scheduleColors[index + 6];
-                    return GestureDetector(
-                      onTap: () {
-                        selectedColor = color.value;
-                        // Trigger rebuild
-                        (context as Element).markNeedsBuild();
-                      },
-                      child: Container(
-                        width: 30,
-                        height: 30,
-                        decoration: BoxDecoration(
-                          color: color,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: color.value == selectedColor ? Colors.black : Colors.transparent,
-                            width: 2,
-                          ),
-                        ),
-                      ),
-                    );
-                  }),
-                ),
-              ],
-            ),
-          ],
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () {
-              if (contentController.text.isNotEmpty) {
-                final updatedTodo = CheckItem(
-                  id: todo.id,
-                  content: contentController.text,
-                  endDate: selectedDate?.toIso8601String(),
-                  colorValue: selectedColor,
-                  check: todo.check,
-                );
-
-                _repository.updateItem(updatedTodo);
-                Navigator.pop(context);
-              }
-            },
-            child: const Text('수정'),
-          ),
-        ],
       ),
     );
   }
