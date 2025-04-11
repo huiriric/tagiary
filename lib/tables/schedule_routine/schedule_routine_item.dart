@@ -94,7 +94,11 @@ class ScheduleRoutineRepository {
     return _item.get(id);
   }
 
-  Iterable<Event> getAllItems() {
+  List<ScheduleRoutineItem> getAllItems() {
+    return _item.values.toList();
+  }
+  
+  Iterable<Event> getAllEvents() {
     return _item.values.toList().map((e) => e.toEvent());
   }
 
