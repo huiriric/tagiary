@@ -18,6 +18,9 @@ import 'package:tagiary/tables/schedule/schedule_item.dart';
 import 'package:tagiary/tables/schedule_routine/schedule_routine_item.dart';
 import 'package:tagiary/todo_widget/todo_widget.dart';
 import 'package:tagiary/todo_routine_widget/todo_routine_widget.dart';
+import 'package:tagiary/tables/diary/diary_item.dart';
+import 'package:tagiary/tables/diary/tag.dart';
+import 'package:tagiary/tables/diary/tag_group.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,6 +43,9 @@ Future<void> main() async {
   Hive.registerAdapter(RoutineHistoryAdapter());
   Hive.registerAdapter(ScheduleLinkItemAdapter());
   Hive.registerAdapter(LinkItemTypeAdapter());
+  Hive.registerAdapter(DiaryItemAdapter());
+  Hive.registerAdapter(TagAdapter());
+  Hive.registerAdapter(TagGroupAdapter());
 
   // 박스 열기
   await Hive.openBox<ScheduleItem>('scheduleBox');
@@ -48,6 +54,9 @@ Future<void> main() async {
   await Hive.openBox<CheckRoutineItem>('checkRoutineBox');
   await Hive.openBox<RoutineHistory>('routineHistoryBox');
   await Hive.openBox<ScheduleLinkItem>('scheduleLinkBox');
+  await Hive.openBox<DiaryItem>('diaryBox');
+  await Hive.openBox<Tag>('tagBox');
+  await Hive.openBox<TagGroup>('tagGroupBox');
 
   // 체크 루틴 마이그레이션 실행 (daysOfWeek 필드 추가)
   await RoutineMigrationHelper.migrateCheckRoutines();
