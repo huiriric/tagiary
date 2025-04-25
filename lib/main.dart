@@ -18,6 +18,7 @@ import 'package:tagiary/tables/schedule/schedule_item.dart';
 import 'package:tagiary/tables/schedule_routine/schedule_routine_item.dart';
 import 'package:tagiary/todo_widget/todo_widget.dart';
 import 'package:tagiary/todo_routine_widget/todo_routine_widget.dart';
+import 'package:tagiary/diary_widget/diary_widget.dart';
 import 'package:tagiary/tables/diary/diary_item.dart';
 import 'package:tagiary/tables/diary/tag.dart';
 import 'package:tagiary/tables/diary/tag_group.dart';
@@ -138,6 +139,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
     return Scaffold(
       floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        shape: const CircleBorder(),
+        child: const Icon(Icons.add, color: Color(0xBB000000)),
         onPressed: () {
           // setState(() {
           //   addScheduleRoutine();
@@ -163,6 +168,7 @@ class _MyHomePageState extends State<MyHomePage> {
           );
         },
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
       backgroundColor: const Color(0xFFFAFAF8),
       body: SafeArea(
           bottom: false,
@@ -238,17 +244,28 @@ class _MyHomePageState extends State<MyHomePage> {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    const Expanded(
-                      child: Column(
-                        children: [
-                          Expanded(
-                            child: TodoRoutineWidget(),
-                          ),
-                          SizedBox(height: 12),
-                          Expanded(
-                            child: TodoWidget(),
-                          ),
-                        ],
+                    Expanded(
+                      child: SafeArea(
+                        left: false,
+                        right: false,
+                        child: Column(
+                          children: [
+                            const Expanded(
+                              child: TodoRoutineWidget(),
+                            ),
+                            const SizedBox(height: 12),
+                            const Expanded(
+                              child: TodoWidget(),
+                            ),
+                            const SizedBox(height: 12),
+                            Expanded(
+                              child: DiaryWidget(
+                                key: ValueKey<DateTime>(DateTime(date.year, date.month, date.day)), // 시간을 제외한 날짜만으로 키를 생성
+                                date: date,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
@@ -262,31 +279,6 @@ class _MyHomePageState extends State<MyHomePage> {
   String _formatTime(TimeOfDay time) {
     return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
   }
-
-  // Future<void> addScheduleRoutine() async {
-  //   final scheduleRoutineBox = Hive.box<ScheduleRoutineItem>('scheduleRoutineBox');
-
-  //   final newItem = ScheduleRoutineItem(
-  //     title: '첫 루틴',
-  //     description: '첫 루틴입니다.',
-  //     startHour: 13,
-  //     startMinute: 0,
-  //     endHour: 14,
-  //     endMinute: 0,
-  //     colorValue: const Color(0xFF123456).value,
-  //   );
-
-  //   ScheduleRoutineRepository repo = ScheduleRoutineRepository();
-  //   await repo.init();
-
-  //   int id = await repo.addItem(newItem);
-  //   final firstSchedule = repo.getItem(id);
-  //   print(firstSchedule?.key);
-  //   print(firstSchedule?.title);
-  //   print(firstSchedule?.description);
-  //   print(firstSchedule?.startHour);
-  //   print(firstSchedule?.endHour);
-  // }
 }
 
 Future<DateTime?> showBlackWhiteDatePicker({

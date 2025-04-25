@@ -66,7 +66,7 @@ class DiaryRepository {
     return _item.get(id);
   }
 
-  List<DiaryItem>? getTodayItem(DateTime date) {
+  List<DiaryItem>? getDateItem(DateTime date) {
     return _item.values.where((item) => item.date.year == date.year && item.date.month == date.month && item.date.day == date.day).toList();
   }
 

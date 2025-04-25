@@ -3,7 +3,7 @@ import 'package:hive/hive.dart';
 
 part 'tag_group.g.dart';
 
-@HiveType(typeId: 6)
+@HiveType(typeId: 9)
 class TagGroup extends HiveObject {
   @HiveField(0)
   late int id;
@@ -68,13 +68,13 @@ class TagGroupRepository {
         name: '일반',
         colorValue: Colors.grey.value,
       ));
-      
+
       await addGroup(TagGroup(
         id: 0,
         name: '감정',
         colorValue: Colors.red.value,
       ));
-      
+
       await addGroup(TagGroup(
         id: 0,
         name: '활동',

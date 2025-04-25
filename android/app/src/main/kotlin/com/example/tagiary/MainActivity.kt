@@ -1,4 +1,4 @@
-package com.example.tagiary
+package com.huiriric.tagiary
 
 import io.flutter.embedding.android.FlutterActivity
 

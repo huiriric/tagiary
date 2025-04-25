@@ -50,17 +50,17 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
     // 오늘 날짜의 요일 가져오기 (0: 일요일, 1: 월요일, ... 6: 토요일)
     final today = DateTime.now();
     final todayDayOfWeek = today.weekday % 7; // 0(일)~6(토) 범위로 변환
-    
+
     // 오늘 요일에 해당하는 루틴만 필터링
     final todayRoutines = allRoutines.where((routine) {
       // daysOfWeek가 null이거나 길이가 7이 아닌 경우 기본값 처리
-      if (routine.daysOfWeek == null || routine.daysOfWeek.length != 7) {
+      if (routine.daysOfWeek.length != 7) {
         return true; // 기존 데이터는 모든 요일에 표시
       }
       // 오늘 요일에 해당하는 값이 true인 루틴만 반환
       return routine.daysOfWeek[todayDayOfWeek];
     }).toList();
-    
+
     // 요일 라벨 배열
     final dayLabels = ['일', '월', '화', '수', '목', '금', '토'];
     return GestureDetector(
@@ -69,18 +69,12 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
               _showAddRoutineDialog(context);
             }
           : null,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 5,
-              spreadRadius: 1,
-            ),
-          ],
+      child: Card(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
         ),
+        elevation: 1,
+        color: Colors.white,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
