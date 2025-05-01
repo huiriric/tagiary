@@ -293,9 +293,7 @@ class _TodoWidgetState extends State<TodoWidget> {
               _updateTodoCheck(todo, value!);
               // Don't close dialog so user can toggle multiple items
             },
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(4),
-            ),
+            shape: const CircleBorder(),
             activeColor: Color(todo.colorValue),
           ),
           Expanded(
