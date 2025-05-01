@@ -9,7 +9,9 @@ import 'package:tagiary/todo_routine_widget/add_routine/add_routine.dart';
 import 'package:tagiary/todo_routine_widget/routine_history_view.dart';
 
 class TodoRoutineWidget extends StatefulWidget {
-  const TodoRoutineWidget({super.key});
+  final DateTime? date; // 표시할 날짜 (null이면 오늘 날짜)
+
+  const TodoRoutineWidget({super.key, this.date});
 
   @override
   State<TodoRoutineWidget> createState() => _TodoRoutineWidgetState();
@@ -18,6 +20,8 @@ class TodoRoutineWidget extends StatefulWidget {
 class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
   late CheckRoutineRepository _repository;
   late RoutineHistoryRepository _historyRepository;
+  late DateTime _displayDate; // 표시할 날짜
+  bool _isToday = true; // 오늘 날짜인지 여부
 
   @override
   void initState() {
@@ -25,6 +29,34 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
     _repository = CheckRoutineRepository();
     _historyRepository = RoutineHistoryRepository();
     _initRepositories();
+    _updateDisplayDate();
+  }
+
+  @override
+  void didUpdateWidget(TodoRoutineWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // 날짜가 변경된 경우 업데이트
+    if (oldWidget.date != widget.date) {
+      _updateDisplayDate();
+    }
+  }
+
+  // 표시할 날짜 업데이트
+  void _updateDisplayDate() {
+    final today = DateTime.now();
+    // 날짜 정보만 사용 (시간 제외)
+    final todayDate = DateTime(today.year, today.month, today.day);
+    
+    if (widget.date == null) {
+      _displayDate = todayDate;
+      _isToday = true;
+    } else {
+      _displayDate = widget.date!;
+      // 선택된 날짜가 오늘인지 비교 (년, 월, 일만 비교)
+      _isToday = (_displayDate.year == todayDate.year && 
+                  _displayDate.month == todayDate.month && 
+                  _displayDate.day == todayDate.day);
+    }
   }
 
   Future<void> _initRepositories() async {
@@ -40,31 +72,29 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
       valueListenable: Hive.box<CheckRoutineItem>('checkRoutineBox').listenable(),
       builder: (context, Box<CheckRoutineItem> box, _) {
         final routines = box.values.toList();
-
         return _buildRoutineWidget(routines);
       },
     );
   }
 
   Widget _buildRoutineWidget(List<CheckRoutineItem> allRoutines) {
-    // 오늘 날짜의 요일 가져오기 (0: 일요일, 1: 월요일, ... 6: 토요일)
-    final today = DateTime.now();
-    final todayDayOfWeek = today.weekday % 7; // 0(일)~6(토) 범위로 변환
+    // 선택된 날짜의 요일 가져오기 (0: 일요일, 1: 월요일, ... 6: 토요일)
+    final displayDayOfWeek = _displayDate.weekday % 7; // 0(일)~6(토) 범위로 변환
 
-    // 오늘 요일에 해당하는 루틴만 필터링
-    final todayRoutines = allRoutines.where((routine) {
+    // 선택된 요일에 해당하는 루틴만 필터링
+    final filteredRoutines = allRoutines.where((routine) {
       // daysOfWeek가 null이거나 길이가 7이 아닌 경우 기본값 처리
       if (routine.daysOfWeek.length != 7) {
         return true; // 기존 데이터는 모든 요일에 표시
       }
-      // 오늘 요일에 해당하는 값이 true인 루틴만 반환
-      return routine.daysOfWeek[todayDayOfWeek];
+      // 선택된 요일에 해당하는 값이 true인 루틴만 반환
+      return routine.daysOfWeek[displayDayOfWeek];
     }).toList();
 
     // 요일 라벨 배열
     final dayLabels = ['일', '월', '화', '수', '목', '금', '토'];
     return GestureDetector(
-      onTap: todayRoutines.isEmpty
+      onTap: filteredRoutines.isEmpty && _isToday
           ? () {
               _showAddRoutineDialog(context);
             }
@@ -83,7 +113,7 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // 왼쪽에 제목 추가 (오늘 요일 표시)
+                  // 왼쪽에 제목 추가 (선택된 요일 표시)
                   RichText(
                     text: TextSpan(
                       children: [
@@ -96,7 +126,7 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
                           ),
                         ),
                         TextSpan(
-                          text: ' (${dayLabels[todayDayOfWeek]})',
+                          text: ' (${dayLabels[displayDayOfWeek]})',
                           style: const TextStyle(
                             fontSize: 12,
                             color: Colors.grey,
@@ -105,24 +135,27 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
                       ],
                     ),
                   ),
-                  // 오른쪽에 추가 버튼
-                  GestureDetector(
-                    onTap: () => _showAddRoutineDialog(context),
-                    child: const Icon(
-                      Icons.add,
-                      size: 20,
-                      color: Colors.grey,
+                  // 오른쪽에 추가 버튼 (오늘 날짜일 때만 표시)
+                  if (_isToday)
+                    GestureDetector(
+                      onTap: () => _showAddRoutineDialog(context),
+                      child: const Icon(
+                        Icons.add,
+                        size: 20,
+                        color: Colors.grey,
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
-            if (todayRoutines.isEmpty)
-              const Expanded(
+            if (filteredRoutines.isEmpty)
+              Expanded(
                 child: Center(
                   child: Text(
-                    '오늘의 루틴이 없습니다',
-                    style: TextStyle(
+                    _isToday 
+                      ? '오늘의 루틴이 없습니다' 
+                      : '${_displayDate.month}월 ${_displayDate.day}일 루틴이 없습니다',
+                    style: const TextStyle(
                       color: Colors.grey,
                       fontSize: 14,
                     ),
@@ -133,45 +166,53 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
               Expanded(
                 child: ListView.builder(
                   padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 0),
-                  itemCount: todayRoutines.length,
+                  itemCount: filteredRoutines.length,
                   itemBuilder: (context, index) {
-                    final routine = todayRoutines[index];
+                    final routine = filteredRoutines[index];
 
                     return ListTile(
                       dense: true,
                       visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
-                      contentPadding: const EdgeInsets.only(left: 4, right: 4),
-                      title: Padding(
-                        padding: const EdgeInsets.only(left: 4),
-                        child: Text(
-                          routine.content,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            decoration: routine.check ? TextDecoration.lineThrough : null,
-                            color: routine.check ? Colors.grey : Colors.black,
-                            fontSize: 13,
+                      contentPadding: const EdgeInsets.only(left: 12, right: 4),
+                      title: Text(
+                        routine.content,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          decoration: _isToday && routine.check ? TextDecoration.lineThrough : null,
+                          color: _isToday && routine.check ? Colors.grey : Colors.black,
+                          fontSize: 13,
+                        ),
+                      ),
+                      // 오늘 날짜면 체크박스, 아니면 컬러 도트 표시
+                      leading: _isToday 
+                        ? Checkbox(
+                            value: routine.check,
+                            onChanged: (value) {
+                              _updateRoutineCheck(routine, value!);
+                            },
+                            shape: const CircleBorder(),
+                            activeColor: Color(routine.colorValue),
+                          )
+                        : Container(
+                            width: 16,
+                            height: 16,
+                            decoration: BoxDecoration(
+                              color: Color(routine.colorValue),
+                              shape: BoxShape.circle,
+                            ),
                           ),
-                        ),
-                      ),
-                      leading: Checkbox(
-                        value: routine.check,
-                        onChanged: (value) {
-                          _updateRoutineCheck(routine, value!);
-                        },
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        activeColor: Color(routine.colorValue),
-                      ),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete_outline, size: 20),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        onPressed: () {
-                          _deleteRoutine(routine);
-                        },
-                      ),
+                      // 삭제 버튼 (오늘 날짜일 때만 표시)
+                      trailing: _isToday
+                        ? IconButton(
+                            icon: const Icon(Icons.delete_outline, size: 20),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            onPressed: () {
+                              _deleteRoutine(routine);
+                            },
+                          )
+                        : null,
                       onTap: () {
                         Navigator.push(
                           context,
