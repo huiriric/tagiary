@@ -31,10 +31,12 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
   int? _selectedCategoryId;
   List<int> _selectedTagIds = [];
   bool _isLoading = false;
+  late DateTime _selectedDate;
 
   @override
   void initState() {
     super.initState();
+    _selectedDate = widget.date; // 초기 날짜 설정
 
     // 수정 모드인 경우 기존 데이터로 초기화
     if (widget.diary != null) {
@@ -45,6 +47,41 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
     } else {
       _titleController = TextEditingController();
       _contentController = TextEditingController();
+    }
+  }
+
+  // 날짜 선택 다이얼로그 표시
+  Future<void> _selectDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Colors.black, // 헤더 배경 색상
+              onPrimary: Colors.white, // 헤더 텍스트 색상
+              onSurface: Colors.black, // 달력 텍스트 색상
+              surface: Colors.white, // 배경 색상
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.black, // 버튼 텍스트 색상
+              ),
+            ),
+            dialogBackgroundColor: Colors.white,
+          ),
+          child: child!,
+        );
+      },
+    );
+    
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+      });
     }
   }
 
@@ -68,24 +105,33 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 날짜 표시
-                  Card(
-                    elevation: 0,
-                    color: Colors.grey[100],
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.calendar_today, size: 20),
-                          const SizedBox(width: 8),
-                          Text(
-                            '${widget.date.year}년 ${widget.date.month}월 ${widget.date.day}일',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
+                  // 날짜 선택 카드
+                  InkWell(
+                    onTap: _selectDate,
+                    child: Card(
+                      elevation: 0,
+                      color: Colors.grey[100],
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.calendar_today, size: 20),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '${_selectedDate.year}년 ${_selectedDate.month}월 ${_selectedDate.day}일',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
+                            const Icon(Icons.arrow_drop_down, color: Colors.grey),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -401,9 +447,9 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
 
     // 날짜는 년, 월, 일 정보만 포함하도록 설정
     final dateOnly = DateTime(
-      widget.date.year,
-      widget.date.month,
-      widget.date.day,
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
     );
 
     final DiaryItem newDiary = DiaryItem(
