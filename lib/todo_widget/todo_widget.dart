@@ -282,6 +282,8 @@ class _TodoWidgetState extends State<TodoWidget> {
     );
   }
 
+
+
   Widget _buildTodoItem(CheckItem todo) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),

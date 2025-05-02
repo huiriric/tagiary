@@ -6,7 +6,7 @@ import 'package:tagiary/tables/check/check_item.dart';
 import 'package:tagiary/todo_widget/add_todo/add_todo.dart';
 
 class TodoScreen extends StatefulWidget {
-  const TodoScreen({Key? key}) : super(key: key);
+  const TodoScreen({super.key});
 
   @override
   State<TodoScreen> createState() => _TodoScreenState();
@@ -63,8 +63,7 @@ class _TodoScreenState extends State<TodoScreen> {
             });
 
           // Get checked items sorted by updated (most recent first)
-          final checkedTodos = todos.where((todo) => todo.check).toList()
-            ..sort((a, b) => b.id.compareTo(a.id)); // Using id as proxy for update time
+          final checkedTodos = todos.where((todo) => todo.check).toList()..sort((a, b) => b.id.compareTo(a.id)); // Using id as proxy for update time
 
           if (todos.isEmpty) {
             return Center(
@@ -90,36 +89,39 @@ class _TodoScreenState extends State<TodoScreen> {
           }
 
           return SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (uncheckedTodos.isNotEmpty) ...[
-                    const Text(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (uncheckedTodos.isNotEmpty) ...[
+                  const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Text(
                       '진행 중',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    ...uncheckedTodos.map((todo) => _buildTodoItem(todo)),
-                    const SizedBox(height: 24),
-                  ],
-                  if (checkedTodos.isNotEmpty) ...[
-                    const Text(
+                  ),
+                  const SizedBox(height: 8),
+                  ...uncheckedTodos.map((todo) => _buildTodoItem(todo)),
+                  const SizedBox(height: 24),
+                ],
+                if (checkedTodos.isNotEmpty) ...[
+                  const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Text(
                       '완료',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    ...checkedTodos.map((todo) => _buildTodoItem(todo)),
-                  ],
+                  ),
+                  const SizedBox(height: 8),
+                  ...checkedTodos.map((todo) => _buildTodoItem(todo)),
                 ],
-              ),
+              ],
             ),
           );
         },
@@ -128,11 +130,10 @@ class _TodoScreenState extends State<TodoScreen> {
   }
 
   Widget _buildTodoItem(CheckItem todo) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8.0),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+    return InkWell(
+      onTap: () => _showEditTodoDialog(context, todo),
       child: Padding(
-        padding: const EdgeInsets.all(4.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4.0),
         child: Row(
           children: [
             Checkbox(
@@ -144,27 +145,38 @@ class _TodoScreenState extends State<TodoScreen> {
               activeColor: Color(todo.colorValue),
             ),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  Text(
-                    todo.content,
-                    style: TextStyle(
-                      decoration: todo.check ? TextDecoration.lineThrough : null,
-                      color: todo.check ? Colors.grey : Colors.black,
-                      fontSize: 16,
+                  Container(
+                    constraints: BoxConstraints(
+                      maxWidth: MediaQuery.of(context).size.width - (todo.endDate != null ? 200 : 140),
+                    ),
+                    child: Text(
+                      todo.content,
+                      style: TextStyle(
+                        decoration: todo.check ? TextDecoration.lineThrough : null,
+                        color: todo.check ? Colors.grey : Colors.black,
+                        fontSize: 16,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ),
-                  if (todo.endDate != null) _buildDDay(todo.endDate!),
+                  if (todo.endDate != null)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: _buildDDay(todo.endDate!),
+                    ),
                 ],
               ),
             ),
-            IconButton(
-              icon: const Icon(Icons.edit_outlined),
-              onPressed: () {
-                _showEditTodoDialog(context, todo);
-              },
-            ),
+            // IconButton(
+            //   icon: const Icon(Icons.edit_outlined),
+            //   onPressed: () {
+            //     _showEditTodoDialog(context, todo);
+            //   },
+            // ),
             IconButton(
               icon: const Icon(Icons.delete_outline),
               onPressed: () {
@@ -197,7 +209,6 @@ class _TodoScreenState extends State<TodoScreen> {
     }
 
     return Container(
-      margin: const EdgeInsets.only(top: 4),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
