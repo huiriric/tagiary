@@ -5,6 +5,7 @@ import 'package:hive/hive.dart';
 import 'package:tagiary/component/day_picker/day_picker.dart';
 import 'package:tagiary/constants/colors.dart';
 import 'package:tagiary/main.dart';
+import 'package:tagiary/screens/home_screen.dart';
 import 'package:tagiary/tables/check/check_item.dart';
 import 'package:tagiary/tables/check_routine/check_routine_item.dart';
 import 'package:tagiary/tables/data_models/event.dart';
@@ -188,7 +189,7 @@ class _AddScheduleState extends State<AddSchedule> {
                       },
                     ),
                     const Spacer(),
-                    
+
                     // 시간 설정 옵션
                     const Text(
                       '시간 설정',
@@ -242,7 +243,7 @@ class _AddScheduleState extends State<AddSchedule> {
                         },
                       ),
                 // 시간 설정이 체크된 경우에만 시간 선택 위젯 표시
-                if (hasTimeSet) 
+                if (hasTimeSet)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 10.0),
                     child: Column(
@@ -508,7 +509,7 @@ class _AddScheduleState extends State<AddSchedule> {
         if (hasTimeSet) {
           // 케이스 3: 요일 + 시간 - 타임라인 루틴에 추가
           await _saveRoutineSchedule();
-          
+
           // 루틴에도 추가할지 묻기
           final addToRoutine = await _showAddToRoutineDialog();
           if (addToRoutine) {
@@ -526,7 +527,7 @@ class _AddScheduleState extends State<AddSchedule> {
         if (hasTimeSet) {
           // 케이스 1: 날짜 + 시간 - 타임라인에 추가
           await _saveNormalSchedule();
-          
+
           // 할 일에도 추가할지 묻기
           final addToTodo = await _showAddToTodoDialog();
           if (addToTodo) {
@@ -535,7 +536,7 @@ class _AddScheduleState extends State<AddSchedule> {
         } else {
           // 케이스 2: 날짜 + 시간 없음 - 일정에 시간 없이 저장
           await _saveNormalScheduleWithoutTime();
-          
+
           // 할 일에도 추가할지 묻기
           final addToTodo = await _showAddToTodoDialog();
           if (addToTodo) {
@@ -660,26 +661,26 @@ class _AddScheduleState extends State<AddSchedule> {
     );
 
     final todoId = await checkRepository.addItem(newTodo);
-    
+
     // 일정과 할 일 사이의 연결 정보 저장
     final scheduleRepository = ScheduleRepository();
     await scheduleRepository.init();
-    
+
     // 가장 최근 추가된 일정 ID 가져오기
     final schedules = scheduleRepository.getAllItems();
     final latestSchedule = schedules.isNotEmpty ? schedules.last : null;
-    
+
     if (latestSchedule != null) {
       final linkRepo = ScheduleLinkRepository();
       await linkRepo.init();
-      
+
       final newLink = ScheduleLinkItem(
         scheduleId: latestSchedule.id,
         isRoutine: false,
         linkedItemId: todoId,
         linkedItemType: LinkItemType.todo,
       );
-      
+
       await linkRepo.addItem(newLink);
     }
   }
@@ -698,26 +699,26 @@ class _AddScheduleState extends State<AddSchedule> {
         daysOfWeek: selectedDays);
 
     final routineId = await checkRoutineRepository.addItem(newRoutine);
-    
+
     // 일정과 루틴 사이의 연결 정보 저장
     final routineRepository = ScheduleRoutineRepository();
     await routineRepository.init();
-    
+
     // 가장 최근 추가된 루틴 ID 가져오기
     final routines = routineRepository.getAllItems();
     final latestRoutine = routines.isNotEmpty ? routines.last : null;
-    
+
     if (latestRoutine != null) {
       final linkRepo = ScheduleLinkRepository();
       await linkRepo.init();
-      
+
       final newLink = ScheduleLinkItem(
         scheduleId: latestRoutine.id,
         isRoutine: true,
         linkedItemId: routineId,
         linkedItemType: LinkItemType.todoRoutine,
       );
-      
+
       await linkRepo.addItem(newLink);
     }
   }
@@ -901,7 +902,7 @@ class _AddScheduleState extends State<AddSchedule> {
 String _formatDate(DateTime date) {
   final DateTime now = DateTime.now();
   List<String> week = ['일', '월', '화', '수', '목', '금', '토'];
-  return '${now.year == date.year ? '' : {'${date.year}년 '}}${date.month}월 ${date.day}일 (${week[date.weekday]})';
+  return '${now.year == date.year ? '' : {'${date.year}년 '}}${date.month}월 ${date.day}일 (${week[date.weekday % 7]})';
 }
 
 String _formatTime(TimeOfDay time) {

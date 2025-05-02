@@ -11,7 +11,8 @@ import 'package:tagiary/time_line/view_schedule/schedule_details.dart';
 
 class TimeLine extends StatefulWidget {
   final DateTime date;
-  const TimeLine({super.key, required this.date});
+  final bool fromScreen;
+  const TimeLine({super.key, required this.date, required this.fromScreen});
 
   @override
   State<TimeLine> createState() => _TimeLineState();
@@ -86,8 +87,9 @@ class _TimeLineState extends State<TimeLine> {
 
     // 선택된 날짜에 해당하는 요일의 루틴 가져오기
     // DateTime.weekday는 1(월요일)~7(일요일)이지만
-    // daysOfWeek는 [일,월,화,수,목,금,토] 순서이므로 적절히 변환
+    // srRepo.getItemsByDay는 0(일요일)~6(토요일) 순서이므로 적절히 변환
     final dayOfWeek = widget.date.weekday % 7; // 1->1(월), 2->2(화)..., 7->0(일)
+
 
     // 데이터 박스 최신화 (새로운 아이템이 추가되었을 수 있음)
     if (mounted) {
@@ -120,7 +122,7 @@ class _TimeLineState extends State<TimeLine> {
     _endHour = provider.endHour;
 
     final double screenWidth = MediaQuery.of(context).size.width;
-    final double eventWidth = (screenWidth / 2) - padding - _timelineWidth; // 일정 카드 폭
+    final double eventWidth = (widget.fromScreen ? screenWidth : screenWidth / 2) - padding - _timelineWidth; // 일정 카드 폭
     final int totalHours = _endHour - _startHour + 1;
     final double totalHeight = totalHours * _hourHeight;
 
@@ -131,9 +133,11 @@ class _TimeLineState extends State<TimeLine> {
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Wrap(
+              alignment: WrapAlignment.start,
+              crossAxisAlignment: WrapCrossAlignment.start,
               spacing: 8,
               runSpacing: 8,
-              children: _noTimeEvents.take(3).map((event) {
+              children: _noTimeEvents.map((event) {
                 // 타임 테이블 항목과 비슷한 컨테이너 생성
                 return GestureDetector(
                   onTap: () => _showEvent(context, event),
@@ -238,7 +242,7 @@ class _TimeLineState extends State<TimeLine> {
                           );
                         },
                         child: Container(
-                          width: (screenWidth / 2),
+                          width: widget.fromScreen ? screenWidth : (screenWidth / 2),
                           height: _hourHeight - 1,
                           decoration: BoxDecoration(
                             // color: const Color(0xFFFAFAFA),

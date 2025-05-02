@@ -16,6 +16,52 @@ class _SettingsState extends State<Settings> {
   // 타임라인 설정을 확장할지 여부
   bool _isTimelineSettingsExpanded = false;
 
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFFAFAFA),
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            AppBar(
+              toolbarHeight: 80,
+              title: const Text(
+                '설정',
+                style: TextStyle(fontSize: 20, color: Colors.black, fontWeight: FontWeight.w700),
+              ),
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.black),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ),
+            // 설정 컨텐츠 섹션
+            Expanded(
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 확장 가능한 타임라인 설정
+                      _buildExpandableTimelineSettings(),
+
+                      // 여기에 다른 설정 섹션들을 추가할 수 있습니다
+                      // 예: 알림 설정, 테마 설정, 계정 설정 등
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // 확장 가능한 타임라인 설정 위젯
   Widget _buildExpandableTimelineSettings() {
     return Column(
@@ -264,47 +310,6 @@ class _SettingsState extends State<Settings> {
           ],
         );
       },
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA),
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            Container(
-              alignment: Alignment.center,
-              height: 80,
-              child: const Text(
-                '설정',
-                style: TextStyle(fontSize: 20, color: Colors.black, fontWeight: FontWeight.w700),
-              ),
-            ),
-            // 설정 컨텐츠 섹션
-            Expanded(
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // 확장 가능한 타임라인 설정
-                      _buildExpandableTimelineSettings(),
-
-                      // 여기에 다른 설정 섹션들을 추가할 수 있습니다
-                      // 예: 알림 설정, 테마 설정, 계정 설정 등
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
