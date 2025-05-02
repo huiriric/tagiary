@@ -6,6 +6,8 @@ import 'package:tagiary/provider.dart';
 import 'package:tagiary/time_line/time_line.dart';
 import 'package:tagiary/time_line/add_schedule.dart';
 import 'package:tagiary/screens/home_screen.dart';
+import 'package:tagiary/time_line/week_view.dart';
+import 'package:tagiary/time_line/month_view.dart';
 
 class TimelineScreen extends StatefulWidget {
   const TimelineScreen({super.key});
@@ -22,10 +24,30 @@ class _TimelineScreenState extends State<TimelineScreen> {
   void initState() {
     super.initState();
     date = DateTime.now();
+    // DataProvider 초기화 (필요 시)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<DataProvider>(context, listen: false).updateDate(date);
+      
+      // 설정 로드 (이미 loadTimelineSettings가 호출되었을 수 있음)
+      Provider.of<DataProvider>(context, listen: false).loadTimelineSettings();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    // DataProvider에서 날짜 변경이 있는지 확인
+    final provider = Provider.of<DataProvider>(context);
+    if (date != provider.selectedDate) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        setState(() {
+          date = provider.selectedDate;
+        });
+      });
+    }
+    
+    // 현재 뷰 모드
+    final currentViewMode = provider.viewMode;
+    
     return Scaffold(
       appBar: AppBar(
         title: GestureDetector(
@@ -38,6 +60,8 @@ class _TimelineScreenState extends State<TimelineScreen> {
               setState(() {
                 date = selectedDate;
               });
+              // DataProvider에도 선택한 날짜 업데이트
+              await Provider.of<DataProvider>(context, listen: false).updateDate(selectedDate);
             }
           },
           child: Row(
@@ -72,6 +96,49 @@ class _TimelineScreenState extends State<TimelineScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
+          // 뷰 모드 전환 드롭다운 버튼
+          PopupMenuButton<TimelineViewMode>(
+            icon: Icon(
+              _getViewModeIcon(provider.viewMode),
+              color: Colors.black,
+            ),
+            onSelected: (TimelineViewMode mode) {
+              // 선택된 뷰 모드 저장
+              provider.setViewMode(mode);
+            },
+            itemBuilder: (BuildContext context) => [
+              const PopupMenuItem<TimelineViewMode>(
+                value: TimelineViewMode.day,
+                child: Row(
+                  children: [
+                    Icon(Icons.calendar_view_day, size: 20),
+                    SizedBox(width: 8),
+                    Text('일간'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem<TimelineViewMode>(
+                value: TimelineViewMode.week,
+                child: Row(
+                  children: [
+                    Icon(Icons.calendar_view_week, size: 20),
+                    SizedBox(width: 8),
+                    Text('주간'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem<TimelineViewMode>(
+                value: TimelineViewMode.month,
+                child: Row(
+                  children: [
+                    Icon(Icons.calendar_month, size: 20),
+                    SizedBox(width: 8),
+                    Text('월간'),
+                  ],
+                ),
+              ),
+            ],
+          ),
           IconButton(
             icon: const Icon(Icons.settings_outlined, color: Colors.black),
             onPressed: () {
@@ -107,12 +174,40 @@ class _TimelineScreenState extends State<TimelineScreen> {
           );
         },
       ),
-      body: TimeLine(
-        key: ValueKey<DateTime>(date),
-        fromScreen: true,
-        date: date,
-      ),
+      body: _buildTimelineView(provider.viewMode),
     );
+  }
+
+  Widget _buildTimelineView(TimelineViewMode viewMode) {
+    switch (viewMode) {
+      case TimelineViewMode.day:
+        return TimeLine(
+          key: ValueKey<DateTime>(date),
+          fromScreen: true,
+          date: date,
+        );
+      case TimelineViewMode.week:
+        return WeekView(
+          key: ValueKey<DateTime>(date),
+          selectedDate: date,
+        );
+      case TimelineViewMode.month:
+        return MonthView(
+          key: ValueKey<DateTime>(date),
+          selectedDate: date,
+        );
+    }
+  }
+
+  IconData _getViewModeIcon(TimelineViewMode viewMode) {
+    switch (viewMode) {
+      case TimelineViewMode.day:
+        return Icons.calendar_view_day;
+      case TimelineViewMode.week:
+        return Icons.calendar_view_week;
+      case TimelineViewMode.month:
+        return Icons.calendar_month;
+    }
   }
 }
 
