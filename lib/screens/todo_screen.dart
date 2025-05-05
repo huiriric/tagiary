@@ -96,7 +96,7 @@ class _TodoScreenState extends State<TodoScreen> {
                   const Padding(
                     padding: EdgeInsets.all(16.0),
                     child: Text(
-                      '진행 중',
+                      '할 일',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -107,6 +107,13 @@ class _TodoScreenState extends State<TodoScreen> {
                   ...uncheckedTodos.map((todo) => _buildTodoItem(todo)),
                   const SizedBox(height: 24),
                 ],
+                if (uncheckedTodos.isNotEmpty && checkedTodos.isNotEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Divider(
+                      thickness: 1,
+                    ),
+                  ),
                 if (checkedTodos.isNotEmpty) ...[
                   const Padding(
                     padding: EdgeInsets.all(16.0),
