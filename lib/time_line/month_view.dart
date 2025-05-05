@@ -111,13 +111,10 @@ class _MonthViewState extends State<MonthView> {
 
       // 해당 요일의 루틴 일정
       // DateTime.weekday는 1(월요일)~7(일요일)이고
-      // daysOfWeek는 [월,화,수,목,금,토,일] 순서이므로 변환 필요
+      // daysOfWeek는 [일,월,화,수,목,금,토] 순서이므로 변환 필요
       int routineIndex;
-      if (day.weekday == 7) { // 일요일인 경우
-        routineIndex = 6;     // 배열에서는 인덱스 6 (마지막)
-      } else {
-        routineIndex = day.weekday - 1;  // 월(1)→0, 화(2)→1, ..., 토(6)→5
-      }
+      routineIndex = day.weekday % 7;
+
       List<Event> routineEvents = srRepo.getItemsByDay(routineIndex).toList();
 
       // 모든 일정 합치기 (시간 있는/없는 일정 모두 포함)
@@ -224,11 +221,11 @@ class _MonthViewState extends State<MonthView> {
           ),
 
           // 요일 헤더
-          Row(
-            children: weekdays
-                .map((day) => Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: Row(
+              children: weekdays
+                  .map((day) => Expanded(
                         child: Center(
                           child: Text(
                             day,
@@ -239,9 +236,9 @@ class _MonthViewState extends State<MonthView> {
                             ),
                           ),
                         ),
-                      ),
-                    ))
-                .toList(),
+                      ))
+                  .toList(),
+            ),
           ),
 
           // 달력 그리드
@@ -269,29 +266,30 @@ class _MonthViewState extends State<MonthView> {
                   onTap: () {
                     setState(() {
                       _selectedDay = day;
-                      print(_selectedDay);
+                    });
+
+                    // Provider의 날짜도 업데이트
+                    Provider.of<DataProvider>(context, listen: false).updateDate(day).then((_) {
+                      if (mounted) {
+                        setState(() {
+                          // UI 업데이트
+                        });
+                      }
                     });
 
                     if (events.isNotEmpty) {
                       _showDayEvents(context, day, events);
-                    } else {
-                      // 일정 추가 다이얼로그 표시
-                      _showAddScheduleDialog(context, day);
                     }
+                  },
+                  onLongPress: () {
+                    // 일정 추가 다이얼로그 표시
+                    _showAddScheduleDialog(context, day);
                   },
                   child: Container(
                     decoration: BoxDecoration(
                       border: Border.all(
-                        color: isToday
-                            ? Theme.of(context).primaryColor
-                            : isSelected
-                                ? Theme.of(context).primaryColor.withOpacity(0.7)
-                                : Colors.transparent,
-                        width: isToday
-                            ? 2.0
-                            : isSelected
-                                ? 1.5
-                                : 1.0,
+                        color: isSelected ? Theme.of(context).primaryColor.withOpacity(0.7) : Colors.transparent,
+                        width: isSelected ? 1.5 : 1.0,
                       ),
                       borderRadius: BorderRadius.circular(4),
                     ),
@@ -299,7 +297,7 @@ class _MonthViewState extends State<MonthView> {
                       children: [
                         // 날짜 표시
                         Container(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          padding: const EdgeInsets.symmetric(vertical: 2),
                           decoration: const BoxDecoration(
                             color: Colors.transparent, // 배경색 제거
                             borderRadius: BorderRadius.only(
@@ -308,20 +306,30 @@ class _MonthViewState extends State<MonthView> {
                             ),
                           ),
                           child: Center(
-                            child: Text(
-                              '${day.day}',
-                              style: TextStyle(
-                                fontWeight: isToday || isSelected ? FontWeight.bold : FontWeight.normal,
-                                color: !isCurrentMonth
-                                    ? Colors.grey.shade400
-                                    : day.weekday == 7  // 일요일
-                                        ? Colors.red
-                                        : day.weekday == 6  // 토요일
-                                            ? Colors.blue
-                                            : isToday
-                                                ? Theme.of(context).primaryColor
-                                                : Colors.black87,
-                                fontSize: 14,
+                            child: Container(
+                              width: 26,
+                              height: 26,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: isToday ? Theme.of(context).primaryColor : Colors.transparent,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  '${day.day}',
+                                  style: TextStyle(
+                                    fontWeight: isToday || isSelected ? FontWeight.bold : FontWeight.normal,
+                                    color: !isCurrentMonth
+                                        ? Colors.grey.shade400
+                                        : isToday
+                                            ? Colors.white
+                                            : day.weekday == 7 // 일요일
+                                                ? Colors.red
+                                                : day.weekday == 6 // 토요일
+                                                    ? Colors.blue
+                                                    : Colors.black87,
+                                    fontSize: 14,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
@@ -331,7 +339,7 @@ class _MonthViewState extends State<MonthView> {
                         if (events.isNotEmpty)
                           Expanded(
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 2.0, vertical: 2.0),
+                              padding: const EdgeInsets.symmetric(horizontal: 2.0),
                               child: Column(
                                 children: [
                                   // 최대 3개의 일정만 표시
@@ -387,7 +395,7 @@ class _MonthViewState extends State<MonthView> {
                     fontSize: 9,
                     fontWeight: FontWeight.bold,
                   ),
-                  overflow: TextOverflow.ellipsis,
+                  overflow: TextOverflow.fade,
                   maxLines: 1,
                 ),
               ),

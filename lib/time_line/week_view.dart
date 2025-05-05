@@ -294,38 +294,50 @@ class _WeekViewState extends State<WeekView> {
           bool isSelected = _isSameDay(date, widget.selectedDate);
           
           return Expanded(
-            child: Column(
-              children: [
-                Text(
-                  weekdays[index],
-                  style: TextStyle(
-                    color: isToday ? Theme.of(context).primaryColor : Colors.grey.shade700,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
+            child: GestureDetector(
+              onTap: () {
+                // 날짜 선택 시 Provider 업데이트 및 상태 업데이트
+                Provider.of<DataProvider>(context, listen: false).updateDate(date).then((_) {
+                  if (mounted) {
+                    setState(() {
+                      // 선택된 날짜가 변경되었으므로 위젯 다시 렌더링
+                    });
+                  }
+                });
+              },
+              child: Column(
+                children: [
+                  Text(
+                    weekdays[index],
+                    style: TextStyle(
+                      color: isToday ? Theme.of(context).primaryColor : Colors.grey.shade700,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Container(
-                  width: 30,
-                  height: 30,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: isToday 
-                        ? Border.all(color: Theme.of(context).primaryColor, width: 2.0)
-                        : null,
-                    color: isSelected ? Theme.of(context).primaryColor : Colors.transparent,
-                  ),
-                  child: Center(
-                    child: Text(
-                      '${date.day}',
-                      style: TextStyle(
-                        color: isSelected ? Colors.white : isToday ? Theme.of(context).primaryColor : Colors.black,
-                        fontWeight: isToday || isSelected ? FontWeight.bold : FontWeight.normal,
+                  const SizedBox(height: 4),
+                  Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: isToday 
+                          ? Border.all(color: Theme.of(context).primaryColor, width: 2.0)
+                          : null,
+                      color: isSelected ? Theme.of(context).primaryColor : Colors.transparent,
+                    ),
+                    child: Center(
+                      child: Text(
+                        '${date.day}',
+                        style: TextStyle(
+                          color: isSelected ? Colors.white : isToday ? Theme.of(context).primaryColor : Colors.black,
+                          fontWeight: isToday || isSelected ? FontWeight.bold : FontWeight.normal,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         }),

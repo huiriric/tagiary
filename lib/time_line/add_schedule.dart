@@ -112,7 +112,7 @@ class _AddScheduleState extends State<AddSchedule> {
                     descriptionFocus.requestFocus(); // 다음 필드로 포커스 이동
                   },
                   decoration: const InputDecoration(
-                    hintText: '일정 제목',
+                    hintText: '일정',
                     // 언더라인 완전 제거
                     border: InputBorder.none,
                     enabledBorder: InputBorder.none,
