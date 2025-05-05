@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:tagiary/constants/colors.dart';
 import 'package:tagiary/tables/check/check_item.dart';
+import 'package:tagiary/tables/schedule/schedule_item.dart';
+import 'package:tagiary/tables/schedule_links/schedule_link_item.dart';
 
 class AddTodo extends StatefulWidget {
   final VoidCallback? onTodoAdded; // 할 일 추가 후 호출할 콜백 함수
@@ -16,13 +18,13 @@ class AddTodo extends StatefulWidget {
 class _AddTodoState extends State<AddTodo> {
   String content = '';
   late TextEditingController contentCont;
-  
+
   // FocusNode 추가
   final FocusNode contentFocus = FocusNode();
-  
+
   // 마감일 설정
   DateTime? selectedDate;
-  
+
   // 색상 선택
   late Color selectedColor;
   bool isLoading = false;
@@ -30,18 +32,16 @@ class _AddTodoState extends State<AddTodo> {
   @override
   void initState() {
     super.initState();
-    
+
     // 수정 모드인 경우 기존 데이터로 초기화
     if (widget.todoToEdit != null) {
       content = widget.todoToEdit!.content;
-      selectedDate = widget.todoToEdit!.endDate != null 
-        ? DateTime.parse(widget.todoToEdit!.endDate!) 
-        : null;
+      selectedDate = widget.todoToEdit!.endDate != null ? DateTime.parse(widget.todoToEdit!.endDate!) : null;
       selectedColor = Color(widget.todoToEdit!.colorValue);
     } else {
       selectedColor = scheduleColors[0];
     }
-    
+
     contentCont = TextEditingController(text: content);
   }
 
@@ -79,7 +79,7 @@ class _AddTodoState extends State<AddTodo> {
                       FocusManager.instance.primaryFocus?.unfocus();
                     },
                     decoration: const InputDecoration(
-                      hintText: '할 일 제목',
+                      hintText: '할 일',
                       border: InputBorder.none,
                       enabledBorder: InputBorder.none,
                       focusedBorder: InputBorder.none,
@@ -93,13 +93,13 @@ class _AddTodoState extends State<AddTodo> {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  
+
                   Divider(
                     height: 20,
                     thickness: 1,
                     color: Colors.grey.shade300,
                   ),
-                  
+
                   // 마감일 선택
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 10.0),
@@ -142,17 +142,15 @@ class _AddTodoState extends State<AddTodo> {
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(
-                                        selectedDate != null 
-                                            ? '${selectedDate!.year}년 ${selectedDate!.month}월 ${selectedDate!.day}일' 
-                                            : '마감일 선택 (선택사항)',
+                                        selectedDate != null ? '${selectedDate!.year}년 ${selectedDate!.month}월 ${selectedDate!.day}일' : '마감일 선택 (선택사항)',
                                         style: TextStyle(
                                           color: selectedDate != null ? Colors.black : Colors.grey,
                                           fontSize: 14,
                                         ),
                                       ),
                                       Icon(
-                                        Icons.calendar_today, 
-                                        size: 16, 
+                                        Icons.calendar_today,
+                                        size: 16,
                                         color: selectedDate != null ? Colors.black : Colors.grey,
                                       ),
                                     ],
@@ -177,7 +175,7 @@ class _AddTodoState extends State<AddTodo> {
                       ],
                     ),
                   ),
-                  
+
                   // 색상 선택
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -248,7 +246,7 @@ class _AddTodoState extends State<AddTodo> {
                   ),
                 ],
               ),
-              
+
               // 우측 상단에 저장 버튼 (초록색 체크 아이콘)
               Positioned(
                 top: 0,
@@ -293,6 +291,8 @@ class _AddTodoState extends State<AddTodo> {
       // 할 일 저장 로직
       final repository = CheckRepository();
       await repository.init();
+
+      int todoId;
       
       if (widget.todoToEdit != null) {
         // 수정 모드 - 기존 완료 상태 유지
@@ -303,8 +303,9 @@ class _AddTodoState extends State<AddTodo> {
           colorValue: selectedColor.value,
           check: widget.todoToEdit!.check, // 기존 완료 상태 그대로 유지
         );
-        
+
         await repository.updateItem(updatedTodo);
+        todoId = widget.todoToEdit!.id;
       } else {
         // 새로 추가 - 완료 상태는 항상 false로 설정
         final newTodo = CheckItem(
@@ -314,8 +315,16 @@ class _AddTodoState extends State<AddTodo> {
           colorValue: selectedColor.value,
           check: false, // 신규 추가 시 항상 false로 설정
         );
-        
-        await repository.addItem(newTodo);
+
+        todoId = await repository.addItem(newTodo);
+      }
+
+      // 마감일이 설정된 경우 스케줄에도 추가할지 확인
+      if (selectedDate != null && widget.todoToEdit == null) {
+        final addToSchedule = await _showAddToScheduleDialog();
+        if (addToSchedule) {
+          await _addToSchedule(todoId);
+        }
       }
 
       // 저장 성공 시 콜백 함수 호출
@@ -331,6 +340,63 @@ class _AddTodoState extends State<AddTodo> {
         isLoading = false;
       });
     }
+  }
+
+  // 스케줄에도 추가할지 묻는 다이얼로그
+  Future<bool> _showAddToScheduleDialog() async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('일정에 추가'),
+        content: const Text('이 할 일을 스케줄에도 추가하시겠습니까?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('아니요'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('추가하기'),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
+  }
+  
+  // 스케줄에 추가하는 메서드 (시간 설정 없이)
+  Future<void> _addToSchedule(int todoId) async {
+    final scheduleRepository = ScheduleRepository();
+    await scheduleRepository.init();
+
+    // 시간 설정 없이 일정 추가
+    final newSchedule = ScheduleItem(
+      year: selectedDate!.year,
+      month: selectedDate!.month,
+      date: selectedDate!.day,
+      title: content,
+      description: '',
+      startHour: null, // 시간 정보 null로 설정
+      startMinute: null,
+      endHour: null,
+      endMinute: null,
+      colorValue: selectedColor.value,
+    );
+
+    final scheduleId = await scheduleRepository.addItem(newSchedule);
+    
+    // 일정과 할 일 사이의 연결 정보 저장
+    final linkRepo = ScheduleLinkRepository();
+    await linkRepo.init();
+
+    final newLink = ScheduleLinkItem(
+      scheduleId: scheduleId,
+      isRoutine: false,
+      linkedItemId: todoId,
+      linkedItemType: LinkItemType.todo,
+    );
+
+    await linkRepo.addItem(newLink);
   }
 
   void _showToast(String message) {

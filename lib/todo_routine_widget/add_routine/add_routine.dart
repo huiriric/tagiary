@@ -17,13 +17,13 @@ class AddRoutine extends StatefulWidget {
 class _AddRoutineState extends State<AddRoutine> {
   String content = '';
   late TextEditingController contentCont;
-  
+
   // FocusNode 추가
   final FocusNode contentFocus = FocusNode();
-  
+
   // 요일 선택 상태
   List<bool> selectedDays = List.generate(7, (index) => false);
-  
+
   // 색상 선택
   late Color selectedColor;
   bool isLoading = false;
@@ -69,7 +69,7 @@ class _AddRoutineState extends State<AddRoutine> {
                       FocusManager.instance.primaryFocus?.unfocus();
                     },
                     decoration: const InputDecoration(
-                      hintText: '루틴 제목',
+                      hintText: '루틴',
                       border: InputBorder.none,
                       enabledBorder: InputBorder.none,
                       focusedBorder: InputBorder.none,
@@ -83,13 +83,13 @@ class _AddRoutineState extends State<AddRoutine> {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  
+
                   Divider(
                     height: 20,
                     thickness: 1,
                     color: Colors.grey.shade300,
                   ),
-                  
+
                   // 요일 선택기
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 10.0),
@@ -102,7 +102,7 @@ class _AddRoutineState extends State<AddRoutine> {
                       },
                     ),
                   ),
-                  
+
                   // 색상 선택
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -173,7 +173,7 @@ class _AddRoutineState extends State<AddRoutine> {
                   ),
                 ],
               ),
-              
+
               // 우측 상단에 저장 버튼 (초록색 체크 아이콘)
               Positioned(
                 top: 0,
