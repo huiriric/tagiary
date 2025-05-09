@@ -141,6 +141,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             Expanded(
                               child: TodoRoutineWidget(
                                 date: date,
+                                fromMain: true,
                               ),
                             ),
                             const SizedBox(height: 12),
