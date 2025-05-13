@@ -140,57 +140,51 @@ class _TodoScreenState extends State<TodoScreen> {
     return InkWell(
       onTap: () => _showEditTodoDialog(context, todo),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4.0),
-        child: Row(
-          children: [
-            Checkbox(
-              value: todo.check,
-              onChanged: (value) {
-                _updateTodoCheck(todo, value!);
-              },
-              shape: const CircleBorder(),
-              activeColor: Color(todo.colorValue),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4.0),
+        child: ListTile(
+          contentPadding: const EdgeInsets.only(left: 0, right: 4),
+          dense: true,
+          visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
+          leading: Checkbox(
+            value: todo.check,
+            onChanged: (value) {
+              _updateTodoCheck(todo, value!);
+            },
+            shape: const CircleBorder(),
+            activeColor: Color(todo.colorValue),
+            side: BorderSide(
+              color: todo.check ? Colors.transparent : Color(todo.colorValue),
+              width: 2,
             ),
-            Expanded(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Container(
-                    constraints: BoxConstraints(
-                      maxWidth: MediaQuery.of(context).size.width - (todo.endDate != null ? 200 : 140),
-                    ),
-                    child: Text(
-                      todo.content,
-                      style: TextStyle(
-                        decoration: todo.check ? TextDecoration.lineThrough : null,
-                        color: todo.check ? Colors.grey : Colors.black,
-                        fontSize: 16,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
+          ),
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Text(
+                  todo.content,
+                  style: TextStyle(
+                    decoration: todo.check ? TextDecoration.lineThrough : null,
+                    color: todo.check ? Colors.grey : Colors.black,
+                    fontSize: 16,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  if (todo.endDate != null)
-                    Padding(
-                      padding: const EdgeInsets.only(left: 8.0),
-                      child: _buildDDay(todo.endDate!),
-                    ),
-                ],
+                ),
               ),
-            ),
-            // IconButton(
-            //   icon: const Icon(Icons.edit_outlined),
-            //   onPressed: () {
-            //     _showEditTodoDialog(context, todo);
-            //   },
-            // ),
-            IconButton(
-              icon: const Icon(Icons.delete_outline),
-              onPressed: () {
-                _deleteTodo(todo);
-              },
-            ),
-          ],
+              if (todo.endDate != null)
+                Padding(
+                  padding: const EdgeInsets.only(left: 8.0),
+                  child: _buildDDay(todo.endDate!),
+                ),
+            ],
+          ),
+          trailing: IconButton(
+            icon: const Icon(Icons.delete_outline),
+            onPressed: () {
+              _deleteTodo(todo);
+            },
+          ),
         ),
       ),
     );

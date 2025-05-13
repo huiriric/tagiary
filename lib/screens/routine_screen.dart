@@ -9,7 +9,7 @@ import 'package:tagiary/todo_routine_widget/routine_history_view.dart';
 import 'package:tagiary/todo_routine_widget/todo_routine_widget.dart';
 
 class RoutineScreen extends StatefulWidget {
-  const RoutineScreen({Key? key}) : super(key: key);
+  const RoutineScreen({super.key});
 
   @override
   State<RoutineScreen> createState() => _RoutineScreenState();
@@ -35,10 +35,10 @@ class _RoutineScreenState extends State<RoutineScreen> {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final todayDayOfWeek = now.weekday % 7; // 0(일)~6(토) 범위로 변환
-    
+
     // 선택된 요일과 오늘 요일의 차이 계산
     int dayDifference = _selectedDayIndex - todayDayOfWeek;
-    
+
     // 날짜 계산
     _selectedDate = today.add(Duration(days: dayDifference));
   }

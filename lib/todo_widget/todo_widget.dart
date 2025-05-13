@@ -141,23 +141,27 @@ class _TodoWidgetState extends State<TodoWidget> {
         final todo = previewTodos[index];
 
         return ListTile(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+          contentPadding: const EdgeInsets.only(left: 0, right: 6),
           dense: true,
           visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
           title: Text(
             todo.content,
             maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+            overflow: TextOverflow.clip,
             style: const TextStyle(
               fontSize: 13,
             ),
           ),
-          leading: Container(
-            width: 16,
-            height: 16,
-            decoration: BoxDecoration(
-              color: Color(todo.colorValue),
-              shape: BoxShape.circle,
+          leading: Checkbox(
+            value: todo.check,
+            onChanged: (value) {
+              _updateTodoCheck(todo, value!);
+            },
+            shape: const CircleBorder(),
+            activeColor: Color(todo.colorValue),
+            side: BorderSide(
+              color: todo.check ? Colors.transparent : Color(todo.colorValue),
+              width: 2,
             ),
           ),
           trailing: todo.endDate != null ? _buildDDay(todo.endDate!) : null,
@@ -281,8 +285,6 @@ class _TodoWidgetState extends State<TodoWidget> {
       ),
     );
   }
-
-
 
   Widget _buildTodoItem(CheckItem todo) {
     return Padding(
