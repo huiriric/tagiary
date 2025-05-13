@@ -24,11 +24,11 @@ class _TimeLineState extends State<TimeLine> {
   late int _startHour; // Provider에서 가져올 시작 시간
   late int _endHour; // Provider에서 가져올 종료 시간
   final double _hourHeight = 70.0; // 시간당 높이
-  final double _timelineWidth = 40.0; // 타임라인 폭
+  final double _timelineWidth = 20.0; // 타임라인 폭
   final double padding = 12.0;
   final double eventHorizontalPadding = 10;
   final double eventFontSize = 12;
-  final double timelineOffset = 9.0; // 시간 라인 위치 보정값 상수화
+  final double timelineOffset = 8.0; // 시간 라인 위치 보정값 상수화
 
   final ScheduleRoutineRepository srRepo = ScheduleRoutineRepository();
   final ScheduleRepository sRepo = ScheduleRepository();
@@ -89,7 +89,6 @@ class _TimeLineState extends State<TimeLine> {
     // DateTime.weekday는 1(월요일)~7(일요일)이지만
     // srRepo.getItemsByDay는 0(일요일)~6(토요일) 순서이므로 적절히 변환
     final dayOfWeek = widget.date.weekday % 7; // 1->1(월), 2->2(화)..., 7->0(일)
-
 
     // 데이터 박스 최신화 (새로운 아이템이 추가되었을 수 있음)
     if (mounted) {
@@ -195,7 +194,7 @@ class _TimeLineState extends State<TimeLine> {
                         SizedBox(
                           width: _timelineWidth,
                           child: Text(
-                            '$hour:00',
+                            '$hour',
                             textAlign: TextAlign.center,
                             style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey.shade700, fontSize: eventFontSize),
                           ),

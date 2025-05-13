@@ -221,30 +221,27 @@ class _MonthViewState extends State<MonthView> {
           ),
 
           // 요일 헤더
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: Row(
-              children: weekdays
-                  .map((day) => Expanded(
-                        child: Center(
-                          child: Text(
-                            day,
-                            // textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: day == '일' ? Colors.red : (day == '토' ? Colors.blue : Colors.black87),
-                            ),
+          Row(
+            children: weekdays
+                .map((day) => Expanded(
+                      child: Center(
+                        child: Text(
+                          day,
+                          // textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: day == '일' ? Colors.red : (day == '토' ? Colors.blue : Colors.black87),
                           ),
                         ),
-                      ))
-                  .toList(),
-            ),
+                      ),
+                    ))
+                .toList(),
           ),
 
           // 달력 그리드
           Expanded(
             child: GridView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
+              padding: const EdgeInsets.symmetric(vertical: 16.0),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 7,
                 childAspectRatio: 0.6, // 비율 조정으로 날짜 셀 높이 확보
@@ -395,7 +392,7 @@ class _MonthViewState extends State<MonthView> {
                     fontSize: 9,
                     fontWeight: FontWeight.bold,
                   ),
-                  overflow: TextOverflow.fade,
+                  overflow: TextOverflow.clip,
                   maxLines: 1,
                 ),
               ),
