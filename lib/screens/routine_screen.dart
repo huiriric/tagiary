@@ -130,10 +130,8 @@ class _RoutineScreenState extends State<RoutineScreen> {
           ),
 
           // 루틴 위젯 사용
-          Expanded(
-            child: TodoRoutineWidget(
-              date: _selectedDate,
-            ),
+          TodoRoutineWidget(
+            date: _selectedDate,
           ),
         ],
       ),

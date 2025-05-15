@@ -107,6 +107,7 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
         color: Colors.white,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: widget.fromMain == false ? MainAxisSize.min : MainAxisSize.max,
           children: [
             Padding(
               padding: const EdgeInsets.only(top: 8, left: 16, right: 8),
@@ -175,10 +176,11 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
               ),
             ),
             if (filteredRoutines.isEmpty)
-              Expanded(
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 30),
                 child: Center(
                   child: Text(
-                    _isToday ? '오늘의 루틴이 없습니다' : '${_displayDate.month}월 ${_displayDate.day}일 루틴이 없습니다',
+                    _isToday ? '오늘의 루틴이 없습니다' : '${dayLabels[_displayDate.weekday % 7]}요일 루틴이 없습니다',
                     style: const TextStyle(
                       color: Colors.grey,
                       fontSize: 14,
@@ -186,115 +188,129 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
                   ),
                 ),
               )
+            else if (widget.fromMain == true)
+              Expanded(child: routineList(filteredRoutines))
             else
-              Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 0),
-                  itemCount: filteredRoutines.length,
-                  itemBuilder: (context, index) {
-                    final routine = filteredRoutines[index];
-
-                    return ListTile(
-                      dense: true,
-                      visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
-                      contentPadding: const EdgeInsets.only(left: 0, right: 4),
-                      title: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              routine.content,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: _isToday && routine.check ? Colors.grey : Colors.black,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ),
-                          if (widget.fromMain == false)
-                            FutureBuilder<double>(
-                              future: _getRoutineMonthlyCompletionRate(routine.id),
-                              builder: (context, snapshot) {
-                                if (snapshot.hasData && snapshot.data! > 0) {
-                                  return SizedBox(
-                                    width: 110,
-                                    // margin: const EdgeInsets.only(right: 8.0),
-                                    child: Row(
-                                      children: [
-                                        Text(
-                                          '월간 ${(snapshot.data! * 100).toStringAsFixed(0)}%',
-                                          style: const TextStyle(
-                                            fontSize: 10,
-                                            color: Colors.grey,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 2),
-                                        Expanded(
-                                          child: _buildProgressIndicator(snapshot.data!),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                } else {
-                                  return const SizedBox.shrink();
-                                }
-                              },
-                            ),
-                        ],
-                      ),
-                      // 오늘 날짜면 체크박스, 아니면 컬러 도트 표시
-                      leading: _isToday
-                          ? Checkbox(
-                              value: routine.check,
-                              onChanged: (value) {
-                                _updateRoutineCheck(routine, value!);
-                              },
-                              shape: const CircleBorder(),
-                              activeColor: Color(routine.colorValue),
-                              // 테두리 색상 설정
-                              side: BorderSide(
-                                color: routine.check ? Colors.transparent : Color(routine.colorValue),
-                                width: 2,
-                              ),
-                            )
-                          : FutureBuilder<bool>(
-                              future: _isRoutineCompletedOnDate(routine.id, _displayDate),
-                              builder: (context, snapshot) {
-                                final isCompleted = snapshot.data ?? false;
-                                return Checkbox(
-                                  value: isCompleted,
-                                  onChanged: (value) => _showToast('오늘의 루틴만 체크할 수 있습니다'),
-                                  shape: const CircleBorder(),
-                                  activeColor: Color(routine.colorValue),
-                                );
-                              },
-                            ),
-                      // 삭제 버튼 (루틴 페이지일 때만 표시)
-                      trailing: widget.fromMain == false
-                          ? IconButton(
-                              icon: const Icon(Icons.delete_outline, size: 20),
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                              onPressed: () {
-                                _deleteRoutine(routine);
-                              },
-                            )
-                          : null,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => RoutineHistoryView(routine: routine),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                ),
-              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10.0),
+                child: routineList(filteredRoutines),
+              )
           ],
         ),
       ),
+    );
+  }
+
+  Widget routineList(List<CheckRoutineItem> filteredRoutines) {
+    return ListView.builder(
+      shrinkWrap: widget.fromMain == false ? true : false,
+      physics: widget.fromMain == false ? const NeverScrollableScrollPhysics() : const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 0),
+      itemCount: filteredRoutines.length,
+      itemBuilder: (context, index) {
+        final routine = filteredRoutines[index];
+
+        return ListTile(
+          dense: true,
+          visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
+          contentPadding: const EdgeInsets.only(left: 0, right: 4),
+          title: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  routine.content,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: _isToday && routine.check ? Colors.grey : Colors.black,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+              if (widget.fromMain == false)
+                FutureBuilder<double>(
+                  future: _getRoutineMonthlyCompletionRate(routine.id),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData) {
+                      return SizedBox(
+                        width: 110,
+                        // margin: const EdgeInsets.only(right: 8.0),
+                        child: Row(
+                          children: [
+                            Text(
+                              '월간 ${(snapshot.data! * 100).toStringAsFixed(0)}%',
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            const SizedBox(width: 2),
+                            Expanded(
+                              child: _buildProgressIndicator(snapshot.data!),
+                            ),
+                          ],
+                        ),
+                      );
+                    } else {
+                      return const SizedBox.shrink();
+                    }
+                  },
+                ),
+            ],
+          ),
+          // 오늘 날짜면 체크박스, 아니면 컬러 도트 표시
+          leading: _isToday
+              ? Checkbox(
+                  value: routine.check,
+                  onChanged: (value) {
+                    _updateRoutineCheck(routine, value!);
+                  },
+                  shape: const CircleBorder(),
+                  activeColor: Color(routine.colorValue),
+                  // 테두리 색상 설정
+                  side: BorderSide(
+                    color: routine.check ? Colors.transparent : Color(routine.colorValue),
+                    width: 2,
+                  ),
+                )
+              : FutureBuilder<bool>(
+                  future: _isRoutineCompletedOnDate(routine.id, _displayDate),
+                  builder: (context, snapshot) {
+                    final isCompleted = snapshot.data ?? false;
+                    return Checkbox(
+                      value: isCompleted,
+                      onChanged: (value) => _showToast('오늘의 루틴만 체크할 수 있습니다'),
+                      shape: const CircleBorder(),
+                      activeColor: Color(routine.colorValue),
+                      // 테두리 색상 설정
+                      side: BorderSide(
+                        color: isCompleted ? Colors.transparent : Color(routine.colorValue),
+                        width: 2,
+                      ),
+                    );
+                  },
+                ),
+          // 삭제 버튼 (루틴 페이지일 때만 표시)
+          trailing: widget.fromMain == false
+              ? IconButton(
+                  icon: const Icon(Icons.delete_outline, size: 20),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: () {
+                    _deleteRoutine(routine);
+                  },
+                )
+              : null,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => RoutineHistoryView(routine: routine),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -355,6 +371,7 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
     // 각 루틴별로 계산
     for (final routine in routines) {
       // 요일 정보가 없는 경우 기본값 처리
+      print(routine.content);
       List<bool> daysOfWeek = routine.daysOfWeek;
       if (daysOfWeek.length != 7) {
         daysOfWeek = List.generate(7, (index) => true);
@@ -364,6 +381,7 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
       int routineScheduledDays = 0;
 
       // 이번 주의 일요일부터 토요일까지의 모든 날짜 확인
+      print(daysOfWeek);
       for (int i = 0; i < 7; i++) {
         final date = firstDayOfWeek.add(Duration(days: i));
         final dayOfWeek = date.weekday % 7; // 0(일)~6(토)
@@ -377,7 +395,7 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
       }
 
       totalScheduledDays += routineScheduledDays;
-
+      print(totalScheduledDays);
       // 해당 루틴의 모든 완료 기록 가져오기
       final allHistory = _historyRepository.getHistoryForRoutine(routine.id);
 
@@ -398,6 +416,7 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
     if (totalScheduledDays == 0) return 0.0;
 
     // 달성률 계산 (총 완료된 루틴 / 이번 주 예정된 루틴)
+    print('주간 달성률: $totalCompleted / $totalScheduledDays');
     return totalCompleted / totalScheduledDays;
   }
 
