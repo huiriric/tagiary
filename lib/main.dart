@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tagiary/tables/check/check_enum.dart';
 import 'package:tagiary/tables/check_routine/routine_migration.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:hive/hive.dart';
@@ -41,6 +42,7 @@ Future<void> main() async {
   Hive.registerAdapter(ScheduleRoutineItemAdapter());
   Hive.registerAdapter(ScheduleItemAdapter());
   Hive.registerAdapter(CheckItemAdapter());
+  Hive.registerAdapter(CheckEnumAdapter());
   Hive.registerAdapter(CheckRoutineItemAdapter());
   Hive.registerAdapter(RoutineHistoryAdapter());
   Hive.registerAdapter(ScheduleLinkItemAdapter());
@@ -53,6 +55,7 @@ Future<void> main() async {
   await Hive.openBox<ScheduleItem>('scheduleBox');
   await Hive.openBox<ScheduleRoutineItem>('scheduleRoutineBox');
   await Hive.openBox<CheckItem>('checkBox');
+  await Hive.openBox<CheckEnum>('checkEnumBox');
   await Hive.openBox<CheckRoutineItem>('checkRoutineBox');
   await Hive.openBox<RoutineHistory>('routineHistoryBox');
   await Hive.openBox<ScheduleLinkItem>('scheduleLinkBox');
