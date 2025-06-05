@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+import 'package:tagiary/tables/check/check_enum.dart';
 part 'check_item.g.dart';
 
 @HiveType(typeId: 2)
@@ -10,18 +11,26 @@ class CheckItem extends HiveObject {
   final String content;
 
   @HiveField(2)
-  final String? endDate;
+  final String? dueDate;
 
   @HiveField(3)
-  final int colorValue;
+  final String? startDate;
 
   @HiveField(4)
-  final bool check;
+  final String? doneDate;
+
+  @HiveField(5)
+  final int colorValue;
+
+  @HiveField(6)
+  final CheckEnum check;
 
   CheckItem({
     required this.id,
     required this.content,
-    required this.endDate,
+    required this.dueDate,
+    required this.startDate,
+    required this.doneDate,
     required this.colorValue,
     required this.check,
   });
@@ -68,6 +77,9 @@ class CheckRepository {
 
   Future<void> updateItem(CheckItem item) async {
     await _item.put(item.id, item);
+    getItem(item.id);
+    print(item.startDate);
+    print(item.doneDate);
   }
 
   Future<void> deleteItem(int id) async {

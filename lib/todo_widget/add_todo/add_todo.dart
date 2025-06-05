@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:tagiary/constants/colors.dart';
+import 'package:tagiary/tables/check/check_enum.dart';
 import 'package:tagiary/tables/check/check_item.dart';
 import 'package:tagiary/tables/schedule/schedule_item.dart';
 import 'package:tagiary/tables/schedule_links/schedule_link_item.dart';
@@ -36,7 +37,7 @@ class _AddTodoState extends State<AddTodo> {
     // 수정 모드인 경우 기존 데이터로 초기화
     if (widget.todoToEdit != null) {
       content = widget.todoToEdit!.content;
-      selectedDate = widget.todoToEdit!.endDate != null ? DateTime.parse(widget.todoToEdit!.endDate!) : null;
+      selectedDate = widget.todoToEdit!.dueDate != null ? DateTime.parse(widget.todoToEdit!.dueDate!) : null;
       selectedColor = Color(widget.todoToEdit!.colorValue);
     } else {
       selectedColor = scheduleColors[0];
@@ -293,13 +294,15 @@ class _AddTodoState extends State<AddTodo> {
       await repository.init();
 
       int todoId;
-      
+
       if (widget.todoToEdit != null) {
         // 수정 모드 - 기존 완료 상태 유지
         final updatedTodo = CheckItem(
           id: widget.todoToEdit!.id,
           content: content,
-          endDate: selectedDate?.toIso8601String(),
+          dueDate: selectedDate?.toIso8601String(),
+          startDate: widget.todoToEdit!.startDate, // 기존 시작일 그대로 유지
+          doneDate: widget.todoToEdit!.doneDate, // 기존 완료일 그대로 유지
           colorValue: selectedColor.value,
           check: widget.todoToEdit!.check, // 기존 완료 상태 그대로 유지
         );
@@ -311,9 +314,11 @@ class _AddTodoState extends State<AddTodo> {
         final newTodo = CheckItem(
           id: 0, // 저장소에서 ID 할당
           content: content,
-          endDate: selectedDate?.toIso8601String(),
+          dueDate: selectedDate?.toIso8601String(),
+          startDate: null, // 시작일은 현재 시간으로 설정
+          doneDate: null, // 신규 추가 시 완료일은 null로 설정
           colorValue: selectedColor.value,
-          check: false, // 신규 추가 시 항상 false로 설정
+          check: CheckEnum.pending, // 신규 추가 시 항상 false로 설정
         );
 
         todoId = await repository.addItem(newTodo);
@@ -363,7 +368,7 @@ class _AddTodoState extends State<AddTodo> {
     );
     return result ?? false;
   }
-  
+
   // 스케줄에 추가하는 메서드 (시간 설정 없이)
   Future<void> _addToSchedule(int todoId) async {
     final scheduleRepository = ScheduleRepository();
@@ -384,7 +389,7 @@ class _AddTodoState extends State<AddTodo> {
     );
 
     final scheduleId = await scheduleRepository.addItem(newSchedule);
-    
+
     // 일정과 할 일 사이의 연결 정보 저장
     final linkRepo = ScheduleLinkRepository();
     await linkRepo.init();
