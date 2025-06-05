@@ -12,8 +12,14 @@ import 'package:tagiary/todo_routine_widget/routine_history_view.dart';
 class TodoRoutineWidget extends StatefulWidget {
   final DateTime? date; // 표시할 날짜 (null이면 오늘 날짜)
   final bool? fromMain; // 메인 화면에서 호출된 경우 true
+  final VoidCallback? onRoutineChanged; // 루틴 변경 시 호출되는 콜백
 
-  const TodoRoutineWidget({super.key, this.date, this.fromMain = false});
+  const TodoRoutineWidget({
+    super.key,
+    this.date,
+    this.fromMain = false,
+    this.onRoutineChanged,
+  });
 
   @override
   State<TodoRoutineWidget> createState() => _TodoRoutineWidgetState();
@@ -148,7 +154,7 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
                           child: Row(
                             children: [
                               Text(
-                                '주간 ${(completionRate * 100).toStringAsFixed(0)}%',
+                                '주간 ${(completionRate * 100).toStringAsFixed(1)}%',
                                 style: const TextStyle(
                                   fontSize: 11,
                                   color: Colors.grey,
@@ -165,7 +171,7 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
                     },
                   ),
                   GestureDetector(
-                    onTap: () => _showAddRoutineDialog(context),
+                    onTap: () => _showAddRoutineDialog(context, onRoutineChanged: widget.onRoutineChanged),
                     child: const Icon(
                       Icons.add,
                       size: 20,
@@ -193,7 +199,7 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
             else
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 10.0),
-                child: routineList(filteredRoutines),
+                child: routineList(filteredRoutines, widget.onRoutineChanged),
               )
           ],
         ),
@@ -201,7 +207,7 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
     );
   }
 
-  Widget routineList(List<CheckRoutineItem> filteredRoutines) {
+  Widget routineList(List<CheckRoutineItem> filteredRoutines, [VoidCallback? onRoutineChanged]) {
     return ListView.builder(
       shrinkWrap: widget.fromMain == false ? true : false,
       physics: widget.fromMain == false ? const NeverScrollableScrollPhysics() : const AlwaysScrollableScrollPhysics(),
@@ -238,7 +244,7 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
                         child: Row(
                           children: [
                             Text(
-                              '월간 ${(snapshot.data! * 100).toStringAsFixed(0)}%',
+                              '월간 ${(snapshot.data! * 100).toStringAsFixed(1)}%',
                               style: const TextStyle(
                                 fontSize: 10,
                                 color: Colors.grey,
@@ -263,7 +269,13 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
               ? Checkbox(
                   value: routine.check,
                   onChanged: (value) {
-                    _updateRoutineCheck(routine, value!);
+                    setState(() {
+                      _updateRoutineCheck(routine, value!);
+                      if (onRoutineChanged != null) {
+                        onRoutineChanged();
+                      }
+                      _showToast(value ? '루틴을 완료했습니다' : '루틴 체크를 해제했습니다');
+                    });
                   },
                   shape: const CircleBorder(),
                   activeColor: Color(routine.colorValue),
@@ -297,7 +309,7 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   onPressed: () {
-                    _deleteRoutine(routine);
+                    _deleteRoutine(routine, onRoutineChanged: onRoutineChanged);
                   },
                 )
               : null,
@@ -387,7 +399,7 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
         final dayOfWeek = date.weekday % 7; // 0(일)~6(토)
 
         // 오늘 또는 오늘 이전의 날짜만 포함 (미래 날짜는 제외)
-        if (date.isAfter(today)) continue;
+        // if (date.isAfter(today)) continue;
 
         if (daysOfWeek[dayOfWeek]) {
           routineScheduledDays++;
@@ -640,7 +652,7 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
     await _historyRepository.deleteHistoryForRoutineOnDate(routineId, DateTime.now());
   }
 
-  void _deleteRoutine(CheckRoutineItem routine) {
+  void _deleteRoutine(CheckRoutineItem routine, {VoidCallback? onRoutineChanged}) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -657,6 +669,7 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
               await _repository.deleteItem(routine.id);
               // 해당 루틴의 모든 기록 삭제
               await _historyRepository.deleteHistoryForRoutine(routine.id);
+              onRoutineChanged?.call(); // 루틴 변경 콜백 호출
               Navigator.pop(context);
             },
             child: const Text('삭제'),
@@ -666,7 +679,7 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
     );
   }
 
-  void _showAddRoutineDialog(BuildContext context) {
+  void _showAddRoutineDialog(BuildContext context, {VoidCallback? onRoutineChanged}) {
     // SlideUpContainer를 사용하여 일정 추가와 유사한 UI로 변경
     showModalBottomSheet(
       context: context,
@@ -678,12 +691,7 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
         child: SingleChildScrollView(
           child: SlideUpContainer(
             height: 350,
-            child: AddRoutine(
-              onRoutineAdded: () {
-                // 루틴 목록 새로고침
-                setState(() {});
-              },
-            ),
+            child: AddRoutine(onRoutineAdded: onRoutineChanged),
           ),
         ),
       ),

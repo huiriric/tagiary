@@ -6,6 +6,7 @@ import 'package:tagiary/component/day_picker/day_picker.dart';
 import 'package:tagiary/constants/colors.dart';
 import 'package:tagiary/main.dart';
 import 'package:tagiary/screens/home_screen.dart';
+import 'package:tagiary/tables/check/check_enum.dart';
 import 'package:tagiary/tables/check/check_item.dart';
 import 'package:tagiary/tables/check_routine/check_routine_item.dart';
 import 'package:tagiary/tables/data_models/event.dart';
@@ -655,9 +656,11 @@ class _AddScheduleState extends State<AddSchedule> {
     final newTodo = CheckItem(
       id: 0, // 저장소에서 할당
       content: title,
-      endDate: widget.date.toIso8601String(), // 현재 날짜 사용
+      dueDate: widget.date.toIso8601String(), // 현재 날짜 사용
+      startDate: null, // 시작 날짜도 현재 날짜로 설정
+      doneDate: null, // 완료 날짜는 null로 설정
       colorValue: selectedColor.value,
-      check: false,
+      check: CheckEnum.pending,
     );
 
     final todoId = await checkRepository.addItem(newTodo);

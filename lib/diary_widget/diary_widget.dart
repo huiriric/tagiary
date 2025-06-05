@@ -38,15 +38,13 @@ class _DiaryWidgetState extends State<DiaryWidget> {
       }
     });
   }
-  
+
   @override
   void didUpdateWidget(DiaryWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
+
     // 날짜가 변경되었을 때만 데이터 다시 로드
-    if (oldWidget.date.year != widget.date.year || 
-        oldWidget.date.month != widget.date.month || 
-        oldWidget.date.day != widget.date.day) {
+    if (oldWidget.date.year != widget.date.year || oldWidget.date.month != widget.date.month || oldWidget.date.day != widget.date.day) {
       print('DiaryWidget - didUpdateWidget 날짜 변경 감지: ${oldWidget.date} -> ${widget.date}');
       // 즉시 다이어리 로딩 실행
       _loadDiary();
@@ -58,17 +56,17 @@ class _DiaryWidgetState extends State<DiaryWidget> {
       // 다이어리 리포지토리 초기화
       _diaryRepository = DiaryRepository();
       await _diaryRepository.init();
-      
+
       // 태그 관련 리포지토리 초기화
       final tagRepository = TagRepository();
       final tagGroupRepository = TagGroupRepository();
-      
+
       _tagManager = TagManager(
         tagRepository: tagRepository,
         groupRepository: tagGroupRepository,
       );
       await _tagManager.init();
-      
+
       // 모든 리포지토리 초기화 후 다이어리 로드
       await _loadDiary();
     } catch (e) {
@@ -84,14 +82,14 @@ class _DiaryWidgetState extends State<DiaryWidget> {
   Future<void> _loadDiary() async {
     // 이미 ui가 해제된 경우 실행하지 않음
     if (!mounted) return;
-    
+
     // 로딩 상태 활성화
     setState(() {
       _isLoading = true;
     });
-    
+
     print('DiaryWidget - 다이어리 로드 시작: ${widget.date}');
-    
+
     try {
       // 날짜 정보를 년, 월, 일만 포함하도록 변환 (시간 정보 제거)
       final dateOnly = DateTime(
@@ -99,17 +97,13 @@ class _DiaryWidgetState extends State<DiaryWidget> {
         widget.date.month,
         widget.date.day,
       );
-      
+
       // 다이어리 리포지토리 초기화 확인
       await _diaryRepository.init();
-      
+
       // 해당 날짜의 다이어리 데이터 조회
       final diaries = _diaryRepository.getDateItem(dateOnly);
-      
-      print('DiaryWidget - 다이어리 로드 결과: ${diaries?.length ?? 0}개 항목');
-      print('DiaryWidget - 조회된 날짜: $dateOnly');
-      print('DiaryWidget - 조회된 다이어리: ${diaries?.map((d) => '${d.id}: ${d.title}').join(', ') ?? 'null'}');
-      
+
       // UI가 아직 유효하면 상태 업데이트
       if (mounted) {
         setState(() {
@@ -119,7 +113,7 @@ class _DiaryWidgetState extends State<DiaryWidget> {
       }
     } catch (e) {
       print('DiaryWidget - 다이어리 로드 오류: $e');
-      
+
       // 오류 발생해도 로딩 상태는 해제
       if (mounted) {
         setState(() {

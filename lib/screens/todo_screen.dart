@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:tagiary/component/slide_up_container.dart';
+import 'package:tagiary/tables/check/check_enum.dart';
 import 'package:tagiary/tables/check/check_item.dart';
 import 'package:tagiary/todo_widget/add_todo/add_todo.dart';
+import 'package:tagiary/todo_widget/todo_widget.dart';
 
 class TodoScreen extends StatefulWidget {
   const TodoScreen({super.key});
@@ -49,21 +51,24 @@ class _TodoScreenState extends State<TodoScreen> {
           final todos = box.values.toList();
 
           // Get unchecked items sorted by end date (closest first)
-          final uncheckedTodos = todos.where((todo) => !todo.check).toList()
+          final pendingTodos = todos.where((todo) => todo.check == CheckEnum.pending).toList()
             ..sort((a, b) {
-              if (a.endDate == null && b.endDate == null) {
+              if (a.dueDate == null && b.dueDate == null) {
                 return b.id.compareTo(a.id); // Newer tasks first if no end date
-              } else if (a.endDate == null) {
+              } else if (a.dueDate == null) {
                 return 1; // b comes first
-              } else if (b.endDate == null) {
+              } else if (b.dueDate == null) {
                 return -1; // a comes first
               } else {
-                return a.endDate!.compareTo(b.endDate!);
+                return a.dueDate!.compareTo(b.dueDate!);
               }
             });
 
+          final inProgressTodos = todos.where((todo) => todo.check == CheckEnum.inProgress).toList()..sort((a, b) => b.id.compareTo(a.id)); // Newer tasks first
+
           // Get checked items sorted by updated (most recent first)
-          final checkedTodos = todos.where((todo) => todo.check).toList()..sort((a, b) => b.id.compareTo(a.id)); // Using id as proxy for update time
+          final doneTodos = todos.where((todo) => todo.check == CheckEnum.done).toList()
+            ..sort((a, b) => b.id.compareTo(a.id)); // Using id as proxy for update time
 
           if (todos.isEmpty) {
             return Center(
@@ -92,7 +97,7 @@ class _TodoScreenState extends State<TodoScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (uncheckedTodos.isNotEmpty) ...[
+                if (pendingTodos.isNotEmpty) ...[
                   const Padding(
                     padding: EdgeInsets.all(16.0),
                     child: Text(
@@ -104,17 +109,52 @@ class _TodoScreenState extends State<TodoScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  ...uncheckedTodos.map((todo) => _buildTodoItem(todo)),
+                  ...pendingTodos.map((todo) => _buildTodoItem(todo)),
                   const SizedBox(height: 24),
                 ],
-                if (uncheckedTodos.isNotEmpty && checkedTodos.isNotEmpty)
+                if (pendingTodos.isNotEmpty && inProgressTodos.isNotEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Divider(
+                      thickness: 1,
+                    ),
+                  )
+                else if (pendingTodos.isNotEmpty && doneTodos.isNotEmpty)
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 16.0),
                     child: Divider(
                       thickness: 1,
                     ),
                   ),
-                if (checkedTodos.isNotEmpty) ...[
+                if (inProgressTodos.isNotEmpty) ...[
+                  const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Text(
+                      '진행 중',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ...inProgressTodos.map((todo) => _buildTodoItem(todo)),
+                ],
+                // if (pendingTodos.isNotEmpty && doneTodos.isNotEmpty)
+                //   const Padding(
+                //     padding: EdgeInsets.symmetric(horizontal: 16.0),
+                //     child: Divider(
+                //       thickness: 1,
+                //     ),
+                //   ),
+                if (inProgressTodos.isNotEmpty && doneTodos.isNotEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Divider(
+                      thickness: 1,
+                    ),
+                  ),
+                if (doneTodos.isNotEmpty) ...[
                   const Padding(
                     padding: EdgeInsets.all(16.0),
                     child: Text(
@@ -126,7 +166,7 @@ class _TodoScreenState extends State<TodoScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  ...checkedTodos.map((todo) => _buildTodoItem(todo)),
+                  ...doneTodos.map((todo) => _buildTodoItem(todo)),
                 ],
               ],
             ),
@@ -134,6 +174,17 @@ class _TodoScreenState extends State<TodoScreen> {
         },
       ),
     );
+  }
+
+  CheckEnum _getNextStatus(CheckEnum currentStatus) {
+    switch (currentStatus) {
+      case CheckEnum.pending:
+        return CheckEnum.inProgress; // false → null
+      case CheckEnum.inProgress:
+        return CheckEnum.done; // null → true
+      case CheckEnum.done:
+        return CheckEnum.pending; // true → false
+    }
   }
 
   Widget _buildTodoItem(CheckItem todo) {
@@ -146,14 +197,15 @@ class _TodoScreenState extends State<TodoScreen> {
           dense: true,
           visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
           leading: Checkbox(
-            value: todo.check,
+            tristate: true,
+            value: getCheckboxValue(todo.check),
             onChanged: (value) {
-              _updateTodoCheck(todo, value!);
+              _updateTodoCheckEnum(todo, _getNextStatus(todo.check));
             },
             shape: const CircleBorder(),
             activeColor: Color(todo.colorValue),
             side: BorderSide(
-              color: todo.check ? Colors.transparent : Color(todo.colorValue),
+              color: todo.check != CheckEnum.pending ? Colors.transparent : Color(todo.colorValue),
               width: 2,
             ),
           ),
@@ -165,17 +217,16 @@ class _TodoScreenState extends State<TodoScreen> {
                 child: Text(
                   todo.content,
                   style: TextStyle(
-                    decoration: todo.check ? TextDecoration.lineThrough : null,
-                    color: todo.check ? Colors.grey : Colors.black,
+                    color: todo.check == CheckEnum.done ? Colors.grey : Colors.black,
                     fontSize: 16,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ),
-              if (todo.endDate != null)
+              if (todo.dueDate != null)
                 Padding(
                   padding: const EdgeInsets.only(left: 8.0),
-                  child: _buildDDay(todo.endDate!),
+                  child: _buildDDay(todo.dueDate!),
                 ),
             ],
           ),
@@ -226,11 +277,27 @@ class _TodoScreenState extends State<TodoScreen> {
     );
   }
 
-  void _updateTodoCheck(CheckItem todo, bool value) {
+  void _updateTodoCheck(CheckItem todo, bool? value) {
+    CheckEnum newCheckValue;
+
+    if (value == true) {
+      newCheckValue = CheckEnum.done;
+    } else if (value == false) {
+      newCheckValue = CheckEnum.pending;
+    } else {
+      newCheckValue = CheckEnum.inProgress;
+    }
+
+    _updateTodoCheckEnum(todo, newCheckValue);
+  }
+
+  void _updateTodoCheckEnum(CheckItem todo, CheckEnum value) {
     final updatedTodo = CheckItem(
       id: todo.id,
       content: todo.content,
-      endDate: todo.endDate,
+      dueDate: todo.dueDate,
+      startDate: todo.startDate,
+      doneDate: todo.doneDate,
       colorValue: todo.colorValue,
       check: value,
     );

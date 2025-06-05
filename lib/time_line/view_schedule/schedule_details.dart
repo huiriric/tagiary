@@ -710,7 +710,9 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
           final updatedItem = CheckItem(
             id: item.id,
             content: _titleController.text, // 제목 동기화
-            endDate: item.endDate, // 기존 마감일 유지
+            dueDate: item.dueDate, // 기존 마감일 유지
+            startDate: item.startDate, // 기존 시작일 유지
+            doneDate: item.doneDate, // 기존 완료일 유지
             colorValue: _selectedColor.value, // 색상 동기화
             check: item.check, // 완료 상태 유지
           );
