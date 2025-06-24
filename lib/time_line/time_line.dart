@@ -12,7 +12,14 @@ import 'package:tagiary/time_line/view_schedule/schedule_details.dart';
 class TimeLine extends StatefulWidget {
   final DateTime date;
   final bool fromScreen;
-  const TimeLine({super.key, required this.date, required this.fromScreen});
+  final VoidCallback? onEventsLoaded; // 이벤트 로드 완료 시 호출할 콜백
+
+  const TimeLine({
+    super.key,
+    required this.date,
+    required this.fromScreen,
+    this.onEventsLoaded,
+  });
 
   @override
   State<TimeLine> createState() => _TimeLineState();
@@ -67,7 +74,7 @@ class _TimeLineState extends State<TimeLine> {
 
     // 날짜가 변경되었을 때만 데이터 다시 로드
     if (oldWidget.date != widget.date) {
-      _loadEventsForDate();
+      loadEventsForDate();
     }
   }
 
@@ -77,10 +84,10 @@ class _TimeLineState extends State<TimeLine> {
     await sRepo.init();
 
     // 데이터 로드
-    _loadEventsForDate();
+    loadEventsForDate();
   }
 
-  Future<void> _loadEventsForDate() async {
+  Future<void> loadEventsForDate() async {
     // 항상 초기화 호출 (이미 초기화되어 있으면 내부적으로 처리됨)
     await srRepo.init();
     await sRepo.init();
@@ -92,10 +99,15 @@ class _TimeLineState extends State<TimeLine> {
 
     // 데이터 박스 최신화 (새로운 아이템이 추가되었을 수 있음)
     if (mounted) {
+      // 박스 닫고 다시 열기로 최신 상태 보장
+      await srRepo.init();
+      await sRepo.init();
+
       // 선택된 날짜의 모든 일정 이벤트 가져오기
       final allScheduleEvents = sRepo.getDateItems(widget.date).toList();
       // 선택된 요일의 루틴 이벤트 가져오기
-      final routineEvents = srRepo.getItemsByDay(dayOfWeek).toList();
+      final timeRoutineEvents = srRepo.getItemsByDayWithTime(dayOfWeek).toList();
+      final noTimeRoutineEvents = srRepo.getItemsByDayWithoutTime(dayOfWeek).toList();
 
       // 시간 있는 이벤트와 없는 이벤트 구분
       final timeEvents = allScheduleEvents.where((e) => e.hasTimeSet).toList();
@@ -103,13 +115,18 @@ class _TimeLineState extends State<TimeLine> {
 
       setState(() {
         // 시간 정보가 있는 일정만 타임라인에 표시
-        _events = [...routineEvents, ...timeEvents];
+        _events = [...timeRoutineEvents, ...timeEvents];
         // 이벤트를 시작 시간순으로 정렬
         _events.sort((a, b) => a.startMinutes.compareTo(b.startMinutes));
 
         // 시간 정보가 없는 일정
-        _noTimeEvents = noTimeEvents;
+        _noTimeEvents = [...noTimeRoutineEvents, ...noTimeEvents];
       });
+
+      // 콜백 호출 (이벤트 로드 완료)
+      if (widget.onEventsLoaded != null) {
+        widget.onEventsLoaded!();
+      }
     }
   }
 
@@ -215,11 +232,11 @@ class _TimeLineState extends State<TimeLine> {
                       left: 0 - padding,
                       child: InkWell(
                         // borderRadius: BorderRadius.circular(5),
-                        onLongPress: () {
+                        onLongPress: () async {
                           TimeOfDay start = TimeOfDay(hour: _startHour + index, minute: 0);
                           TimeOfDay end = TimeOfDay(hour: _startHour + index + 1, minute: 0);
 
-                          showModalBottomSheet(
+                          final result = await showModalBottomSheet<bool>(
                             context: context,
                             isScrollControlled: true,
                             builder: (context) => AnimatedPadding(
@@ -228,17 +245,21 @@ class _TimeLineState extends State<TimeLine> {
                               curve: Curves.decelerate,
                               child: SingleChildScrollView(
                                 child: SlideUpContainer(
-                                  height: 450,
                                   child: AddSchedule(
                                     date: widget.date,
                                     start: start,
                                     end: end,
-                                    onScheduleAdded: _loadEventsForDate, // 일정 추가 후 이벤트 다시 로드
+                                    onScheduleAdded: loadEventsForDate, // 일정 추가 후 이벤트 다시 로드
                                   ),
                                 ),
                               ),
                             ),
                           );
+
+                          // 일정이 추가되었다면 이벤트 다시 로드
+                          if (result == true) {
+                            loadEventsForDate();
+                          }
                         },
                         child: Container(
                           width: widget.fromScreen ? screenWidth : (screenWidth / 2),
@@ -330,7 +351,7 @@ class _TimeLineState extends State<TimeLine> {
                                       Padding(
                                         padding: const EdgeInsets.only(top: 4),
                                         child: Text(
-                                          '${_formatTime(event.startTime)} - ${_formatTime(event.endTime)}',
+                                          '${_formatTime(event.startTime!)} - ${_formatTime(event.endTime!)}',
                                           style: const TextStyle(
                                             color: Colors.white,
                                             fontSize: 10,
@@ -467,7 +488,7 @@ class _TimeLineState extends State<TimeLine> {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(_conflictEvent != null
-                                  ? '${_formatTime(_conflictEvent!.startTime)}~${_formatTime(_conflictEvent!.endTime)}의 "${_conflictEvent!.title}" 일정과 충돌합니다'
+                                  ? '${_formatTime(_conflictEvent!.startTime!)}~${_formatTime(_conflictEvent!.endTime!)}의 "${_conflictEvent!.title}" 일정과 충돌합니다'
                                   : '다른 일정과 시간이 중복됩니다'),
                               backgroundColor: Colors.red,
                               duration: const Duration(seconds: 2),
@@ -529,8 +550,8 @@ class _TimeLineState extends State<TimeLine> {
   Map<String, TimeOfDay> _calculateDraggedTime(Event event, double startY, double currentY) {
     if (_originalTopPosition == null || _originalStartTime == null || _originalEndTime == null) {
       return {
-        'start': event.startTime,
-        'end': event.endTime,
+        'start': event.startTime!,
+        'end': event.endTime!,
       };
     }
 
@@ -607,7 +628,7 @@ class _TimeLineState extends State<TimeLine> {
     await scheduleRepo.updateItem(updatedItem);
 
     // 이벤트 목록 새로고침
-    _loadEventsForDate();
+    loadEventsForDate();
   }
 
   // 드래그 중 충돌 감지
@@ -728,7 +749,7 @@ class _TimeLineState extends State<TimeLine> {
   String _formatEventTime(Event event, Map<String, TimeOfDay> times) {
     final start = times['start'] ?? event.startTime;
     final end = times['end'] ?? event.endTime;
-    return '${_formatTime(start)} - ${_formatTime(end)}';
+    return '${_formatTime(start!)} - ${_formatTime(end!)}';
   }
 
   void _showEvent(BuildContext context, Event event) {
@@ -760,8 +781,8 @@ class _TimeLineState extends State<TimeLine> {
     }
   }
 
-  void _showEventDetails(BuildContext context, Event event) {
-    showModalBottomSheet(
+  void _showEventDetails(BuildContext context, Event event) async {
+    final result = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       builder: (context) => AnimatedPadding(
@@ -769,16 +790,20 @@ class _TimeLineState extends State<TimeLine> {
         duration: const Duration(milliseconds: 0),
         curve: Curves.decelerate,
         child: SlideUpContainer(
-          height: 450,
           child: ScheduleDetails(
             event: event,
             onUpdate: () {
               // 일정이 수정되거나 삭제되었을 때 데이터를 다시 로드
-              _loadEventsForDate();
+              loadEventsForDate();
             },
           ),
         ),
       ),
     );
+
+    // 일정이 수정되거나 삭제되었다면 이벤트 다시 로드
+    if (result == true) {
+      loadEventsForDate();
+    }
   }
 }

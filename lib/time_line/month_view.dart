@@ -115,14 +115,26 @@ class _MonthViewState extends State<MonthView> {
       int routineIndex;
       routineIndex = day.weekday % 7;
 
-      List<Event> routineEvents = srRepo.getItemsByDay(routineIndex).toList();
+      List<Event> routineEvents = srRepo.getItemsByDayWithTime(routineIndex).toList();
+      List<Event> routineNoTimeEvents = srRepo.getItemsByDayWithoutTime(routineIndex).toList();
 
       // 모든 일정 합치기 (시간 있는/없는 일정 모두 포함)
-      monthEvents[dateKey] = [...dateEvents, ...routineEvents];
+      monthEvents[dateKey] = [
+        ...dateEvents,
+        ...routineNoTimeEvents,
+        ...routineEvents,
+      ];
 
-      // 일정 정렬 (루틴 우선, 그 다음 시간순)
+      // 일정 정렬 (시간 없는 루틴 우선, 시간 있는 루틴 우선, 그 다음 시간순)
       monthEvents[dateKey]!.sort((a, b) {
-        if (a.isRoutine != b.isRoutine) {
+        // 시간 정보가 없는 루틴이 우선
+        if (a.isRoutine && !a.hasTimeSet && b.isRoutine && !b.hasTimeSet) {
+          return 0; // 둘 다 시간 정보가 없는 루틴이면 동일하게 처리
+        } else if (a.isRoutine && !a.hasTimeSet) {
+          return -1; // a가 시간 정보가 없는 루틴이면 a가 우선
+        } else if (b.isRoutine && !b.hasTimeSet) {
+          return 1; // b가 시간 정보가 없는 루틴이면 b가 우선
+        } else if (a.isRoutine != b.isRoutine) {
           return a.isRoutine ? -1 : 1;
         } else if (!a.hasTimeSet && !b.hasTimeSet) {
           return 0;
@@ -278,9 +290,14 @@ class _MonthViewState extends State<MonthView> {
                       _showDayEvents(context, day, events);
                     }
                   },
-                  onLongPress: () {
+                  onLongPress: () async {
                     // 일정 추가 다이얼로그 표시
-                    _showAddScheduleDialog(context, day);
+                    void asdf = await _showAddScheduleDialog(context, day);
+                    setState(() {
+                      _selectedDay = day;
+                      // 일정 추가 후 월간 일정 다시 로드
+                      _loadMonthEvents();
+                    });
                   },
                   child: Container(
                     decoration: BoxDecoration(
@@ -436,9 +453,13 @@ class _MonthViewState extends State<MonthView> {
                       ),
                       IconButton(
                         icon: const Icon(Icons.add, color: Colors.black87),
-                        onPressed: () {
+                        onPressed: () async {
                           Navigator.pop(context);
-                          _showAddScheduleDialog(context, date);
+                          void asdf = await _showAddScheduleDialog(context, date);
+                          setState(() {
+                            // 일정 추가 후 상태 업데이트
+                            _loadMonthEvents();
+                          });
                         },
                       ),
                     ],
@@ -468,7 +489,7 @@ class _MonthViewState extends State<MonthView> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        subtitle: event.hasTimeSet ? Text('${_formatTime(event.startTime)} - ${_formatTime(event.endTime)}') : const Text('하루 종일'),
+                        subtitle: event.hasTimeSet ? Text('${_formatTime(event.startTime!)} - ${_formatTime(event.endTime!)}') : const Text('하루 종일'),
                         trailing: event.isRoutine ? const Icon(Icons.repeat, size: 16, color: Colors.grey) : null,
                         onTap: () {
                           Navigator.pop(context);
@@ -487,8 +508,8 @@ class _MonthViewState extends State<MonthView> {
   }
 
   // 일정 추가 다이얼로그
-  void _showAddScheduleDialog(BuildContext context, DateTime date) {
-    showModalBottomSheet(
+  Future<void> _showAddScheduleDialog(BuildContext context, DateTime date) async {
+    await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       builder: (context) => AnimatedPadding(
@@ -497,12 +518,12 @@ class _MonthViewState extends State<MonthView> {
         curve: Curves.decelerate,
         child: SingleChildScrollView(
           child: SlideUpContainer(
-            height: 450,
             child: AddSchedule(
               date: date,
               start: TimeOfDay(hour: TimeOfDay.now().hour + 1, minute: 0),
               end: TimeOfDay(hour: TimeOfDay.now().hour + 2, minute: 0),
               onScheduleAdded: () {
+                // 일정 추가 후 월간 일정 다시 로드
                 _loadMonthEvents();
               },
             ),
@@ -551,7 +572,6 @@ class _MonthViewState extends State<MonthView> {
         duration: const Duration(milliseconds: 0),
         curve: Curves.decelerate,
         child: SlideUpContainer(
-          height: 450,
           child: ScheduleDetails(
             event: event,
             onUpdate: () {

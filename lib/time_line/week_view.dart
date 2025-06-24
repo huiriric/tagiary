@@ -11,11 +11,11 @@ import 'package:tagiary/time_line/view_schedule/schedule_details.dart';
 
 class WeekView extends StatefulWidget {
   final DateTime selectedDate;
-  
+
   const WeekView({
-    Key? key,
+    super.key,
     required this.selectedDate,
-  }) : super(key: key);
+  });
 
   @override
   State<WeekView> createState() => _WeekViewState();
@@ -24,23 +24,23 @@ class WeekView extends StatefulWidget {
 class _WeekViewState extends State<WeekView> {
   final ScheduleRoutineRepository srRepo = ScheduleRoutineRepository();
   final ScheduleRepository sRepo = ScheduleRepository();
-  
+
   // 요일 헤더 텍스트
   final List<String> weekdays = ['일', '월', '화', '수', '목', '금', '토'];
-  
+
   // 현재 주와 이전/다음 주를 위한 컨트롤러
   late PageController _pageController;
-  
+
   // 페이지 인덱스 (0: 이전 주, 1: 현재 주, 2: 다음 주)
   int _currentPage = 1;
-  
+
   // 3주치 날짜 정보 (이전 주, 현재 주, 다음 주)
   List<DateTime> _weekStarts = [];
   List<DateTime> _weekEnds = [];
-  
+
   // 각 주별 이벤트 데이터
   List<Map<int, List<Event>>> _weeklyEvents = [];
-  
+
   @override
   void initState() {
     super.initState();
@@ -48,13 +48,13 @@ class _WeekViewState extends State<WeekView> {
     _initializeWeeks();
     _initializeData();
   }
-  
+
   @override
   void dispose() {
     _pageController.dispose();
     super.dispose();
   }
-  
+
   @override
   void didUpdateWidget(WeekView oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -63,45 +63,45 @@ class _WeekViewState extends State<WeekView> {
       _loadAllWeeksEvents(); // 모든 주 데이터 다시 로드
     }
   }
-  
+
   // 데이터 초기화
   Future<void> _initializeData() async {
     await srRepo.init();
     await sRepo.init();
     _loadAllWeeksEvents();
   }
-  
+
   // 현재 주와 이전/다음 주의 시작일과 종료일 계산
   void _initializeWeeks() {
     _weekStarts = [];
     _weekEnds = [];
-    
+
     for (int offset = -1; offset <= 1; offset++) {
       // 기준 날짜에서 offset주 만큼 이동
       final baseDate = widget.selectedDate.add(Duration(days: 7 * offset));
-      
+
       // 해당 주의 시작일 (일요일)
       final weekday = baseDate.weekday % 7; // 1->1(월), 2->2(화)..., 7->0(일)
       final weekStart = baseDate.subtract(Duration(days: weekday));
-      
+
       // 해당 주의 종료일 (토요일)
       final weekEnd = weekStart.add(const Duration(days: 6));
-      
+
       _weekStarts.add(weekStart);
       _weekEnds.add(weekEnd);
     }
   }
-  
+
   // 3주치 이벤트 전부 로드
   Future<void> _loadAllWeeksEvents() async {
     if (_weekStarts.isEmpty || !mounted) return;
-    
+
     try {
       // 이전 주, 현재 주, 다음 주의 이벤트 로드
       final prevWeekEvents = await _loadWeekEventsFor(_weekStarts[0]);
       final currentWeekEvents = await _loadWeekEventsFor(_weekStarts[1]);
       final nextWeekEvents = await _loadWeekEventsFor(_weekStarts[2]);
-      
+
       if (mounted) {
         setState(() {
           _weeklyEvents = [prevWeekEvents, currentWeekEvents, nextWeekEvents];
@@ -112,26 +112,31 @@ class _WeekViewState extends State<WeekView> {
       // 오류 처리 (필요시 추가)
     }
   }
-  
+
   // 특정 주의 이벤트 로드
   Future<Map<int, List<Event>>> _loadWeekEventsFor(DateTime weekStart) async {
     Map<int, List<Event>> weekEvents = {};
-    
+
     // 일요일(0)부터 토요일(6)까지의 일정 로드
     for (int i = 0; i < 7; i++) {
       DateTime currentDate = weekStart.add(Duration(days: i));
       int dayOfWeek = i; // 0: 일요일, 1: 월요일, ..., 6: 토요일
-      
+
       // 해당 날짜의 일반 일정
-      List<Event> dateEvents = await sRepo.getDateItems(currentDate).toList();
-      
+      List<Event> dateEvents = sRepo.getDateItems(currentDate).toList();
+
       // 해당 요일의 루틴 일정
       // ScheduleRoutineRepository.getItemsByDay는 dayIndex: 0(일요일) ~ 6(토요일) 순서 사용
-      List<Event> routineEvents = await srRepo.getItemsByDay(dayOfWeek).toList();
-      
+      List<Event> routineEvents = srRepo.getItemsByDayWithTime(dayOfWeek).toList();
+      List<Event> noTimeRoutineEvents = srRepo.getItemsByDayWithoutTime(dayOfWeek).toList();
+
       // 시간 있는 일정과 없는 일정 모두 포함
-      weekEvents[dayOfWeek] = [...dateEvents, ...routineEvents];
-      
+      weekEvents[dayOfWeek] = [
+        ...dateEvents,
+        ...noTimeRoutineEvents,
+        ...routineEvents,
+      ];
+
       // 시간 기준으로 정렬
       weekEvents[dayOfWeek]!.sort((a, b) {
         if (!a.hasTimeSet && !b.hasTimeSet) {
@@ -145,50 +150,50 @@ class _WeekViewState extends State<WeekView> {
         }
       });
     }
-    
+
     return weekEvents;
   }
-  
+
   // 페이지 변경 시 호출
   void _onPageChanged(int page) {
     setState(() {
       _currentPage = page;
     });
-    
+
     // 페이지가 0이나 2로 변경되면 추가 주 로드 및 재조정
     if (page == 0 || page == 2) {
       _updateAfterPageChange(page);
     }
   }
-  
+
   // 페이지 변경 후 데이터 업데이트
   void _updateAfterPageChange(int page) {
     // 애니메이션 완료 후 실행되도록 지연
     Future.delayed(const Duration(milliseconds: 300), () {
       if (!mounted) return;
-      
+
       // 새로운 기준 날짜 (이전 또는 다음 주의 중간 날짜)
-      final newBaseDate = (page == 0) 
-        ? _weekStarts[0].add(const Duration(days: 3)) // 이전 주
-        : _weekStarts[2].add(const Duration(days: 3)); // 다음 주
-      
+      final newBaseDate = (page == 0)
+          ? _weekStarts[0].add(const Duration(days: 3)) // 이전 주
+          : _weekStarts[2].add(const Duration(days: 3)); // 다음 주
+
       // 주 정보 재계산
       List<DateTime> newWeekStarts = [];
       List<DateTime> newWeekEnds = [];
-      
+
       for (int offset = -1; offset <= 1; offset++) {
         final offsetDate = newBaseDate.add(Duration(days: 7 * offset));
-        
+
         // 해당 주의 시작일 (일요일)
         final weekday = offsetDate.weekday % 7; // 1->1(월), 2->2(화)..., 7->0(일)
         final weekStart = offsetDate.subtract(Duration(days: weekday));
-        
+
         final weekEnd = weekStart.add(const Duration(days: 6));
-        
+
         newWeekStarts.add(weekStart);
         newWeekEnds.add(weekEnd);
       }
-      
+
       // 기존 데이터 재활용
       if (page == 0) {
         // 이전 => 현재로 변경된 경우: 이전 주 데이터 유지, 이전의 이전 주 로드, 다음 주 데이터 유지
@@ -196,40 +201,41 @@ class _WeekViewState extends State<WeekView> {
           if (mounted) {
             setState(() {
               _weeklyEvents = [
-                newPrevWeekEvents,            // 새 이전 주
-                _weeklyEvents[0],            // 기존 이전 주 => 새 현재 주
-                _weeklyEvents[1],            // 기존 현재 주 => 새 다음 주
+                newPrevWeekEvents, // 새 이전 주
+                _weeklyEvents[0], // 기존 이전 주 => 새 현재 주
+                _weeklyEvents[1], // 기존 현재 주 => 새 다음 주
               ];
               _weekStarts = newWeekStarts;
               _weekEnds = newWeekEnds;
               _currentPage = 1; // 현재 페이지로 리셋
             });
-            
+
             // 페이지 컨트롤러 리셋 (애니메이션 없이)
             _pageController.jumpToPage(1);
-            
+
             // 부모 위젯에 알림
             Provider.of<DataProvider>(context, listen: false).updateDate(newBaseDate);
           }
         });
-      } else { // page == 2
+      } else {
+        // page == 2
         // 다음 => 현재로 변경된 경우: 이전 주 데이터 유지, 다음 주 데이터 유지, 다음의 다음 주 로드
         _loadWeekEventsFor(newWeekStarts[2]).then((newNextWeekEvents) {
           if (mounted) {
             setState(() {
               _weeklyEvents = [
-                _weeklyEvents[1],            // 기존 현재 주 => 새 이전 주
-                _weeklyEvents[2],            // 기존 다음 주 => 새 현재 주
-                newNextWeekEvents,            // 새 다음 주
+                _weeklyEvents[1], // 기존 현재 주 => 새 이전 주
+                _weeklyEvents[2], // 기존 다음 주 => 새 현재 주
+                newNextWeekEvents, // 새 다음 주
               ];
               _weekStarts = newWeekStarts;
               _weekEnds = newWeekEnds;
               _currentPage = 1; // 현재 페이지로 리셋
             });
-            
+
             // 페이지 컨트롤러 리셋 (애니메이션 없이)
             _pageController.jumpToPage(1);
-            
+
             // 부모 위젯에 알림
             Provider.of<DataProvider>(context, listen: false).updateDate(newBaseDate);
           }
@@ -237,14 +243,14 @@ class _WeekViewState extends State<WeekView> {
       }
     });
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         // 날짜 헤더 표시
         _buildWeekHeader(),
-        
+
         // 주간 일정 페이지 뷰
         Expanded(
           child: PageView.builder(
@@ -256,7 +262,7 @@ class _WeekViewState extends State<WeekView> {
               if (_weeklyEvents.length <= index || _weeklyEvents[index].isEmpty) {
                 return const Center(child: CircularProgressIndicator());
               }
-              
+
               // 해당 주의 주간 뷰 위젯 반환
               return _buildWeekEventsView(index);
             },
@@ -265,16 +271,16 @@ class _WeekViewState extends State<WeekView> {
       ],
     );
   }
-  
+
   // 주간 헤더 (날짜 표시)
   Widget _buildWeekHeader() {
     // 현재 보고 있는 주의 시작일
-    final weekStart = (_currentPage < _weekStarts.length) 
-        ? _weekStarts[_currentPage] 
-        : _weekStarts.isNotEmpty 
-            ? _weekStarts.last 
+    final weekStart = (_currentPage < _weekStarts.length)
+        ? _weekStarts[_currentPage]
+        : _weekStarts.isNotEmpty
+            ? _weekStarts.last
             : DateTime.now().subtract(Duration(days: DateTime.now().weekday % 7));
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       decoration: BoxDecoration(
@@ -292,7 +298,7 @@ class _WeekViewState extends State<WeekView> {
           DateTime date = weekStart.add(Duration(days: index));
           bool isToday = _isToday(date);
           bool isSelected = _isSameDay(date, widget.selectedDate);
-          
+
           return Expanded(
             child: GestureDetector(
               onTap: () {
@@ -321,16 +327,18 @@ class _WeekViewState extends State<WeekView> {
                     height: 30,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: isToday 
-                          ? Border.all(color: Theme.of(context).primaryColor, width: 2.0)
-                          : null,
+                      border: isToday ? Border.all(color: Theme.of(context).primaryColor, width: 2.0) : null,
                       color: isSelected ? Theme.of(context).primaryColor : Colors.transparent,
                     ),
                     child: Center(
                       child: Text(
                         '${date.day}',
                         style: TextStyle(
-                          color: isSelected ? Colors.white : isToday ? Theme.of(context).primaryColor : Colors.black,
+                          color: isSelected
+                              ? Colors.white
+                              : isToday
+                                  ? Theme.of(context).primaryColor
+                                  : Colors.black,
                           fontWeight: isToday || isSelected ? FontWeight.bold : FontWeight.normal,
                         ),
                       ),
@@ -344,19 +352,15 @@ class _WeekViewState extends State<WeekView> {
       ),
     );
   }
-  
+
   // 주간 일정 목록 뷰
   Widget _buildWeekEventsView(int pageIndex) {
     // 해당 주의 시작일
-    final weekStart = (_weekStarts.length > pageIndex) 
-        ? _weekStarts[pageIndex]
-        : DateTime.now().subtract(Duration(days: DateTime.now().weekday % 7));
-    
+    final weekStart = (_weekStarts.length > pageIndex) ? _weekStarts[pageIndex] : DateTime.now().subtract(Duration(days: DateTime.now().weekday % 7));
+
     // 해당 주의 이벤트 데이터
-    final weekEvents = (_weeklyEvents.length > pageIndex) 
-        ? _weeklyEvents[pageIndex]
-        : <int, List<Event>>{};
-    
+    final weekEvents = (_weeklyEvents.length > pageIndex) ? _weeklyEvents[pageIndex] : <int, List<Event>>{};
+
     return ListView(
       children: List.generate(7, (i) {
         final date = weekStart.add(Duration(days: i));
@@ -365,7 +369,7 @@ class _WeekViewState extends State<WeekView> {
       }),
     );
   }
-  
+
   // 요일별 일정 섹션
   Widget _buildDaySection(int dayIndex, DateTime date, List<Event> events) {
     return Column(
@@ -382,23 +386,22 @@ class _WeekViewState extends State<WeekView> {
             ),
           ),
         ),
-        
+
         // 일정이 없는 경우
         if (events.isEmpty)
           const Padding(
             padding: EdgeInsets.all(16.0),
             child: Center(child: Text('일정이 없습니다.')),
           ),
-        
+
         // 일정 목록
-        if (events.isNotEmpty)
-          ...events.map((event) => _buildEventItem(event, date)).toList(),
-        
+        if (events.isNotEmpty) ...events.map((event) => _buildEventItem(event, date)),
+
         const Divider(height: 1),
       ],
     );
   }
-  
+
   // 개별 일정 아이템
   Widget _buildEventItem(Event event, DateTime date) {
     // 시간 없는 일정과 있는 일정 스타일 분리
@@ -418,7 +421,7 @@ class _WeekViewState extends State<WeekView> {
               ),
             ),
             const SizedBox(width: 12),
-            
+
             // 일정 내용
             Expanded(
               child: Column(
@@ -433,7 +436,7 @@ class _WeekViewState extends State<WeekView> {
                   ),
                   if (event.hasTimeSet)
                     Text(
-                      '${_formatTime(event.startTime)} - ${_formatTime(event.endTime)}',
+                      '${_formatTime(event.startTime!)} - ${_formatTime(event.endTime!)}',
                       style: TextStyle(
                         color: Colors.grey.shade600,
                         fontSize: 12,
@@ -450,7 +453,7 @@ class _WeekViewState extends State<WeekView> {
                 ],
               ),
             ),
-            
+
             // 루틴 표시
             if (event.isRoutine)
               const Padding(
@@ -466,7 +469,7 @@ class _WeekViewState extends State<WeekView> {
       ),
     );
   }
-  
+
   // 이벤트 상세 보기
   void _showEvent(BuildContext context, Event event) {
     // 최신 정보 다시 가져오기
@@ -506,7 +509,6 @@ class _WeekViewState extends State<WeekView> {
         duration: const Duration(milliseconds: 0),
         curve: Curves.decelerate,
         child: SlideUpContainer(
-          height: 450,
           child: ScheduleDetails(
             event: event,
             onUpdate: () {
@@ -518,18 +520,18 @@ class _WeekViewState extends State<WeekView> {
       ),
     );
   }
-  
+
   // 시간 포맷팅
   String _formatTime(TimeOfDay time) {
     return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
   }
-  
+
   // 오늘 날짜인지 확인 (년월일 모두 같은 경우만)
   bool _isToday(DateTime date) {
     final now = DateTime.now();
     return date.year == now.year && date.month == now.month && date.day == now.day;
   }
-  
+
   // 같은 날짜인지 확인
   bool _isSameDay(DateTime a, DateTime b) {
     return a.year == b.year && a.month == b.month && a.day == b.day;
