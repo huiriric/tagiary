@@ -25,16 +25,16 @@ class ScheduleItem extends HiveObject {
   final String description;
 
   @HiveField(6)
-  final int? startHour;  // null 가능
+  final int? startHour; // null 가능
 
   @HiveField(7)
-  final int? startMinute;  // null 가능
+  final int? startMinute; // null 가능
 
   @HiveField(8)
-  final int? endHour;  // null 가능
+  final int? endHour; // null 가능
 
   @HiveField(9)
-  final int? endMinute;  // null 가능
+  final int? endMinute; // null 가능
 
   @HiveField(10)
   final int colorValue;
@@ -60,9 +60,10 @@ class ScheduleItem extends HiveObject {
       id: id,
       title: title,
       description: description,
-      // 시간 정보가 없으면 기본값 제공
-      startTime: hasTimeInfo ? TimeOfDay(hour: startHour!, minute: startMinute!) : const TimeOfDay(hour: 0, minute: 0),
-      endTime: hasTimeInfo ? TimeOfDay(hour: endHour!, minute: endMinute!) : const TimeOfDay(hour: 0, minute: 30),
+      date: DateTime(year, month, date), // 날짜 정보
+      daysOfWeek: null,
+      startTime: hasTimeInfo ? TimeOfDay(hour: startHour!, minute: startMinute!) : null,
+      endTime: hasTimeInfo ? TimeOfDay(hour: endHour!, minute: endMinute!) : null,
       color: Color(colorValue),
       isRoutine: false,
       hasTimeSet: hasTimeInfo,
@@ -83,7 +84,7 @@ class ScheduleRepository {
     } else {
       _item = await Hive.openBox<ScheduleItem>('scheduleBox');
     }
-    
+
     if (Hive.isBoxOpen('counterBox')) {
       _counter = Hive.box<int>('counterBox');
     } else {
@@ -116,24 +117,23 @@ class ScheduleRepository {
         .where((item) => DateTime(item.year, item.month, item.date).isAtSameMomentAs(DateTime(date.year, date.month, date.day)))
         .map((e) => e.toEvent());
   }
-  
+
   // 시간 정보가 없는 일정만 가져오기
   Iterable<Event> getNoTimeItems(DateTime date) {
     return _item.values
-        .where((item) => 
+        .where((item) =>
             DateTime(item.year, item.month, item.date).isAtSameMomentAs(DateTime(date.year, date.month, date.day)) &&
-            (item.startHour == null || item.endHour == null)
-        )
+            (item.startHour == null || item.endHour == null))
         .map((e) => e.toEvent());
   }
-  
+
   // 시간 정보가 있는 일정만 가져오기
   Iterable<Event> getTimeItems(DateTime date) {
     return _item.values
-        .where((item) => 
+        .where((item) =>
             DateTime(item.year, item.month, item.date).isAtSameMomentAs(DateTime(date.year, date.month, date.day)) &&
-            item.startHour != null && item.endHour != null
-        )
+            item.startHour != null &&
+            item.endHour != null)
         .map((e) => e.toEvent());
   }
 

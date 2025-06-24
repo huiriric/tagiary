@@ -13,13 +13,13 @@ class CheckRoutineItem extends HiveObject {
   @HiveField(2)
   final int colorValue;
 
-  @HiveField(3)
+  @HiveField(7)
   late bool check;
 
-  @HiveField(4)
+  @HiveField(8)
   late DateTime updated;
-  
-  @HiveField(5)
+
+  @HiveField(9)
   final List<bool> daysOfWeek; // 요일별 반복 여부 [일, 월, 화, 수, 목, 금, 토]
 
   CheckRoutineItem({
@@ -30,7 +30,7 @@ class CheckRoutineItem extends HiveObject {
     required this.updated,
     required this.daysOfWeek,
   });
-  
+
   // 기존 데이터와의 호환성을 위한 팩토리 생성자
   factory CheckRoutineItem.fromLegacy({
     required int id,

@@ -19,41 +19,45 @@ class ScheduleRoutineItem extends HiveObject {
   final List<bool> daysOfWeek; // [월,화,수,목,금,토,일] - true means the schedule applies to that day
 
   @HiveField(4)
-  final int startHour;
+  final int? startHour;
 
   @HiveField(5)
-  final int startMinute;
+  final int? startMinute;
 
   @HiveField(6)
-  final int endHour;
+  final int? endHour;
 
   @HiveField(7)
-  final int endMinute;
+  final int? endMinute;
 
   @HiveField(8)
   final int colorValue;
 
+  bool get hasTimeInfo => startHour != null && startMinute != null && endHour != null && endMinute != null;
+
   ScheduleRoutineItem({
     required this.title,
     required this.description,
-    required this.startHour,
-    required this.startMinute,
-    required this.endHour,
-    required this.endMinute,
+    this.startHour,
+    this.startMinute,
+    this.endHour,
+    this.endMinute,
     required this.colorValue,
     required this.daysOfWeek,
   });
 
   Event toEvent() {
     return Event(
-      id: id,
-      title: title,
-      description: description,
-      startTime: TimeOfDay(hour: startHour, minute: startMinute),
-      endTime: TimeOfDay(hour: endHour, minute: endMinute),
-      color: Color(colorValue),
-      isRoutine: true,
-    );
+        id: id,
+        title: title,
+        description: description,
+        daysOfWeek: daysOfWeek,
+        date: null, // 날짜 정보는 없으므로 null
+        startTime: hasTimeInfo ? TimeOfDay(hour: startHour!, minute: startMinute!) : null,
+        endTime: hasTimeInfo ? TimeOfDay(hour: endHour!, minute: endMinute!) : null,
+        color: Color(colorValue),
+        isRoutine: true,
+        hasTimeSet: hasTimeInfo);
   }
 }
 
@@ -70,7 +74,7 @@ class ScheduleRoutineRepository {
     } else {
       _item = await Hive.openBox<ScheduleRoutineItem>('scheduleRoutineBox');
     }
-    
+
     if (Hive.isBoxOpen('counterBox')) {
       _counter = Hive.box<int>('counterBox');
     } else {
@@ -97,14 +101,14 @@ class ScheduleRoutineRepository {
   List<ScheduleRoutineItem> getAllItems() {
     return _item.values.toList();
   }
-  
+
   Iterable<Event> getAllEvents() {
     return _item.values.toList().map((e) => e.toEvent());
   }
 
-  // 특정 요일의 스케줄만 가져오기
+  // 특정 요일의 스케줄만 가져오기 (시간 정보가 있는 경우)
   // dayIndex: 0(일요일) ~ 6(토요일)
-  Iterable<Event> getItemsByDay(int dayIndex) {
+  Iterable<Event> getItemsByDayWithTime(int dayIndex) {
     if (dayIndex < 0 || dayIndex > 6) {
       throw ArgumentError('dayIndex must be between 0 and 6');
     }
@@ -114,16 +118,32 @@ class ScheduleRoutineRepository {
       if (item.daysOfWeek.length <= dayIndex) {
         return false;
       }
-      return item.daysOfWeek[dayIndex];
+      // 해당 요일이면서 시간 정보가 있는 경우만 반환
+      return item.daysOfWeek[dayIndex] && item.hasTimeInfo;
+    }).map((e) => e.toEvent());
+  }
+
+  // 특정 요일의 스케줄만 가져오기 (시간 정보가 없는 경우)
+  Iterable<Event> getItemsByDayWithoutTime(int dayIndex) {
+    if (dayIndex < 0 || dayIndex > 6) {
+      throw ArgumentError('dayIndex must be between 0 and 6');
+    }
+
+    return _item.values.where((item) {
+      // 인덱스가 유효한지 확인
+      if (item.daysOfWeek.length <= dayIndex) {
+        return false;
+      }
+      return item.daysOfWeek[dayIndex] && !item.hasTimeInfo;
     }).map((e) => e.toEvent());
   }
 
   // 오늘의 스케줄만 가져오기
-  Iterable<Event> getTodayItems() {
-    // DateTime의 weekday는 1(월요일) ~ 7(일요일)이므로 조정 필요
-    final today = DateTime.now().weekday % 7; // 0(일)~6(토) 범위로 변환
-    return getItemsByDay(today);
-  }
+  // Iterable<Event> getTodayItems() {
+  //   // DateTime의 weekday는 1(월요일) ~ 7(일요일)이므로 조정 필요
+  //   final today = DateTime.now().weekday % 7; // 0(일)~6(토) 범위로 변환
+  //   return getItemsByDayWithTime(today);
+  // }
 
   Future<void> updateItem(ScheduleRoutineItem item) async {
     await _item.put(item.id, item);
