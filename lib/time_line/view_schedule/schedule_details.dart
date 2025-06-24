@@ -2,14 +2,17 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:hive/hive.dart';
+import 'package:tagiary/component/day_picker/day_picker.dart';
 import 'package:tagiary/constants/colors.dart';
 import 'package:tagiary/main.dart';
+import 'package:tagiary/screens/home_screen.dart';
 import 'package:tagiary/tables/data_models/event.dart';
 import 'package:tagiary/tables/schedule/schedule_item.dart';
 import 'package:tagiary/tables/schedule_routine/schedule_routine_item.dart';
 import 'package:tagiary/tables/check/check_item.dart';
 import 'package:tagiary/tables/check_routine/check_routine_item.dart';
 import 'package:tagiary/tables/schedule_links/schedule_link_item.dart';
+import 'package:tagiary/time_line/add_schedule.dart';
 
 class ScheduleDetails extends StatefulWidget {
   final Event event;
@@ -30,398 +33,546 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
   bool _isLoading = false;
   late TextEditingController _titleController;
   late TextEditingController _descriptionController;
-  late TimeOfDay _startTime;
-  late TimeOfDay _endTime;
+  late FocusNode _titleFocusNode;
+  late FocusNode _descriptionFocusNode;
+  late DateTime? _date; // 날짜 정보\
+  late List<bool>? selectedDays;
+  late TimeOfDay? _startTime;
+  late TimeOfDay? _endTime;
   late Color _selectedColor;
-  bool _hasTimeSet = true; // 시간 설정 여부
+  late bool _isRoutine;
+  late bool _hasTimeSet; // 시간 설정 여부
+  late Key _dayPickerKey;
+
+  late FixedExtentScrollController _startHourController;
+  late FixedExtentScrollController _startMinuteController;
+  late FixedExtentScrollController _endHourController;
+  late FixedExtentScrollController _endMinuteController;
+
+  DateTime now = DateTime.now();
 
   @override
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.event.title);
     _descriptionController = TextEditingController(text: widget.event.description);
+    _titleFocusNode = FocusNode();
+    _descriptionFocusNode = FocusNode();
+    _date = widget.event.date;
     _startTime = widget.event.startTime;
     _endTime = widget.event.endTime;
     _selectedColor = widget.event.color;
+    _isRoutine = widget.event.isRoutine;
     _hasTimeSet = widget.event.hasTimeSet;
+    selectedDays = widget.event.daysOfWeek;
+    _dayPickerKey = UniqueKey();
+    _initializeControllers();
+  }
+
+  void _initializeControllers() {
+    _startHourController = FixedExtentScrollController(initialItem: _startTime!.hour);
+    _startMinuteController = FixedExtentScrollController(initialItem: _startTime!.minute ~/ 5);
+    _endHourController = FixedExtentScrollController(initialItem: _endTime!.hour);
+    _endMinuteController = FixedExtentScrollController(initialItem: _endTime!.minute ~/ 5);
+  }
+
+  void _resetTimePickers() {
+    print(_startTime);
+    print(_endTime);
+    // setState(() {
+    //   _startTime = widget.event.startTime;
+    //   _endTime = widget.event.endTime;
+    // });
+    print((widget.event.startTime!.hour).toDouble());
+    print((widget.event.startTime!.minute ~/ 5).toDouble());
+    print((widget.event.endTime!.hour).toDouble());
+    print((widget.event.endTime!.minute ~/ 5).toDouble());
+
+    // 스크롤 위치도 원래대로 되돌리기
+    _startHourController.animateToItem(
+      widget.event.startTime!.hour,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+    _startMinuteController.animateToItem(
+      widget.event.startTime!.minute ~/ 5,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+    _endHourController.animateToItem(
+      widget.event.endTime!.hour,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+    _endMinuteController.animateToItem(
+      widget.event.endTime!.minute ~/ 5,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
   }
 
   @override
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
+    _titleFocusNode.dispose();
+    _descriptionFocusNode.dispose();
+    _startHourController.dispose();
+    _startMinuteController.dispose();
+    _endHourController.dispose();
+    _endMinuteController.dispose();
+
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final isRoutine = widget.event.isRoutine;
-    final typeText = isRoutine ? '루틴 일정' : '일반 일정';
+    if (detectDiff() && !_isEditing) {
+      // 편집 모드로 전환
+      setState(() {
+        _isEditing = true;
+      });
+    } else if (!detectDiff() && _isEditing) {
+      // 편집 모드 종료
+      setState(() {
+        _isEditing = false;
+      });
+    }
 
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // 헤더와 삭제 버튼
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  _isEditing ? '일정 수정' : '일정 상세',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Row(
-                  children: [
-                    if (_isEditing)
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () {
-                          setState(() {
-                            // 편집 취소시 원래 값으로 복원
-                            _titleController.text = widget.event.title;
-                            _descriptionController.text = widget.event.description;
-                            _startTime = widget.event.startTime;
-                            _endTime = widget.event.endTime;
-                            _selectedColor = widget.event.color;
-                            _isEditing = false;
-                          });
-                        },
-                        color: Colors.grey,
-                        tooltip: '편집 취소',
-                      ),
-                    IconButton(
-                      icon: Icon(_isEditing ? Icons.check : Icons.edit),
-                      onPressed: _isLoading
-                          ? null
-                          : () {
-                              if (_isEditing) {
-                                _updateSchedule();
-                              } else {
-                                setState(() {
-                                  _isEditing = true;
-                                });
-                              }
-                            },
-                      color: _isEditing ? Colors.green : Colors.blue,
-                      tooltip: _isEditing ? '저장' : '수정',
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.delete_outline),
-                      onPressed: _isLoading
-                          ? null
-                          : () async {
-                              final confirm = await _showConfirmDialog('정말 이 일정을 삭제하시겠습니까?');
-
-                              if (confirm) {
-                                _deleteSchedule();
-                              }
-                            },
-                      color: Colors.red,
-                      tooltip: '삭제',
-                    ),
-                  ],
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 10),
-
-            // 일정 유형 표시
-            Chip(
-              label: Text(typeText),
-              backgroundColor: isRoutine ? Colors.purple.shade100 : Colors.blue.shade100,
-            ),
-
-            const SizedBox(height: 20),
-
-            // 제목
-            if (_isEditing)
-              TextField(
-                controller: _titleController,
-                decoration: const InputDecoration(
-                  labelText: '제목',
-                  border: OutlineInputBorder(),
-                ),
-              )
-            else
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    '제목',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  Text(
-                    widget.event.title,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-
-            const SizedBox(height: 20),
-
-            // 설명
-            if (_isEditing)
-              TextField(
-                controller: _descriptionController,
-                decoration: const InputDecoration(
-                  labelText: '설명',
-                  border: OutlineInputBorder(),
-                ),
-                minLines: 2,
-                maxLines: 5,
-              )
-            else if (widget.event.description.isNotEmpty)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    '설명',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  Text(
-                    widget.event.description,
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                ],
-              ),
-
-            const SizedBox(height: 20),
-
-            // 시간 정보가 있거나 편집 모드에서 시간 설정이 켜져 있는 경우 표시
-            if (widget.event.hasTimeSet || (_isEditing && _hasTimeSet)) ...[
-              const Text(
-                '시간',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey,
-                ),
-              ),
+        child: GestureDetector(
+          onTap: () {
+            // 터치 시 키보드 내리기
+            FocusManager.instance.primaryFocus?.unfocus();
+          },
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              // 헤더와 삭제 버튼
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  if (_isEditing) ...[
-                    // 편집 모드일 때 시간 선택기
-                    Expanded(
-                      child: Row(
-                        children: [
-                          // 시작 시간
-                          SizedBox(
-                            width: 50,
-                            height: 55,
-                            child: CupertinoPicker(
-                              itemExtent: 30,
-                              scrollController: FixedExtentScrollController(
-                                initialItem: _startTime.hour,
-                              ),
-                              onSelectedItemChanged: (i) => setState(() {
-                                _startTime = TimeOfDay(hour: i, minute: _startTime.minute);
-                              }),
-                              children: List.generate(
-                                24,
-                                (int i) => Center(
-                                  child: Text(
-                                    i.toString().padLeft(2, '0'),
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const Text(':'),
-                          // 시작 분
-                          SizedBox(
-                            width: 50,
-                            height: 55,
-                            child: CupertinoPicker(
-                              itemExtent: 30,
-                              scrollController: FixedExtentScrollController(
-                                initialItem: (_startTime.minute / 5).floor(),
-                              ),
-                              onSelectedItemChanged: (i) => setState(() {
-                                _startTime = TimeOfDay(hour: _startTime.hour, minute: i * 5);
-                              }),
-                              children: List.generate(
-                                12,
-                                (int i) => Center(
-                                  child: Text(
-                                    (i * 5).toString().padLeft(2, '0'),
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          const Text(' ~ '),
-
-                          // 종료 시간
-                          SizedBox(
-                            width: 50,
-                            height: 55,
-                            child: CupertinoPicker(
-                              itemExtent: 30,
-                              scrollController: FixedExtentScrollController(
-                                initialItem: _endTime.hour,
-                              ),
-                              onSelectedItemChanged: (i) => setState(() {
-                                _endTime = TimeOfDay(hour: i, minute: _endTime.minute);
-                              }),
-                              children: List.generate(
-                                24,
-                                (int i) => Center(
-                                  child: Text(
-                                    i.toString().padLeft(2, '0'),
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const Text(':'),
-                          // 종료 분
-                          SizedBox(
-                            width: 50,
-                            height: 55,
-                            child: CupertinoPicker(
-                              itemExtent: 30,
-                              scrollController: FixedExtentScrollController(
-                                initialItem: (_endTime.minute / 5).floor(),
-                              ),
-                              onSelectedItemChanged: (i) => setState(() {
-                                _endTime = TimeOfDay(hour: _endTime.hour, minute: i * 5);
-                              }),
-                              children: List.generate(
-                                12,
-                                (int i) => Center(
-                                  child: Text(
-                                    (i * 5).toString().padLeft(2, '0'),
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+                  // 일정 이름
+                  Expanded(
+                    child: TextFormField(
+                      onChanged: (value) {
+                        setState(() {
+                          _titleController.text = value;
+                        });
+                      },
+                      controller: _titleController,
+                      focusNode: _titleFocusNode,
+                      // autofocus: true,
+                      onEditingComplete: () {
+                        _descriptionFocusNode.requestFocus();
+                      },
+                      decoration: const InputDecoration(
+                        hintText: '일정',
+                        // 언더라인 완전 제거
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        // 힌트 스타일 커스터마이징
+                        hintStyle: TextStyle(
+                          color: Colors.grey,
+                        ),
+                      ),
+                      style: const TextStyle(
+                        color: Colors.black87,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                  ] else
-                    // 읽기 모드일 때 시간 표시
-                    Text(
-                      '${_formatTime(_startTime)} ~ ${_formatTime(_endTime)}',
-                      style: const TextStyle(
+                  ),
+
+                  Row(
+                    children: [
+                      if (_isEditing)
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () {
+                            setState(() {
+                              // 편집 취소시 원래 값으로 복원
+                              _titleController.text = widget.event.title;
+                              _descriptionController.text = widget.event.description;
+                              selectedDays = widget.event.daysOfWeek;
+                              _date = widget.event.date;
+                              _hasTimeSet = widget.event.hasTimeSet;
+                              _isRoutine = widget.event.isRoutine;
+                              _selectedColor = widget.event.color;
+                              _isEditing = false;
+                              _dayPickerKey = UniqueKey(); // DayPicker 새로고침
+                              if (_hasTimeSet) {
+                                print(_startTime);
+                                print(_endTime);
+                                _startTime = widget.event.startTime;
+                                _endTime = widget.event.endTime;
+                                _resetTimePickers();
+                              }
+                            });
+                          },
+                          color: Colors.grey,
+                          tooltip: '편집 취소',
+                        ),
+                      if (_isEditing)
+                        IconButton(
+                          icon: const Icon(Icons.check),
+                          onPressed: _isLoading
+                              ? null
+                              : () {
+                                  _updateSchedule();
+                                },
+                          color: Colors.green,
+                          tooltip: '저장',
+                        ),
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline),
+                        onPressed: _isLoading
+                            ? null
+                            : () async {
+                                final confirm = await _showConfirmDialog('정말 이 일정을 삭제하시겠습니까?');
+
+                                if (confirm) {
+                                  _deleteSchedule();
+                                }
+                              },
+                        color: Colors.red,
+                        tooltip: '삭제',
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+
+              TextFormField(
+                onChanged: (value) {
+                  setState(() {
+                    _descriptionController.text = value;
+                  });
+                },
+                controller: _descriptionController,
+                focusNode: _descriptionFocusNode,
+                keyboardType: TextInputType.multiline,
+                maxLines: null,
+                textInputAction: TextInputAction.done,
+                onEditingComplete: () {
+                  // 키보드 내리기
+                  FocusManager.instance.primaryFocus?.unfocus();
+                },
+                decoration: const InputDecoration(
+                  hintText: '노트',
+                  // 언더라인 완전 제거
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  // 힌트 스타일 커스터마이징
+                  hintStyle: TextStyle(
+                    color: Colors.grey,
+                  ),
+                ),
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+              Divider(
+                height: 5,
+                thickness: 1,
+                color: Colors.grey.shade300,
+              ),
+
+              !_isRoutine
+                  ? TextButton(
+                      onPressed: () async {
+                        final selectedDate = await showBlackWhiteDatePicker(
+                          context: context,
+                          initialDate: _date,
+                        );
+                        if (selectedDate != null) {
+                          setState(() {
+                            _date = selectedDate;
+                          });
+                        }
+                      },
+                      child: Text(
+                        formatDate(_date!),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                          color: Color(0xFF40608A),
+                        ),
+                      ),
+                    )
+                  : DayPicker(
+                      key: _dayPickerKey,
+                      selectedDays: selectedDays!,
+                      onDaysChanged: (days) {
+                        setState(() {
+                          selectedDays = days;
+                        });
+                      },
+                    ),
+              _isRoutine
+                  //
+                  ? _hasTimeSet
+                      ? GestureDetector(
+                          onTap: () => _showToast('반복 일정은 시간을 수정할 수 없습니다.'),
+                          // TimePicker 위젯을 클릭할 수 없도록 하기
+                          child: AbsorbPointer(child: timePicker()),
+                        )
+                      : const SizedBox.shrink()
+                  : _hasTimeSet
+                      ? timePicker()
+                      : const SizedBox.shrink(),
+              // 색상 선택
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '색상',
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                ],
-              ),
-            ],
-
-            if (_isEditing) ...[
-              const SizedBox(height: 20),
-
-              // 일정만 시간 설정 체크박스 추가 (루틴은 항상 시간이 있어야 함)
-              if (!widget.event.isRoutine)
-                Row(
-                  children: [
-                    const Text(
-                      '시간 설정',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                    Checkbox(
-                      value: _hasTimeSet,
-                      activeColor: Colors.indigo,
-                      shape: const CircleBorder(),
-                      onChanged: (value) {
-                        setState(() {
-                          _hasTimeSet = value!;
-                          // 시간 설정 활성화 시 기본 시간 설정
-                          if (_hasTimeSet) {
-                            _startTime = const TimeOfDay(hour: 9, minute: 0);
-                            _endTime = const TimeOfDay(hour: 10, minute: 0);
-                          }
-                        });
-                      },
+                    const SizedBox(height: 8),
+                    Column(
+                      children: [
+                        // 첫 번째 줄 (색상 0-5)
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: List.generate(6, (index) {
+                            final color = scheduleColors[index];
+                            return GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _selectedColor = color;
+                                });
+                              },
+                              child: Container(
+                                width: 35,
+                                height: 35,
+                                decoration: BoxDecoration(
+                                  color: color,
+                                  shape: BoxShape.circle,
+                                  border: _selectedColor == color ? Border.all(color: Colors.black, width: 2) : null,
+                                ),
+                              ),
+                            );
+                          }),
+                        ),
+                        const SizedBox(height: 12),
+                        // 두 번째 줄 (색상 6-11)
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: List.generate(6, (index) {
+                            final color = scheduleColors[index + 6];
+                            return GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _selectedColor = color;
+                                });
+                              },
+                              child: Container(
+                                width: 35,
+                                height: 35,
+                                decoration: BoxDecoration(
+                                  color: color,
+                                  shape: BoxShape.circle,
+                                  border: _selectedColor == color ? Border.all(color: Colors.black, width: 2) : null,
+                                ),
+                              ),
+                            );
+                          }),
+                        ),
+                      ],
                     ),
                   ],
                 ),
+              ),
 
-              const SizedBox(height: 20),
+              // 로딩 표시
+              if (_isLoading)
+                const Center(
+                  child: CircularProgressIndicator(),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
-              // 색상 선택
+  bool detectDiff() {
+    // 제목, 설명, 시간, 색상 변경 여부 확인
+    final isTitleChanged = _titleController.text != widget.event.title;
+    final isDescriptionChanged = _descriptionController.text != widget.event.description;
+    final isDateChanged = _date != widget.event.date;
+    final isRoutineChanged = selectedDays != widget.event.daysOfWeek;
+    final isStartTimeChanged = _startTime != widget.event.startTime;
+    final isEndTimeChanged = _endTime != widget.event.endTime;
+    final isColorChanged = _selectedColor != widget.event.color;
+
+    return isTitleChanged || isDescriptionChanged || isDateChanged || isRoutineChanged || isStartTimeChanged || isEndTimeChanged || isColorChanged;
+  }
+
+  Widget timePicker() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
               const Text(
-                '색상',
+                '시간',
                 style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 10),
-
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  for (Color color in scheduleColors)
-                    GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _selectedColor = color;
-                        });
-                      },
-                      child: Container(
-                        width: 35,
-                        height: 35,
-                        decoration: BoxDecoration(
-                          color: color,
-                          shape: BoxShape.circle,
-                          border: _selectedColor.value == color.value ? Border.all(color: Colors.black, width: 2) : null,
+              const SizedBox(width: 8),
+              if (_isRoutine)
+                const Text(
+                  '반복 일정은 시간을 수정할 수 없습니다',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.normal,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // start hour
+              SizedBox(
+                width: 50,
+                height: 55,
+                child: CupertinoPicker(
+                  itemExtent: 30,
+                  scrollController: _startHourController,
+                  onSelectedItemChanged: (i) => setState(() {
+                    // print(_startTime);
+                    _startTime = TimeOfDay(hour: i, minute: _startTime!.minute);
+                  }),
+                  children: List.generate(
+                    24,
+                    (int i) => Center(
+                      child: Text(
+                        formatEachTime(i),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                          color: Color(0xFF40608A),
                         ),
                       ),
                     ),
-                ],
+                  ),
+                ),
+              ),
+              const Text(
+                ':',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+              ),
+              // start minute
+              SizedBox(
+                width: 50,
+                height: 55,
+                child: CupertinoPicker(
+                  itemExtent: 30,
+                  scrollController: _startMinuteController,
+                  onSelectedItemChanged: (i) => setState(() {
+                    _startTime = TimeOfDay(hour: _startTime!.hour, minute: i * 5);
+                  }),
+                  children: List.generate(
+                    12,
+                    (int i) => Center(
+                      child: Text(
+                        formatEachTime(i * 5),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                          color: Color(0xFF40608A),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const Text(
+                ' ~ ',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                  color: Color(0xFF40608A),
+                ),
+              ),
+              // end hour
+              SizedBox(
+                width: 50,
+                height: 55,
+                child: CupertinoPicker(
+                  itemExtent: 30,
+                  scrollController: _endHourController,
+                  onSelectedItemChanged: (i) => setState(() {
+                    _endTime = TimeOfDay(hour: i, minute: _endTime!.minute);
+                  }),
+                  children: List.generate(
+                    24,
+                    (int i) => Center(
+                      child: Text(
+                        formatEachTime(i),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                          color: Color(0xFF40608A),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const Text(
+                ':',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+              ),
+              // end minute
+              SizedBox(
+                width: 50,
+                height: 55,
+                child: CupertinoPicker(
+                  itemExtent: 30,
+                  scrollController: _endMinuteController,
+                  onSelectedItemChanged: (i) => setState(() {
+                    _endTime = TimeOfDay(hour: _endTime!.hour, minute: i * 5);
+                  }),
+                  children: List.generate(
+                    12,
+                    (int i) => Center(
+                      child: Text(
+                        formatEachTime(i * 5),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                          color: Color(0xFF40608A),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ],
-
-            const SizedBox(height: 20),
-
-            // 로딩 표시
-            if (_isLoading)
-              const Center(
-                child: CircularProgressIndicator(),
-              ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -565,11 +716,10 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
 
   // 일정 수정 함수
   Future<void> _updateSchedule() async {
-    // 원래 값 저장
     final originalTitle = widget.event.title;
     final originalDescription = widget.event.description;
-    final originalStartTime = widget.event.startTime;
-    final originalEndTime = widget.event.endTime;
+    final originalStartTime = widget.event.startTime ?? const TimeOfDay(hour: 0, minute: 0);
+    final originalEndTime = widget.event.endTime ?? const TimeOfDay(hour: 0, minute: 30);
     final originalColor = widget.event.color;
 
     // 입력 검증
@@ -579,10 +729,10 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
     }
 
     // 시간 설정이 켜져있을 때만 시간 검증
-    if (_hasTimeSet && (_startTime.hour > _endTime.hour || (_startTime.hour == _endTime.hour && _startTime.minute >= _endTime.minute))) {
-      _showToast('종료 시간은 시작 시간보다 나중이어야 합니다');
-      return;
-    }
+    // if (_hasTimeSet && (_startTime.hour > _endTime.hour || (_startTime.hour == _endTime.hour && _startTime.minute >= _endTime.minute))) {
+    //   _showToast('종료 시간은 시작 시간보다 나중이어야 합니다');
+    //   return;
+    // }
 
     setState(() {
       _isLoading = true;
@@ -590,19 +740,19 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
 
     try {
       // 연결된 루틴/할일 항목 체크
-      final linkRepo = ScheduleLinkRepository();
-      await linkRepo.init();
+      // final linkRepo = ScheduleLinkRepository();
+      // await linkRepo.init();
 
-      final linkedItems = linkRepo.getLinksForSchedule(widget.event.id, widget.event.isRoutine);
+      // final linkedItems = linkRepo.getLinksForSchedule(widget.event.id, widget.event.isRoutine);
 
       // 연결된 항목이 있는지 확인
-      bool hasLinkedItems = linkedItems.isNotEmpty;
-      bool updateLinkedItems = false;
+      // bool hasLinkedItems = linkedItems.isNotEmpty;
+      // bool updateLinkedItems = false;
 
       // 연결된 항목이 있으면 함께 수정할지 확인
-      if (hasLinkedItems) {
-        updateLinkedItems = await _showUpdateLinkedItemsDialog(linkedItems);
-      }
+      // if (hasLinkedItems) {
+      //   updateLinkedItems = await _showUpdateLinkedItemsDialog(linkedItems);
+      // }
 
       // 일정 정보 업데이트
       if (widget.event.isRoutine) {
@@ -614,9 +764,9 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
       }
 
       // 연결된 항목들도 함께 수정
-      if (updateLinkedItems) {
-        await _updateLinkedItems(linkedItems);
-      }
+      // if (updateLinkedItems) {
+      //   await _updateLinkedItems(linkedItems);
+      // }
 
       // 수정 성공 알림
       _showToast('일정이 수정되었습니다');
@@ -728,7 +878,7 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
             colorValue: _selectedColor.value, // 색상 동기화
             check: item.check, // 완료 상태 유지
             updated: item.updated, // 업데이트 시간 유지
-            daysOfWeek: item.daysOfWeek, // 요일 설정 유지
+            daysOfWeek: selectedDays!, // 요일 설정 유지
           );
           await routineRepo.updateItem(updatedItem);
         }
@@ -746,8 +896,7 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
 
     // 1. 해당 날짜의 모든 일정 가져오기 (현재 수정 중인 일정 제외)
     final allDateEvents = scheduleRepo.getDateItems(date);
-    final dateEvents = allDateEvents.where((e) => e.id != eventId);
-
+    final dateEvents = allDateEvents.where((e) => e.id != eventId && e.hasTimeSet);
     // 시간 충돌 확인
     if (_hasTimeConflict(dateEvents)) {
       return true;
@@ -755,7 +904,7 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
 
     // 2. 해당 날짜의 요일에 해당하는 루틴 일정 확인
     final dayOfWeek = date.weekday % 7; // 0(일)~6(토) 범위로 변환
-    final routineEvents = routineRepo.getItemsByDay(dayOfWeek);
+    final routineEvents = routineRepo.getItemsByDayWithTime(dayOfWeek);
 
     // 루틴 일정과의 시간 충돌 확인
     return _hasTimeConflict(routineEvents);
@@ -774,8 +923,8 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
       if (!daysOfWeek[i]) continue; // 선택되지 않은 요일은 건너뛰기
 
       // 1. 해당 요일의 모든 루틴 가져오기 (현재 수정 중인 루틴 제외)
-      final allRoutineEvents = routineRepo.getItemsByDay(i);
-      final routineEvents = allRoutineEvents.where((e) => e.id != eventId);
+      final allRoutineEvents = routineRepo.getItemsByDayWithTime(i);
+      final routineEvents = allRoutineEvents.where((e) => e.id != eventId && e.hasTimeSet);
 
       // 시간 충돌 확인
       if (_hasTimeConflict(routineEvents)) {
@@ -791,7 +940,7 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
         // 날짜의 요일이 현재 확인 중인 요일과 일치하는지 확인
         if (date.weekday % 7 == i) {
           // 해당 날짜의 일반 일정 가져오기
-          final scheduleEvents = scheduleRepo.getDateItems(date);
+          final scheduleEvents = scheduleRepo.getTimeItems(date);
 
           // 시간 충돌 확인
           if (_hasTimeConflict(scheduleEvents)) {
@@ -817,7 +966,7 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
     }
 
     // 일정 날짜 가져오기
-    final date = DateTime(item.year, item.month, item.date);
+    final date = DateTime(_date!.year, _date!.month, _date!.day);
 
     // 시간 설정이 있는 경우에만 중복 체크
     if (_hasTimeSet && await _checkNormalScheduleConflict(widget.event.id, date)) {
@@ -825,17 +974,18 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
     }
 
     // 새 일정 정보로 업데이트
+    print('새 일정 정보: ${_titleController.text}, ${_descriptionController.text}, $_startTime, $_endTime, $_selectedColor');
     final updatedItem = ScheduleItem(
-      year: item.year,
-      month: item.month,
-      date: item.date,
+      year: _date!.year,
+      month: _date!.month,
+      date: _date!.day,
       title: _titleController.text,
       description: _descriptionController.text,
       // 시간 설정 여부에 따라 시간 정보 저장 방식 결정
-      startHour: _hasTimeSet ? _startTime.hour : null,
-      startMinute: _hasTimeSet ? _startTime.minute : null,
-      endHour: _hasTimeSet ? _endTime.hour : null,
-      endMinute: _hasTimeSet ? _endTime.minute : null,
+      startHour: _hasTimeSet ? _startTime!.hour : null,
+      startMinute: _hasTimeSet ? _startTime!.minute : null,
+      endHour: _hasTimeSet ? _endTime!.hour : null,
+      endMinute: _hasTimeSet ? _endTime!.minute : null,
       colorValue: _selectedColor.value,
     );
 
@@ -859,7 +1009,7 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
     }
 
     // 중복 체크
-    if (await _checkRoutineScheduleConflict(widget.event.id, item.daysOfWeek)) {
+    if (_hasTimeSet && await _checkRoutineScheduleConflict(widget.event.id, selectedDays!)) {
       throw Exception('선택한 요일에 중복되는 일정이 있습니다');
     }
 
@@ -867,11 +1017,11 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
     final updatedItem = ScheduleRoutineItem(
       title: _titleController.text,
       description: _descriptionController.text,
-      daysOfWeek: item.daysOfWeek, // 요일은 변경하지 않음
-      startHour: _startTime.hour,
-      startMinute: _startTime.minute,
-      endHour: _endTime.hour,
-      endMinute: _endTime.minute,
+      daysOfWeek: selectedDays!, // 요일은 변경하지 않음
+      startHour: _hasTimeSet ? _startTime!.hour : null,
+      startMinute: _hasTimeSet ? _startTime!.minute : null,
+      endHour: _hasTimeSet ? _endTime!.hour : null,
+      endMinute: _hasTimeSet ? _endTime!.minute : null,
       colorValue: _selectedColor.value,
     );
 
@@ -885,13 +1035,13 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
   // 일정 충돌 확인 로직
   bool _hasTimeConflict(Iterable<Event> events) {
     // 시작/종료 시간을 분 단위로 변환
-    final newStartMinutes = _startTime.hour * 60 + _startTime.minute;
-    final newEndMinutes = _endTime.hour * 60 + _endTime.minute;
+    final newStartMinutes = _startTime!.hour * 60 + _startTime!.minute;
+    final newEndMinutes = _endTime!.hour * 60 + _endTime!.minute;
 
     // 모든 이벤트와 시간 충돌 확인
     for (var event in events) {
-      final eventStartMinutes = event.startTime.hour * 60 + event.startTime.minute;
-      final eventEndMinutes = event.endTime.hour * 60 + event.endTime.minute;
+      final eventStartMinutes = event.startTime!.hour * 60 + event.startTime!.minute;
+      final eventEndMinutes = event.endTime!.hour * 60 + event.endTime!.minute;
 
       // 충돌 조건:
       // 1. 새 이벤트의 시작이 기존 이벤트 기간 내에 있거나
