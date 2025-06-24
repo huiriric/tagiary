@@ -72,6 +72,7 @@ coverage/
 # Firebase configuration files (if used)
 google-services.json
 GoogleService-Info.plist
+lib/firebase_options.dart
 
 # Fastlane related (if used)
 fastlane/report.xml
