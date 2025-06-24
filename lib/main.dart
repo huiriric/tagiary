@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tagiary/services/notification_service.dart';
 import 'package:tagiary/tables/check/check_enum.dart';
 import 'package:tagiary/tables/check_routine/routine_migration.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -27,6 +28,20 @@ import 'package:tagiary/screens/main_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Firebase 초기화를 NotificationService로 이동
+  // await Firebase.initializeApp(
+  //   options: DefaultFirebaseOptions.currentPlatform,
+  // );
+
+  // Firebase 초기화 후 백그라운드 핸들러 등록
+  // FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  // await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+  //   alert: true,
+  //   badge: true,
+  //   sound: true,
+  // );
 
   // Hive 초기화
   await Hive.initFlutter();
@@ -80,6 +95,9 @@ Future<void> main() async {
   final dataProvider = DataProvider();
   await dataProvider.loadTimelineSettings();
 
+  // 알림 서비스 초기화
+  await NotificationService.initialize();
+
   runApp(
     ChangeNotifierProvider.value(
       value: dataProvider,
@@ -114,5 +132,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
-// 공통 유틸리티 함수는 각 화면에서 직접 관리

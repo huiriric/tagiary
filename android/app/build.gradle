@@ -2,6 +2,7 @@ plugins {
     id "com.android.application"
     id "kotlin-android"
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    id 'com.google.gms.google-services'
     id "dev.flutter.flutter-gradle-plugin"
 }
 
@@ -28,6 +29,8 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        multiDexEnabled = true
     }
 
     buildTypes {
@@ -37,6 +40,15 @@ android {
             signingConfig = signingConfigs.debug
         }
     }
+}
+
+dependencies {
+    // Firebase BOM 사용 (버전 자동 관리)
+    implementation platform('com.google.firebase:firebase-bom:33.14.0')
+    implementation 'com.google.firebase:firebase-messaging'
+    
+    // 멀티덱스 지원
+    implementation 'androidx.multidex:multidex:2.0.1'
 }
 
 flutter {
