@@ -89,15 +89,14 @@ class _AddScheduleState extends State<AddSchedule> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-        child: Padding(
-      padding: const EdgeInsets.all(20.0),
-      child: GestureDetector(
-        // 빈 영역 터치 시 키보드 숨기기
-        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-        child: Stack(
-          children: [
-            Column(
+    return Stack(
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 15.0, right: 15.0, top: 15.0, bottom: 2),
+          child: GestureDetector(
+            // 빈 영역 터치 시 키보드 숨기기
+            onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
@@ -227,7 +226,7 @@ class _AddScheduleState extends State<AddSchedule> {
                           }
                         },
                         child: Text(
-                          _formatDate(widget.date),
+                          formatDate(widget.date),
                           style: const TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 16,
@@ -244,145 +243,7 @@ class _AddScheduleState extends State<AddSchedule> {
                         },
                       ),
                 // 시간 설정이 체크된 경우에만 시간 선택 위젯 표시
-                if (hasTimeSet)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 10.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          '시간',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            // start hour
-                            SizedBox(
-                              width: 50,
-                              height: 55,
-                              child: CupertinoPicker(
-                                itemExtent: 30,
-                                scrollController: FixedExtentScrollController(initialItem: start.hour),
-                                onSelectedItemChanged: (i) => setState(() {
-                                  start = TimeOfDay(hour: i, minute: start.minute);
-                                }),
-                                children: List.generate(
-                                  24,
-                                  (int i) => Center(
-                                    child: Text(
-                                      _formatEachTime(i),
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 16,
-                                        color: Color(0xFF40608A),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const Text(
-                              ':',
-                              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
-                            ),
-                            // start minute
-                            SizedBox(
-                              width: 50,
-                              height: 55,
-                              child: CupertinoPicker(
-                                itemExtent: 30,
-                                scrollController: FixedExtentScrollController(initialItem: start.minute),
-                                onSelectedItemChanged: (i) => setState(() {
-                                  start = TimeOfDay(hour: start.hour, minute: i * 5);
-                                }),
-                                children: List.generate(
-                                  12,
-                                  (int i) => Center(
-                                    child: Text(
-                                      _formatEachTime(i * 5),
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 16,
-                                        color: Color(0xFF40608A),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const Text(
-                              ' ~ ',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 16,
-                                color: Color(0xFF40608A),
-                              ),
-                            ),
-                            // end hour
-                            SizedBox(
-                              width: 50,
-                              height: 55,
-                              child: CupertinoPicker(
-                                itemExtent: 30,
-                                scrollController: FixedExtentScrollController(initialItem: end.hour),
-                                onSelectedItemChanged: (i) => setState(() {
-                                  end = TimeOfDay(hour: i, minute: end.minute);
-                                }),
-                                children: List.generate(
-                                  24,
-                                  (int i) => Center(
-                                    child: Text(
-                                      _formatEachTime(i),
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 16,
-                                        color: Color(0xFF40608A),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const Text(
-                              ':',
-                              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
-                            ),
-                            // end minute
-                            SizedBox(
-                              width: 50,
-                              height: 55,
-                              child: CupertinoPicker(
-                                itemExtent: 30,
-                                scrollController: FixedExtentScrollController(initialItem: end.minute),
-                                onSelectedItemChanged: (i) => setState(() {
-                                  end = TimeOfDay(hour: end.hour, minute: i * 5);
-                                }),
-                                children: List.generate(
-                                  12,
-                                  (int i) => Center(
-                                    child: Text(
-                                      _formatEachTime(i * 5),
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 16,
-                                        color: Color(0xFF40608A),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
+                if (hasTimeSet) TimePicker(startTime: start, endTime: end),
                 // 색상 선택
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -453,33 +314,31 @@ class _AddScheduleState extends State<AddSchedule> {
                 ),
               ],
             ),
-
-            // 우측 상단에 저장 버튼 (초록색 체크 아이콘)
-            Positioned(
-              top: 0,
-              right: 0,
-              child: isLoading
-                  ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
-                      ),
-                    )
-                  : IconButton(
-                      onPressed: _saveSchedule,
-                      icon: const Icon(
-                        Icons.check,
-                        color: Colors.green,
-                        size: 32,
-                      ),
-                    ),
-            ),
-          ],
+          ),
         ),
-      ),
-    ));
+        Positioned(
+          top: 15,
+          right: 20,
+          child: isLoading
+              ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
+                  ),
+                )
+              : IconButton(
+                  onPressed: _saveSchedule,
+                  icon: const Icon(
+                    Icons.check,
+                    color: Colors.green,
+                    size: 32,
+                  ),
+                ),
+        ),
+      ],
+    );
   }
 
   Future<void> _saveSchedule() async {
@@ -507,22 +366,7 @@ class _AddScheduleState extends State<AddSchedule> {
     try {
       if (isRoutine) {
         // 요일 기반 일정 (루틴)
-        if (hasTimeSet) {
-          // 케이스 3: 요일 + 시간 - 타임라인 루틴에 추가
-          await _saveRoutineSchedule();
-
-          // 루틴에도 추가할지 묻기
-          final addToRoutine = await _showAddToRoutineDialog();
-          if (addToRoutine) {
-            await _addToTodoRoutine();
-          }
-        } else {
-          // 케이스 4: 요일 + 시간 없음 - 루틴에만 추가
-          final addToRoutine = await _showAddToRoutineOnlyDialog();
-          if (addToRoutine) {
-            await _addToTodoRoutine();
-          }
-        }
+        await _saveRoutineSchedule();
       } else {
         // 날짜 기반 일정
         if (hasTimeSet) {
@@ -530,34 +374,41 @@ class _AddScheduleState extends State<AddSchedule> {
           await _saveNormalSchedule();
 
           // 할 일에도 추가할지 묻기
-          final addToTodo = await _showAddToTodoDialog();
-          if (addToTodo) {
-            await _addToTodo();
-          }
+          // final addToTodo = await _showAddToTodoDialog();
+          // if (addToTodo) {
+          //   await _addToTodo();
+          // }
         } else {
           // 케이스 2: 날짜 + 시간 없음 - 일정에 시간 없이 저장
           await _saveNormalScheduleWithoutTime();
 
           // 할 일에도 추가할지 묻기
-          final addToTodo = await _showAddToTodoDialog();
-          if (addToTodo) {
-            await _addToTodo();
-          }
+          // final addToTodo = await _showAddToTodoDialog();
+          // if (addToTodo) {
+          //   await _addToTodo();
+          // }
         }
       }
 
-      // 저장 성공 시 콜백 함수 호출
       if (widget.onScheduleAdded != null) {
         widget.onScheduleAdded!();
+        print('callback called');
       }
 
-      Navigator.pop(context); // 저장 성공 시 화면 닫기
+      // Future.delayed(const Duration(microseconds: 300));
+
+      if (mounted) {
+        Navigator.pop(context, true); // 저장 성공 시 화면 닫기
+        print('pop');
+      }
     } catch (e) {
       _showToast('저장 중 오류가 발생했습니다: $e');
     } finally {
-      setState(() {
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
 
@@ -730,12 +581,12 @@ class _AddScheduleState extends State<AddSchedule> {
     // 일정 중복 체크
     _conflictEvent = null; // 충돌 정보 초기화
 
-    if (await _checkNormalScheduleConflict()) {
+    if (hasTimeSet && await _checkNormalScheduleConflict()) {
       if (_conflictEvent != null) {
         // 충돌하는 이벤트 정보를 포함한 에러 메시지
         String conflictType = _conflictEvent!.isRoutine ? "루틴" : "일정";
         throw Exception(
-            '${_formatTime(_conflictEvent!.startTime)}~${_formatTime(_conflictEvent!.endTime)}에 "${_conflictEvent!.title}" $conflictType과(와) 시간이 중복됩니다');
+            '${formatTime(_conflictEvent!.startTime!)}~${formatTime(_conflictEvent!.endTime!)}에 "${_conflictEvent!.title}" $conflictType과(와) 시간이 중복됩니다');
       } else {
         throw Exception('해당 시간에 이미 일정이 있습니다');
       }
@@ -764,12 +615,12 @@ class _AddScheduleState extends State<AddSchedule> {
     // 루틴 일정 중복 체크
     _conflictEvent = null; // 충돌 정보 초기화
 
-    if (await _checkRoutineScheduleConflict()) {
+    if (hasTimeSet && await _checkRoutineScheduleConflict()) {
       if (_conflictEvent != null) {
         // 충돌하는 이벤트 정보를 포함한 에러 메시지
         String conflictType = _conflictEvent!.isRoutine ? "루틴" : "일정";
         throw Exception(
-            '선택한 요일 중 "${_conflictEvent!.title}" $conflictType과(와) 시간이 중복됩니다 (${_formatTime(_conflictEvent!.startTime)}~${_formatTime(_conflictEvent!.endTime)})');
+            '선택한 요일 중 "${_conflictEvent!.title}" $conflictType과(와) 시간이 중복됩니다 (${formatTime(_conflictEvent!.startTime!)}~${formatTime(_conflictEvent!.endTime!)})');
       } else {
         throw Exception('선택한 요일 중 하나 이상에서 이미 같은 시간에 일정이 있습니다');
       }
@@ -782,10 +633,10 @@ class _AddScheduleState extends State<AddSchedule> {
       title: title,
       description: description,
       daysOfWeek: selectedDays,
-      startHour: start.hour,
-      startMinute: start.minute,
-      endHour: end.hour,
-      endMinute: end.minute,
+      startHour: hasTimeSet ? start.hour : null,
+      startMinute: hasTimeSet ? start.minute : null,
+      endHour: hasTimeSet ? end.hour : null,
+      endMinute: hasTimeSet ? end.minute : null,
       colorValue: selectedColor.value,
     );
 
@@ -810,7 +661,7 @@ class _AddScheduleState extends State<AddSchedule> {
 
     // 2. 해당 날짜의 요일에 해당하는 루틴 일정 확인
     final dayOfWeek = widget.date.weekday % 7; // 0(일)~6(토) 범위로 변환
-    final routineEvents = routineRepository.getItemsByDay(dayOfWeek);
+    final routineEvents = routineRepository.getItemsByDayWithTime(dayOfWeek);
 
     // 루틴 일정과의 시간 충돌 확인
     return _hasTimeConflict(routineEvents);
@@ -829,7 +680,7 @@ class _AddScheduleState extends State<AddSchedule> {
       if (!selectedDays[i]) continue; // 선택되지 않은 요일은 건너뛰기
 
       // 1. 해당 요일의 모든 루틴 가져오기
-      final routineEvents = routineRepository.getItemsByDay(i);
+      final routineEvents = routineRepository.getItemsByDayWithTime(i);
 
       // 시간 충돌 확인
       if (_hasTimeConflict(routineEvents)) {
@@ -845,7 +696,7 @@ class _AddScheduleState extends State<AddSchedule> {
         // 날짜의 요일이 현재 확인 중인 요일과 일치하는지 확인
         if (date.weekday % 7 == i) {
           // 해당 날짜의 일반 일정 가져오기
-          final scheduleEvents = scheduleRepository.getDateItems(date);
+          final scheduleEvents = scheduleRepository.getTimeItems(date);
 
           // 시간 충돌 확인
           if (_hasTimeConflict(scheduleEvents)) {
@@ -865,8 +716,8 @@ class _AddScheduleState extends State<AddSchedule> {
 
     // 모든 이벤트와 시간 충돌 확인
     for (var event in events) {
-      final eventStartMinutes = event.startTime.hour * 60 + event.startTime.minute;
-      final eventEndMinutes = event.endTime.hour * 60 + event.endTime.minute;
+      final eventStartMinutes = event.startTime!.hour * 60 + event.startTime!.minute;
+      final eventEndMinutes = event.endTime!.hour * 60 + event.endTime!.minute;
 
       // 충돌 조건:
       // 1. 새 이벤트의 시작이 기존 이벤트 기간 내에 있거나
@@ -900,18 +751,162 @@ class _AddScheduleState extends State<AddSchedule> {
       textColor: Colors.white,
     );
   }
+
+  Widget TimePicker({
+    required TimeOfDay startTime,
+    required TimeOfDay endTime,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '시간',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // start hour
+              SizedBox(
+                width: 50,
+                height: 55,
+                child: CupertinoPicker(
+                  itemExtent: 30,
+                  scrollController: FixedExtentScrollController(initialItem: start.hour),
+                  onSelectedItemChanged: (i) => setState(() {
+                    start = TimeOfDay(hour: i, minute: start.minute);
+                  }),
+                  children: List.generate(
+                    24,
+                    (int i) => Center(
+                      child: Text(
+                        formatEachTime(i),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                          color: Color(0xFF40608A),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const Text(
+                ':',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+              ),
+              // start minute
+              SizedBox(
+                width: 50,
+                height: 55,
+                child: CupertinoPicker(
+                  itemExtent: 30,
+                  scrollController: FixedExtentScrollController(initialItem: start.minute),
+                  onSelectedItemChanged: (i) => setState(() {
+                    start = TimeOfDay(hour: start.hour, minute: i * 5);
+                  }),
+                  children: List.generate(
+                    12,
+                    (int i) => Center(
+                      child: Text(
+                        formatEachTime(i * 5),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                          color: Color(0xFF40608A),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const Text(
+                ' ~ ',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                  color: Color(0xFF40608A),
+                ),
+              ),
+              // end hour
+              SizedBox(
+                width: 50,
+                height: 55,
+                child: CupertinoPicker(
+                  itemExtent: 30,
+                  scrollController: FixedExtentScrollController(initialItem: end.hour),
+                  onSelectedItemChanged: (i) => setState(() {
+                    end = TimeOfDay(hour: i, minute: end.minute);
+                  }),
+                  children: List.generate(
+                    24,
+                    (int i) => Center(
+                      child: Text(
+                        formatEachTime(i),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                          color: Color(0xFF40608A),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const Text(
+                ':',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+              ),
+              // end minute
+              SizedBox(
+                width: 50,
+                height: 55,
+                child: CupertinoPicker(
+                  itemExtent: 30,
+                  scrollController: FixedExtentScrollController(initialItem: end.minute),
+                  onSelectedItemChanged: (i) => setState(() {
+                    end = TimeOfDay(hour: end.hour, minute: i * 5);
+                  }),
+                  children: List.generate(
+                    12,
+                    (int i) => Center(
+                      child: Text(
+                        formatEachTime(i * 5),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                          color: Color(0xFF40608A),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-String _formatDate(DateTime date) {
+String formatDate(DateTime date) {
   final DateTime now = DateTime.now();
   List<String> week = ['일', '월', '화', '수', '목', '금', '토'];
   return '${now.year == date.year ? '' : {'${date.year}년 '}}${date.month}월 ${date.day}일 (${week[date.weekday % 7]})';
 }
 
-String _formatTime(TimeOfDay time) {
+String formatTime(TimeOfDay time) {
   return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
 }
 
-String _formatEachTime(int time) {
+String formatEachTime(int time) {
   return time.toString().padLeft(2, '0');
 }
