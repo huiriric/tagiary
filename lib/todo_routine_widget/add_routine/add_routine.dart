@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:hive/hive.dart';
@@ -7,8 +8,15 @@ import 'package:tagiary/tables/check_routine/check_routine_item.dart';
 
 class AddRoutine extends StatefulWidget {
   final VoidCallback? onRoutineAdded; // 루틴 추가 후 호출할 콜백 함수
+  TimeOfDay start;
+  TimeOfDay end;
 
-  const AddRoutine({super.key, this.onRoutineAdded});
+  AddRoutine({
+    super.key,
+    this.onRoutineAdded,
+    required this.start,
+    required this.end,
+  });
 
   @override
   State<AddRoutine> createState() => _AddRoutineState();
@@ -21,8 +29,14 @@ class _AddRoutineState extends State<AddRoutine> {
   // FocusNode 추가
   final FocusNode contentFocus = FocusNode();
 
+  // bool hasTimeSet = false; // 시간 설정 여부 체크박스
+
   // 요일 선택 상태
   List<bool> selectedDays = List.generate(7, (index) => false);
+
+  // 시간 선택
+  late TimeOfDay start;
+  late TimeOfDay end;
 
   // 색상 선택
   late Color selectedColor;
@@ -33,6 +47,8 @@ class _AddRoutineState extends State<AddRoutine> {
     super.initState();
     contentCont = TextEditingController();
     selectedColor = scheduleColors[0];
+    start = widget.start;
+    end = widget.end;
   }
 
   @override
@@ -89,7 +105,28 @@ class _AddRoutineState extends State<AddRoutine> {
                     thickness: 1,
                     color: Colors.grey.shade300,
                   ),
-
+                  // Row(
+                  //   mainAxisAlignment: MainAxisAlignment.end,
+                  //   children: [
+                  //     const Text(
+                  //       '시간 설정',
+                  //       style: TextStyle(
+                  //         fontSize: 16,
+                  //         fontWeight: FontWeight.bold,
+                  //       ),
+                  //     ),
+                  //     Checkbox(
+                  //       value: hasTimeSet,
+                  //       activeColor: Colors.indigo,
+                  //       shape: const CircleBorder(),
+                  //       onChanged: (value) {
+                  //         setState(() {
+                  //           hasTimeSet = value!;
+                  //         });
+                  //       },
+                  //     ),
+                  //   ],
+                  // ),
                   // 요일 선택기
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 10.0),
@@ -102,7 +139,6 @@ class _AddRoutineState extends State<AddRoutine> {
                       },
                     ),
                   ),
-
                   // 색상 선택
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -264,4 +300,8 @@ class _AddRoutineState extends State<AddRoutine> {
       textColor: Colors.white,
     );
   }
+}
+
+String _formatEachTime(int time) {
+  return time.toString().padLeft(2, '0');
 }

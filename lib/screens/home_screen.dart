@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tagiary/component/slide_up_container.dart';
+import 'package:tagiary/tables/schedule/schedule_item.dart';
+import 'package:tagiary/tables/schedule_routine/schedule_routine_item.dart';
 import 'package:tagiary/time_line/time_line.dart';
 import 'package:tagiary/time_line/add_schedule.dart';
 import 'package:tagiary/todo_widget/todo_widget.dart';
@@ -18,10 +20,25 @@ class _HomeScreenState extends State<HomeScreen> {
   List<String> week = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
   late DateTime date;
 
+  // TimeLine 위젯을 강제 새로고침하기 위한 키
+  Key _timelineKey = UniqueKey();
+
   @override
   void initState() {
     super.initState();
     date = DateTime.now();
+    _initializeData();
+  }
+
+  Future<void> _initializeData() async {
+    _loadEventsForDate();
+  }
+
+  Future<void> _loadEventsForDate() async {
+    // TimeLine 위젯 강제 새로고침을 위해 새로운 키 생성
+    setState(() {
+      _timelineKey = UniqueKey();
+    });
   }
 
   @override
@@ -46,6 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
               if (selectedDate != null) {
                 setState(() {
                   date = selectedDate;
+                  _timelineKey = UniqueKey(); // 날짜 변경 시에도 새로운 키 생성
                 });
               }
             },
@@ -64,8 +82,8 @@ class _HomeScreenState extends State<HomeScreen> {
         foregroundColor: Colors.black,
         shape: const CircleBorder(),
         child: const Icon(Icons.add, color: Color(0xBB000000)),
-        onPressed: () {
-          showModalBottomSheet(
+        onPressed: () async {
+          final result = await showModalBottomSheet<bool>(
             context: context,
             isScrollControlled: true,
             builder: (context) => AnimatedPadding(
@@ -74,16 +92,24 @@ class _HomeScreenState extends State<HomeScreen> {
               curve: Curves.decelerate,
               child: SingleChildScrollView(
                 child: SlideUpContainer(
-                  height: 450,
                   child: AddSchedule(
                     date: date,
                     start: TimeOfDay(hour: TimeOfDay.now().hour + 1, minute: 0),
                     end: TimeOfDay(hour: TimeOfDay.now().hour + 2, minute: 0),
+                    onScheduleAdded: () async {
+                      await _loadEventsForDate();
+                      setState(() {});
+                    },
                   ),
                 ),
               ),
             ),
           );
+
+          // 일정이 추가되었다면 UI 새로고침
+          if (result == true) {
+            await _loadEventsForDate();
+          }
         },
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
@@ -126,9 +152,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     Expanded(
                       child: TimeLine(
-                        key: ValueKey<DateTime>(date), // 날짜가 변경될 때 위젯을 다시 생성
+                        key: _timelineKey, // 동적 키로 변경하여 강제 새로고침
                         fromScreen: false,
                         date: date,
+                        onEventsLoaded: () {
+                          setState(() {
+                            date = date;
+                          });
+                        }, // 이벤트가 로드된 후 상태 업데이트
                       ),
                     ),
                     const SizedBox(width: 12),

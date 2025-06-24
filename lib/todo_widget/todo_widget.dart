@@ -41,14 +41,15 @@ class _TodoWidgetState extends State<TodoWidget> {
     final inProgressCount = todos.where((todo) => todo.check == CheckEnum.inProgress).length;
     final doneCount = todos.where((todo) => todo.check == CheckEnum.done).length;
 
-    return GestureDetector(
-      onTap: todos.isEmpty ? () => _showAddTodoDialog(context) : () => _showTodoListDialog(context),
-      child: Card(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        elevation: 1,
-        color: Colors.white,
+    return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      elevation: 1,
+      color: Colors.white,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: todos.isEmpty ? () => _showAddTodoDialog(context) : () => _showTodoListDialog(context),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -448,7 +449,6 @@ class _TodoWidgetState extends State<TodoWidget> {
         curve: Curves.decelerate,
         child: SingleChildScrollView(
           child: SlideUpContainer(
-            height: 450,
             child: AddTodo(
               onTodoAdded: () {
                 // 할 일 목록 새로고침
@@ -472,7 +472,6 @@ class _TodoWidgetState extends State<TodoWidget> {
         curve: Curves.decelerate,
         child: SingleChildScrollView(
           child: SlideUpContainer(
-            height: 450,
             child: AddTodo(
               todoToEdit: todo,
               onTodoAdded: () {

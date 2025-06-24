@@ -99,18 +99,19 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
 
     // 요일 라벨 배열
     final dayLabels = ['일', '월', '화', '수', '목', '금', '토'];
-    return GestureDetector(
-      onTap: filteredRoutines.isEmpty && _isToday
-          ? () {
-              _showAddRoutineDialog(context);
-            }
-          : null,
-      child: Card(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        elevation: 1,
-        color: Colors.white,
+    return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      elevation: 1,
+      color: Colors.white,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: filteredRoutines.isEmpty && _isToday
+            ? () {
+                _showAddRoutineDialog(context);
+              }
+            : null,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: widget.fromMain == false ? MainAxisSize.min : MainAxisSize.max,
@@ -680,6 +681,9 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
   }
 
   void _showAddRoutineDialog(BuildContext context, {VoidCallback? onRoutineChanged}) {
+    TimeOfDay now = TimeOfDay.now();
+    TimeOfDay start = TimeOfDay(hour: now.hour, minute: 0);
+    TimeOfDay end = TimeOfDay(hour: now.hour + 1, minute: 0); // 기본 종료 시간은 시작 시간 + 1시간
     // SlideUpContainer를 사용하여 일정 추가와 유사한 UI로 변경
     showModalBottomSheet(
       context: context,
@@ -690,8 +694,11 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
         curve: Curves.decelerate,
         child: SingleChildScrollView(
           child: SlideUpContainer(
-            height: 350,
-            child: AddRoutine(onRoutineAdded: onRoutineChanged),
+            child: AddRoutine(
+              onRoutineAdded: onRoutineChanged,
+              start: start,
+              end: end,
+            ),
           ),
         ),
       ),
