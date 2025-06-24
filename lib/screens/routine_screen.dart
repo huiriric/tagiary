@@ -640,6 +640,9 @@ class _RoutineScreenState extends State<RoutineScreen> {
   }
 
   void _showAddRoutineDialog(BuildContext context) {
+    TimeOfDay now = TimeOfDay.now();
+    TimeOfDay start = TimeOfDay(hour: now.hour, minute: 0);
+    TimeOfDay end = TimeOfDay(hour: now.hour + 1, minute: 0);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -649,11 +652,12 @@ class _RoutineScreenState extends State<RoutineScreen> {
         curve: Curves.decelerate,
         child: SingleChildScrollView(
           child: SlideUpContainer(
-            height: 350,
             child: AddRoutine(
               onRoutineAdded: () {
                 setState(() {});
               },
+              start: start,
+              end: end,
             ),
           ),
         ),

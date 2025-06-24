@@ -338,7 +338,6 @@ class _TodoScreenState extends State<TodoScreen> {
         curve: Curves.decelerate,
         child: SingleChildScrollView(
           child: SlideUpContainer(
-            height: 450,
             child: AddTodo(
               onTodoAdded: () {
                 setState(() {});
@@ -360,7 +359,6 @@ class _TodoScreenState extends State<TodoScreen> {
         curve: Curves.decelerate,
         child: SingleChildScrollView(
           child: SlideUpContainer(
-            height: 450,
             child: AddTodo(
               todoToEdit: todo,
               onTodoAdded: () {

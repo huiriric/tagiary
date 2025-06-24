@@ -20,16 +20,27 @@ class _TimelineScreenState extends State<TimelineScreen> {
   List<String> week = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
   late DateTime date;
 
+  // TimeLine 위젯을 강제 새로고침하기 위한 키
+  Key _timelineKey = UniqueKey();
+
   @override
   void initState() {
     super.initState();
     date = DateTime.now();
+    _loadEvents();
     // DataProvider 초기화 (필요 시)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<DataProvider>(context, listen: false).updateDate(date);
-      
+
       // 설정 로드 (이미 loadTimelineSettings가 호출되었을 수 있음)
       Provider.of<DataProvider>(context, listen: false).loadTimelineSettings();
+    });
+  }
+
+  Future<void> _loadEvents() async {
+    // TimeLine 위젯 강제 새로고침을 위해 새로운 키 생성
+    setState(() {
+      _timelineKey = UniqueKey();
     });
   }
 
@@ -44,10 +55,10 @@ class _TimelineScreenState extends State<TimelineScreen> {
         });
       });
     }
-    
+
     // 현재 뷰 모드
     final currentViewMode = provider.viewMode;
-    
+
     return Scaffold(
       appBar: AppBar(
         title: GestureDetector(
@@ -58,10 +69,10 @@ class _TimelineScreenState extends State<TimelineScreen> {
             );
             if (selectedDate != null) {
               setState(() {
-                date = selectedDate;
+                provider.updateDate(selectedDate);
+                date = provider.selectedDate;
+                _timelineKey = UniqueKey(); // 날짜 변경 시에도 새로운 키 생성
               });
-              // DataProvider에도 선택한 날짜 업데이트
-              await Provider.of<DataProvider>(context, listen: false).updateDate(selectedDate);
             }
           },
           child: Row(
@@ -104,6 +115,7 @@ class _TimelineScreenState extends State<TimelineScreen> {
             ),
             onSelected: (TimelineViewMode mode) {
               // 선택된 뷰 모드 저장
+              _loadEvents();
               provider.setViewMode(mode);
             },
             itemBuilder: (BuildContext context) => [
@@ -152,8 +164,8 @@ class _TimelineScreenState extends State<TimelineScreen> {
         foregroundColor: Colors.black,
         shape: const CircleBorder(),
         child: const Icon(Icons.add, color: Color(0xBB000000)),
-        onPressed: () {
-          showModalBottomSheet(
+        onPressed: () async {
+          final result = await showModalBottomSheet<bool>(
             context: context,
             isScrollControlled: true,
             builder: (context) => AnimatedPadding(
@@ -162,16 +174,21 @@ class _TimelineScreenState extends State<TimelineScreen> {
               curve: Curves.decelerate,
               child: SingleChildScrollView(
                 child: SlideUpContainer(
-                  height: 450,
                   child: AddSchedule(
                     date: date,
                     start: TimeOfDay(hour: TimeOfDay.now().hour + 1, minute: 0),
                     end: TimeOfDay(hour: TimeOfDay.now().hour + 2, minute: 0),
+                    onScheduleAdded: () => _loadEvents,
                   ),
                 ),
               ),
             ),
           );
+
+          if (result == true) {
+            // 일정이 추가되었다면 UI 새로고침
+            await _loadEvents();
+          }
         },
       ),
       body: _buildTimelineView(provider.viewMode),
@@ -182,18 +199,18 @@ class _TimelineScreenState extends State<TimelineScreen> {
     switch (viewMode) {
       case TimelineViewMode.day:
         return TimeLine(
-          key: ValueKey<DateTime>(date),
+          key: _timelineKey,
           fromScreen: true,
           date: date,
         );
       case TimelineViewMode.week:
         return WeekView(
-          key: ValueKey<DateTime>(date),
+          key: _timelineKey,
           selectedDate: date,
         );
       case TimelineViewMode.month:
         return MonthView(
-          key: ValueKey<DateTime>(date),
+          key: _timelineKey,
           selectedDate: date,
         );
     }

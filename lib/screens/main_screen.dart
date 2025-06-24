@@ -7,7 +7,7 @@ import 'package:tagiary/screens/diary_screen.dart';
 import 'package:tagiary/settings/settings.dart';
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({Key? key}) : super(key: key);
+  const MainScreen({super.key});
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -15,7 +15,7 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 2; // 기본값을 홈으로 설정
-  
+
   // 탭에 표시될 화면들
   final List<Widget> _pages = [
     const TimelineScreen(),

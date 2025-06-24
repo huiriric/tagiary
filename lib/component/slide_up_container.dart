@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 class SlideUpContainer extends StatefulWidget {
-  double height;
+  double? height;
   Widget child;
-  SlideUpContainer({super.key, required this.height, required this.child});
+  SlideUpContainer({super.key, this.height, required this.child});
 
   @override
   State<SlideUpContainer> createState() => _SlideContainerState();
