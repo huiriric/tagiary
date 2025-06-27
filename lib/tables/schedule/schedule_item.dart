@@ -19,30 +19,44 @@ class ScheduleItem extends HiveObject {
   final int date;
 
   @HiveField(4)
-  final String title;
+  final int? endYear;
 
   @HiveField(5)
-  final String description;
+  final int? endMonth;
 
   @HiveField(6)
-  final int? startHour; // null 가능
+  final int? endDate;
 
   @HiveField(7)
-  final int? startMinute; // null 가능
+  final String title;
 
   @HiveField(8)
-  final int? endHour; // null 가능
+  final String description;
 
   @HiveField(9)
-  final int? endMinute; // null 가능
+  final int? startHour; // null 가능
 
   @HiveField(10)
+  final int? startMinute; // null 가능
+
+  @HiveField(11)
+  final int? endHour; // null 가능
+
+  @HiveField(12)
+  final int? endMinute; // null 가능
+
+  @HiveField(13)
   final int colorValue;
+
+  bool get hasMultyDay => endYear != null && endMonth != null && endDate != null;
 
   ScheduleItem({
     required this.year,
     required this.month,
     required this.date,
+    this.endYear,
+    this.endMonth,
+    this.endDate,
     required this.title,
     required this.description,
     this.startHour,
@@ -67,6 +81,7 @@ class ScheduleItem extends HiveObject {
       color: Color(colorValue),
       isRoutine: false,
       hasTimeSet: hasTimeInfo,
+      hasMultyDay: hasMultyDay,
     );
   }
 }

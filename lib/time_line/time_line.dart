@@ -7,7 +7,7 @@ import 'package:tagiary/tables/data_models/event.dart';
 import 'package:tagiary/tables/schedule/schedule_item.dart';
 import 'package:tagiary/tables/schedule_routine/schedule_routine_item.dart';
 import 'package:tagiary/time_line/add_schedule.dart';
-import 'package:tagiary/time_line/view_schedule/schedule_details.dart';
+import 'package:tagiary/time_line/schedule_details.dart';
 
 class TimeLine extends StatefulWidget {
   final DateTime date;

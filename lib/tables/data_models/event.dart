@@ -11,6 +11,7 @@ class Event {
   final Color color;
   final bool isRoutine;
   final bool hasTimeSet; // 시간 설정 여부
+  final bool hasMultyDay; // 멀티데이 여부
 
   const Event({
     required this.id,
@@ -23,6 +24,7 @@ class Event {
     required this.color,
     required this.isRoutine,
     this.hasTimeSet = true, // 기본값은 true
+    this.hasMultyDay = false, // 멀티데이 여부 기본값은 false
   });
 
   // 시간을 분으로 변환 (위치 계산용)
