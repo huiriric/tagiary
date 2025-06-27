@@ -1,4 +1,4 @@
-package com.huiriric.tagiary
+package com.huiriric.mrplando
 
 import io.flutter.embedding.android.FlutterActivity
 
