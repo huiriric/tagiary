@@ -4,8 +4,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:tagiary/component/slide_up_container.dart';
 import 'package:tagiary/tables/check_routine/check_routine_item.dart';
 import 'package:tagiary/tables/check_routine/routine_history.dart';
-import 'package:tagiary/todo_routine_widget/add_routine/add_routine.dart';
-import 'package:tagiary/todo_routine_widget/routine_history_view.dart';
+import 'package:tagiary/todo_routine_widget/add_routine.dart';
 import 'package:tagiary/todo_routine_widget/todo_routine_widget.dart';
 
 class RoutineScreen extends StatefulWidget {
@@ -211,7 +210,10 @@ class _RoutineScreenState extends State<RoutineScreen> {
               // 루틴 위젯 사용
               TodoRoutineWidget(
                 date: selectedDate,
-                onRoutineChanged: () => setState(() {}),
+                onRoutineChanged: () => setState(() {
+                  _updateSelectedDate();
+                  _calculateMonthDays();
+                }),
               ),
 
               // 달력 또는 주간 뷰 표시

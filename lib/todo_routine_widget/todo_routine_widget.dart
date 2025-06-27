@@ -6,7 +6,8 @@ import 'package:tagiary/component/slide_up_container.dart';
 import 'package:tagiary/constants/colors.dart';
 import 'package:tagiary/tables/check_routine/check_routine_item.dart';
 import 'package:tagiary/tables/check_routine/routine_history.dart';
-import 'package:tagiary/todo_routine_widget/add_routine/add_routine.dart';
+import 'package:tagiary/todo_routine_widget/add_routine.dart';
+import 'package:tagiary/todo_routine_widget/routine_detail.dart';
 import 'package:tagiary/todo_routine_widget/routine_history_view.dart';
 
 class TodoRoutineWidget extends StatefulWidget {
@@ -114,7 +115,7 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
             : null,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: widget.fromMain == false ? MainAxisSize.min : MainAxisSize.max,
+          mainAxisSize: widget.fromMain == true ? MainAxisSize.max : MainAxisSize.min,
           children: [
             Padding(
               padding: const EdgeInsets.only(top: 8, left: 16, right: 8),
@@ -183,18 +184,30 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
               ),
             ),
             if (filteredRoutines.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 30),
-                child: Center(
-                  child: Text(
-                    _isToday ? '오늘의 루틴이 없습니다' : '${dayLabels[_displayDate.weekday % 7]}요일 루틴이 없습니다',
-                    style: const TextStyle(
-                      color: Colors.grey,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-              )
+              widget.fromMain == true
+                  ? Expanded(
+                      child: Center(
+                        child: Text(
+                          _isToday ? '오늘의 루틴이 없습니다' : '${dayLabels[_displayDate.weekday % 7]}요일 루틴이 없습니다',
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 30.0),
+                      child: Center(
+                        child: Text(
+                          _isToday ? '오늘의 루틴이 없습니다' : '${dayLabels[_displayDate.weekday % 7]}요일 루틴이 없습니다',
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    )
             else if (widget.fromMain == true)
               Expanded(child: routineList(filteredRoutines))
             else
@@ -314,16 +327,30 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
                   },
                 )
               : null,
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => RoutineHistoryView(routine: routine),
-              ),
-            );
+          onTap: () async {
+            await _showRoutineDetail(routine, onRoutineChanged);
           },
         );
       },
+    );
+  }
+
+  Future<void> _showRoutineDetail(CheckRoutineItem routine, VoidCallback? onRoutineChanged) async {
+    // 루틴 상세 페이지 표시
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => AnimatedPadding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        duration: const Duration(milliseconds: 0),
+        curve: Curves.decelerate,
+        child: SlideUpContainer(
+          child: RoutineDetail(
+            item: routine,
+            onUpdated: onRoutineChanged,
+          ),
+        ),
+      ),
     );
   }
 
