@@ -48,7 +48,7 @@ class _TodoWidgetState extends State<TodoWidget> {
       elevation: 1,
       color: Colors.white,
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         onTap: todos.isEmpty ? () => _showAddTodoDialog(context) : () => _showTodoListDialog(context),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
