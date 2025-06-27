@@ -232,7 +232,10 @@ class _DiaryWidgetState extends State<DiaryWidget> {
             size: 36,
             color: Colors.grey[400],
           ),
-          const SizedBox(height: 8),
+          Expanded(
+            flex: 1,
+            child: Container(),
+          ),
           Text(
             '오늘의 기록이 없습니다',
             style: TextStyle(
@@ -244,6 +247,10 @@ class _DiaryWidgetState extends State<DiaryWidget> {
             onPressed: () => _addNewDiary(context),
             child: const Text('작성하기'),
           ),
+          Expanded(
+            flex: 2,
+            child: Container(),
+          )
         ],
       ),
     );
