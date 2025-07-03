@@ -224,34 +224,32 @@ class _DiaryWidgetState extends State<DiaryWidget> {
 
   Widget _buildEmptyState() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.book_outlined,
-            size: 36,
-            color: Colors.grey[400],
-          ),
-          Expanded(
-            flex: 1,
-            child: Container(),
-          ),
-          Text(
-            '오늘의 기록이 없습니다',
-            style: TextStyle(
-              color: Colors.grey[600],
-              fontSize: 14,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.book_outlined,
+              size: 36,
+              color: Colors.grey[400],
             ),
-          ),
-          TextButton(
-            onPressed: () => _addNewDiary(context),
-            child: const Text('작성하기'),
-          ),
-          Expanded(
-            flex: 2,
-            child: Container(),
-          )
-        ],
+            const SizedBox(
+              height: 5,
+            ),
+            Text(
+              '오늘의 기록이 없습니다',
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 14,
+              ),
+            ),
+            TextButton(
+              onPressed: () => _addNewDiary(context),
+              child: const Text('작성하기'),
+            ),
+          ],
+        ),
       ),
     );
   }
