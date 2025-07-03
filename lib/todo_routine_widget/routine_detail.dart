@@ -303,6 +303,16 @@ class _RoutineDetailState extends State<RoutineDetail> {
   }
 
   Future<void> _editRoutine(VoidCallback? onRoutineEdited) async {
+    if (_content.isEmpty) {
+      _showToast('제목을 입력해주세요');
+      return;
+    }
+
+    if (!_daysOfWeek.contains(true)) {
+      _showToast('반복할 요일을 최소 하나 이상 선택해주세요');
+      return;
+    }
+
     CheckRoutineRepository routineRepository = CheckRoutineRepository();
     await routineRepository.init();
 
