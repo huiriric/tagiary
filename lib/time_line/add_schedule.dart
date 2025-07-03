@@ -43,6 +43,9 @@ class _AddScheduleState extends State<AddSchedule> {
   String title = '';
   String description = '';
 
+  bool hasMultiDay = false; // 멀티데이 여부
+  DateTime? endDate; // 멀티데이 종료 날짜
+
   late TextEditingController titleCont;
   late TextEditingController descriptionCont;
 
@@ -213,26 +216,57 @@ class _AddScheduleState extends State<AddSchedule> {
                 ),
                 // 날짜 선택 (isRoutine이 false일 때) 또는 요일 선택 (isRoutine이 true일 때)
                 !isRoutine
-                    ? TextButton(
-                        onPressed: () async {
-                          final selectedDate = await showBlackWhiteDatePicker(
-                            context: context,
-                            initialDate: widget.date,
-                          );
-                          if (selectedDate != null) {
-                            setState(() {
-                              widget.date = selectedDate;
-                            });
-                          }
-                        },
-                        child: Text(
-                          formatDate(widget.date),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
-                            color: Color(0xFF40608A),
+                    ? Row(
+                        children: [
+                          TextButton(
+                            onPressed: () async {
+                              final selectedDate = await showBlackWhiteDatePicker(
+                                context: context,
+                                initialDate: widget.date,
+                              );
+                              if (selectedDate != null) {
+                                setState(() {
+                                  widget.date = selectedDate;
+                                });
+                              }
+                            },
+                            child: Text(
+                              '${endDate != null ? '시작 ' : ''}${formatDate(widget.date)}',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: endDate != null ? 15 : 16,
+                                color: const Color(0xFF40608A),
+                              ),
+                            ),
                           ),
-                        ),
+                          const SizedBox(
+                            width: 15,
+                          ),
+                          TextButton(
+                            style: TextButton.styleFrom(
+                              backgroundColor: endDate != null ? const Color(0x00000000) : const Color(0x1140608A),
+                            ),
+                            onPressed: () async {
+                              final selectedDate = await showBlackWhiteDatePicker(
+                                context: context,
+                                initialDate: widget.date,
+                              );
+                              if (selectedDate != null) {
+                                setState(() {
+                                  endDate = selectedDate;
+                                });
+                              }
+                            },
+                            child: Text(
+                              endDate != null ? '종료 ${formatDate(endDate!)}' : '종료일 선택',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: endDate != null ? 15 : 16,
+                                color: const Color(0xFF40608A),
+                              ),
+                            ),
+                          ),
+                        ],
                       )
                     : DayPicker(
                         selectedDays: selectedDays,
@@ -345,6 +379,12 @@ class _AddScheduleState extends State<AddSchedule> {
     // 입력 검증
     if (title.isEmpty) {
       _showToast('제목을 입력해주세요');
+      return;
+    }
+
+    // 종료일이 설정되어 있을 때 시작일과 종료일 비교
+    if (endDate != null && widget.date.isAfter(endDate!)) {
+      _showToast('종료일은 시작일보다 나중이어야 합니다');
       return;
     }
 

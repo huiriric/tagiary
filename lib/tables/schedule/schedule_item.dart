@@ -48,7 +48,7 @@ class ScheduleItem extends HiveObject {
   @HiveField(13)
   final int colorValue;
 
-  bool get hasMultyDay => endYear != null && endMonth != null && endDate != null;
+  bool get hasMultiDay => endYear != null && endMonth != null && endDate != null;
 
   ScheduleItem({
     required this.year,
@@ -75,13 +75,14 @@ class ScheduleItem extends HiveObject {
       title: title,
       description: description,
       date: DateTime(year, month, date), // 날짜 정보
+      endDate: hasMultiDay ? DateTime(endYear!, endMonth!, endDate!) : DateTime(year, month, date), // 멀티데이 이벤트를 위한 종료 날짜
       daysOfWeek: null,
       startTime: hasTimeInfo ? TimeOfDay(hour: startHour!, minute: startMinute!) : null,
       endTime: hasTimeInfo ? TimeOfDay(hour: endHour!, minute: endMinute!) : null,
       color: Color(colorValue),
       isRoutine: false,
       hasTimeSet: hasTimeInfo,
-      hasMultyDay: hasMultyDay,
+      hasMultiDay: hasMultiDay,
     );
   }
 }
