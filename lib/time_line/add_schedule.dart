@@ -217,6 +217,7 @@ class _AddScheduleState extends State<AddSchedule> {
                 // 날짜 선택 (isRoutine이 false일 때) 또는 요일 선택 (isRoutine이 true일 때)
                 !isRoutine
                     ? Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
                         children: [
                           TextButton(
                             onPressed: () async {
@@ -266,6 +267,17 @@ class _AddScheduleState extends State<AddSchedule> {
                               ),
                             ),
                           ),
+                          if (endDate != null)
+                            IconButton(
+                                onPressed: () {
+                                  setState(() {
+                                    endDate = null; // 종료일 초기화
+                                  });
+                                },
+                                icon: const Icon(
+                                  Icons.cancel_rounded,
+                                  color: Color(0x2240608A),
+                                ))
                         ],
                       )
                     : DayPicker(
@@ -527,6 +539,9 @@ class _AddScheduleState extends State<AddSchedule> {
       year: widget.date.year,
       month: widget.date.month,
       date: widget.date.day,
+      endYear: endDate?.year,
+      endMonth: endDate?.month,
+      endDate: endDate?.day, // 멀티데이 종료 날짜
       title: title,
       description: description,
       startHour: null, // 시간 정보 null로 설정
@@ -639,6 +654,9 @@ class _AddScheduleState extends State<AddSchedule> {
       year: widget.date.year,
       month: widget.date.month,
       date: widget.date.day,
+      endYear: endDate?.year,
+      endMonth: endDate?.month,
+      endDate: endDate?.day, // 멀티데이 종료 날짜
       title: title,
       description: description,
       startHour: start.hour,

@@ -36,6 +36,7 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
   late FocusNode _titleFocusNode;
   late FocusNode _descriptionFocusNode;
   late DateTime? _date; // 날짜 정보\
+  late DateTime? _endDate;
   late List<bool>? selectedDays;
   late TimeOfDay? _startTime;
   late TimeOfDay? _endTime;
@@ -59,6 +60,7 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
     _titleFocusNode = FocusNode();
     _descriptionFocusNode = FocusNode();
     _date = widget.event.date;
+    _endDate = widget.event.endDate; // 멀티데이 이벤트를 위한 종료 날짜
     _startTime = widget.event.startTime;
     _endTime = widget.event.endTime;
     _selectedColor = widget.event.color;
@@ -200,6 +202,7 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
                               _descriptionController.text = widget.event.description;
                               selectedDays = widget.event.daysOfWeek;
                               _date = widget.event.date;
+                              _endDate = widget.event.endDate; // 멀티데이 이벤트를 위한 종료 날짜
                               _hasTimeSet = widget.event.hasTimeSet;
                               _isRoutine = widget.event.isRoutine;
                               _selectedColor = widget.event.color;
@@ -286,26 +289,65 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
               ),
 
               !_isRoutine
-                  ? TextButton(
-                      onPressed: () async {
-                        final selectedDate = await showBlackWhiteDatePicker(
-                          context: context,
-                          initialDate: _date,
-                        );
-                        if (selectedDate != null) {
-                          setState(() {
-                            _date = selectedDate;
-                          });
-                        }
-                      },
-                      child: Text(
-                        formatDate(_date!),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                          color: Color(0xFF40608A),
+                  ? Row(
+                      children: [
+                        TextButton(
+                          onPressed: () async {
+                            final selectedDate = await showBlackWhiteDatePicker(
+                              context: context,
+                              initialDate: _date,
+                            );
+                            if (selectedDate != null) {
+                              setState(() {
+                                _date = selectedDate;
+                              });
+                            }
+                          },
+                          child: Text(
+                            '${_endDate != null ? '시작 ' : ''}${formatDate(_date!)}',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: _endDate != null ? 15 : 16,
+                              color: const Color(0xFF40608A),
+                            ),
+                          ),
                         ),
-                      ),
+                        TextButton(
+                          style: TextButton.styleFrom(
+                            backgroundColor: _endDate != null ? const Color(0x00000000) : const Color(0x1140608A),
+                          ),
+                          onPressed: () async {
+                            final selectedDate = await showBlackWhiteDatePicker(
+                              context: context,
+                              initialDate: _endDate,
+                            );
+                            if (selectedDate != null) {
+                              setState(() {
+                                _endDate = selectedDate;
+                              });
+                            }
+                          },
+                          child: Text(
+                            _endDate != null ? '종료 ${formatDate(_endDate!)}' : '종료일 선택',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: _endDate != null ? 15 : 16,
+                              color: const Color(0xFF40608A),
+                            ),
+                          ),
+                        ),
+                        if (_endDate != null)
+                          IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  _endDate = null; // 종료일 초기화
+                                });
+                              },
+                              icon: const Icon(
+                                Icons.cancel_rounded,
+                                color: Color(0x2240608A),
+                              ))
+                      ],
                     )
                   : DayPicker(
                       key: _dayPickerKey,
@@ -414,12 +456,20 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
     final isTitleChanged = _titleController.text != widget.event.title;
     final isDescriptionChanged = _descriptionController.text != widget.event.description;
     final isDateChanged = _date != widget.event.date;
+    final isEndDateChanged = _endDate != widget.event.endDate; // 멀티데이 이벤트를 위한 종료 날짜
     final isRoutineChanged = selectedDays != widget.event.daysOfWeek;
     final isStartTimeChanged = _startTime != widget.event.startTime;
     final isEndTimeChanged = _endTime != widget.event.endTime;
     final isColorChanged = _selectedColor != widget.event.color;
 
-    return isTitleChanged || isDescriptionChanged || isDateChanged || isRoutineChanged || isStartTimeChanged || isEndTimeChanged || isColorChanged;
+    return isTitleChanged ||
+        isDescriptionChanged ||
+        isDateChanged ||
+        isEndDateChanged ||
+        isRoutineChanged ||
+        isStartTimeChanged ||
+        isEndTimeChanged ||
+        isColorChanged;
   }
 
   Widget timePicker() {
@@ -974,11 +1024,14 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
     }
 
     // 새 일정 정보로 업데이트
-    print('새 일정 정보: ${_titleController.text}, ${_descriptionController.text}, $_startTime, $_endTime, $_selectedColor');
+    print('새 일정 정보: ${_titleController.text}, $_endDate, $_startTime, $_endTime, $_selectedColor');
     final updatedItem = ScheduleItem(
       year: _date!.year,
       month: _date!.month,
       date: _date!.day,
+      endYear: _endDate?.year,
+      endMonth: _endDate?.month,
+      endDate: _endDate?.day,
       title: _titleController.text,
       description: _descriptionController.text,
       // 시간 설정 여부에 따라 시간 정보 저장 방식 결정
