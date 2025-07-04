@@ -75,7 +75,7 @@ class ScheduleItem extends HiveObject {
       title: title,
       description: description,
       date: DateTime(year, month, date), // 날짜 정보
-      endDate: hasMultiDay ? DateTime(endYear!, endMonth!, endDate!) : DateTime(year, month, date), // 멀티데이 이벤트를 위한 종료 날짜
+      endDate: hasMultiDay ? DateTime(endYear!, endMonth!, endDate!) : null, // 멀티데이 이벤트를 위한 종료 날짜
       daysOfWeek: null,
       startTime: hasTimeInfo ? TimeOfDay(hour: startHour!, minute: startMinute!) : null,
       endTime: hasTimeInfo ? TimeOfDay(hour: endHour!, minute: endMinute!) : null,
