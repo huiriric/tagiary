@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tagiary/services/notification_service.dart';
 import 'package:tagiary/tables/check/check_enum.dart';
-import 'package:tagiary/tables/check_routine/routine_migration.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -77,9 +76,6 @@ Future<void> main() async {
   await Hive.openBox<DiaryItem>('diaryBox');
   await Hive.openBox<Tag>('tagBox');
   await Hive.openBox<TagGroup>('tagGroupBox');
-
-  // 체크 루틴 마이그레이션 실행 (daysOfWeek 필드 추가)
-  await RoutineMigrationHelper.migrateCheckRoutines();
 
   // ScheduleRepository scheduleRepo = ScheduleRepository();
   // ScheduleRoutineRepository scheduleRRepo = ScheduleRoutineRepository();

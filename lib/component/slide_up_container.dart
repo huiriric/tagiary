@@ -12,15 +12,18 @@ class SlideUpContainer extends StatefulWidget {
 class _SlideContainerState extends State<SlideUpContainer> {
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: widget.height,
-      decoration: const BoxDecoration(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Container(
+        height: widget.height,
+        decoration: const BoxDecoration(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
         ),
+        child: widget.child,
       ),
-      child: widget.child,
     );
   }
 }
