@@ -72,10 +72,12 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
   }
 
   void _initializeControllers() {
-    _startHourController = FixedExtentScrollController(initialItem: _startTime!.hour);
-    _startMinuteController = FixedExtentScrollController(initialItem: _startTime!.minute ~/ 5);
-    _endHourController = FixedExtentScrollController(initialItem: _endTime!.hour);
-    _endMinuteController = FixedExtentScrollController(initialItem: _endTime!.minute ~/ 5);
+    print(_startTime);
+    print(_endTime);
+    _startHourController = FixedExtentScrollController(initialItem: _startTime != null ? _startTime!.hour : now.hour + 1);
+    _startMinuteController = FixedExtentScrollController(initialItem: _startTime != null ? _startTime!.minute ~/ 5 : 0);
+    _endHourController = FixedExtentScrollController(initialItem: _endTime != null ? _endTime!.hour : now.hour + 2);
+    _endMinuteController = FixedExtentScrollController(initialItem: _endTime != null ? _endTime!.minute ~/ 5 : 0);
   }
 
   void _resetTimePickers() {

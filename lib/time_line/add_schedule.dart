@@ -44,6 +44,7 @@ class _AddScheduleState extends State<AddSchedule> {
   String description = '';
 
   bool hasMultiDay = false; // 멀티데이 여부
+  late DateTime date; // 시작 날짜
   DateTime? endDate; // 멀티데이 종료 날짜
 
   late TextEditingController titleCont;
@@ -71,7 +72,7 @@ class _AddScheduleState extends State<AddSchedule> {
     super.initState();
     titleCont = TextEditingController();
     descriptionCont = TextEditingController();
-
+    date = widget.date;
     start = widget.start;
     end = widget.end;
     selectedColor = scheduleColors[0];
@@ -223,16 +224,16 @@ class _AddScheduleState extends State<AddSchedule> {
                             onPressed: () async {
                               final selectedDate = await showBlackWhiteDatePicker(
                                 context: context,
-                                initialDate: widget.date,
+                                initialDate: date,
                               );
                               if (selectedDate != null) {
                                 setState(() {
-                                  widget.date = selectedDate;
+                                  date = selectedDate;
                                 });
                               }
                             },
                             child: Text(
-                              '${endDate != null ? '시작 ' : ''}${formatDate(widget.date)}',
+                              '${endDate != null ? '시작 ' : ''}${formatDate(date)}',
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: endDate != null ? 15 : 16,
@@ -250,7 +251,7 @@ class _AddScheduleState extends State<AddSchedule> {
                             onPressed: () async {
                               final selectedDate = await showBlackWhiteDatePicker(
                                 context: context,
-                                initialDate: widget.date,
+                                initialDate: endDate, // 종료일 선택 시 기본값은 시작일 다음 날
                               );
                               if (selectedDate != null) {
                                 setState(() {
@@ -395,7 +396,7 @@ class _AddScheduleState extends State<AddSchedule> {
     }
 
     // 종료일이 설정되어 있을 때 시작일과 종료일 비교
-    if (endDate != null && widget.date.isAfter(endDate!)) {
+    if (endDate != null && date.isAfter(endDate!)) {
       _showToast('종료일은 시작일보다 나중이어야 합니다');
       return;
     }
@@ -536,9 +537,9 @@ class _AddScheduleState extends State<AddSchedule> {
     await scheduleRepository.init();
 
     final newSchedule = ScheduleItem(
-      year: widget.date.year,
-      month: widget.date.month,
-      date: widget.date.day,
+      year: date.year,
+      month: date.month,
+      date: date.day,
       endYear: endDate?.year,
       endMonth: endDate?.month,
       endDate: endDate?.day, // 멀티데이 종료 날짜
@@ -562,7 +563,7 @@ class _AddScheduleState extends State<AddSchedule> {
     final newTodo = CheckItem(
       id: 0, // 저장소에서 할당
       content: title,
-      dueDate: widget.date.toIso8601String(), // 현재 날짜 사용
+      dueDate: date.toIso8601String(), // 현재 날짜 사용
       startDate: null, // 시작 날짜도 현재 날짜로 설정
       doneDate: null, // 완료 날짜는 null로 설정
       colorValue: selectedColor.value,
@@ -651,9 +652,9 @@ class _AddScheduleState extends State<AddSchedule> {
     await scheduleRepository.init();
 
     final newSchedule = ScheduleItem(
-      year: widget.date.year,
-      month: widget.date.month,
-      date: widget.date.day,
+      year: date.year,
+      month: date.month,
+      date: date.day,
       endYear: endDate?.year,
       endMonth: endDate?.month,
       endDate: endDate?.day, // 멀티데이 종료 날짜
@@ -710,7 +711,7 @@ class _AddScheduleState extends State<AddSchedule> {
     await routineRepository.init();
 
     // 1. 해당 날짜의 모든 일반 일정 가져오기
-    final dateEvents = scheduleRepository.getDateItems(widget.date);
+    final dateEvents = scheduleRepository.getDateItems(date);
 
     // 시간 충돌 확인
     if (_hasTimeConflict(dateEvents)) {
@@ -718,7 +719,7 @@ class _AddScheduleState extends State<AddSchedule> {
     }
 
     // 2. 해당 날짜의 요일에 해당하는 루틴 일정 확인
-    final dayOfWeek = widget.date.weekday % 7; // 0(일)~6(토) 범위로 변환
+    final dayOfWeek = date.weekday % 7; // 0(일)~6(토) 범위로 변환
     final routineEvents = routineRepository.getItemsByDayWithTime(dayOfWeek);
 
     // 루틴 일정과의 시간 충돌 확인
