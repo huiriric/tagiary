@@ -213,8 +213,8 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
                               if (_hasTimeSet) {
                                 print(_startTime);
                                 print(_endTime);
-                                _startTime = widget.event.startTime;
-                                _endTime = widget.event.endTime;
+                                _startTime = widget.event.startTime ?? TimeOfDay(hour: now.hour + 1, minute: 0);
+                                _endTime = widget.event.endTime ?? TimeOfDay(hour: now.hour + 2, minute: 0);
                                 _resetTimePickers();
                               }
                             });
@@ -289,6 +289,44 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
                 thickness: 1,
                 color: Colors.grey.shade300,
               ),
+              Row(
+                children: [
+                  const Text(
+                    '날짜',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const Spacer(),
+                  // 시간 설정 옵션
+                  if (!_isRoutine)
+                    const Text(
+                      '시간 설정',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  if (!_isRoutine)
+                    Checkbox(
+                      value: _hasTimeSet,
+                      activeColor: Colors.indigo,
+                      shape: const CircleBorder(),
+                      onChanged: (value) {
+                        setState(() {
+                          _hasTimeSet = value!;
+                          // if (_hasTimeSet) {
+                          _startTime = _startTime ?? (widget.event.startTime ?? TimeOfDay(hour: now.hour + 1, minute: 0));
+
+                          _endTime = _endTime ?? (widget.event.endTime ?? TimeOfDay(hour: now.hour + 2, minute: 0));
+                          // }
+                        });
+                      },
+                    ),
+                ],
+              ),
 
               !_isRoutine
                   ? Row(
@@ -361,7 +399,6 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
                       },
                     ),
               _isRoutine
-                  //
                   ? _hasTimeSet
                       ? GestureDetector(
                           onTap: () => _showToast('반복 일정은 시간을 수정할 수 없습니다.'),
@@ -455,6 +492,7 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
 
   bool detectDiff() {
     // 제목, 설명, 시간, 색상 변경 여부 확인
+    final isTimeSetChanged = _hasTimeSet != widget.event.hasTimeSet;
     final isTitleChanged = _titleController.text != widget.event.title;
     final isDescriptionChanged = _descriptionController.text != widget.event.description;
     final isDateChanged = _date != widget.event.date;
@@ -464,7 +502,8 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
     final isEndTimeChanged = _endTime != widget.event.endTime;
     final isColorChanged = _selectedColor != widget.event.color;
 
-    return isTitleChanged ||
+    return isTimeSetChanged ||
+        isTitleChanged ||
         isDescriptionChanged ||
         isDateChanged ||
         isEndDateChanged ||
@@ -515,6 +554,7 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
                   onSelectedItemChanged: (i) => setState(() {
                     // print(_startTime);
                     _startTime = TimeOfDay(hour: i, minute: _startTime!.minute);
+                    _startHourController = FixedExtentScrollController(initialItem: _startTime != null ? _startTime!.hour : now.hour + 1);
                   }),
                   children: List.generate(
                     24,
@@ -544,6 +584,7 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
                   scrollController: _startMinuteController,
                   onSelectedItemChanged: (i) => setState(() {
                     _startTime = TimeOfDay(hour: _startTime!.hour, minute: i * 5);
+                    _startMinuteController = FixedExtentScrollController(initialItem: _startTime != null ? _startTime!.minute ~/ 5 : 0);
                   }),
                   children: List.generate(
                     12,
@@ -577,6 +618,7 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
                   scrollController: _endHourController,
                   onSelectedItemChanged: (i) => setState(() {
                     _endTime = TimeOfDay(hour: i, minute: _endTime!.minute);
+                    _endHourController = FixedExtentScrollController(initialItem: _endTime != null ? _endTime!.hour : now.hour + 2);
                   }),
                   children: List.generate(
                     24,
@@ -606,6 +648,7 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
                   scrollController: _endMinuteController,
                   onSelectedItemChanged: (i) => setState(() {
                     _endTime = TimeOfDay(hour: _endTime!.hour, minute: i * 5);
+                    _endMinuteController = FixedExtentScrollController(initialItem: _endTime != null ? _endTime!.minute ~/ 5 : 0);
                   }),
                   children: List.generate(
                     12,
@@ -770,8 +813,8 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
   Future<void> _updateSchedule() async {
     final originalTitle = widget.event.title;
     final originalDescription = widget.event.description;
-    final originalStartTime = widget.event.startTime ?? const TimeOfDay(hour: 0, minute: 0);
-    final originalEndTime = widget.event.endTime ?? const TimeOfDay(hour: 0, minute: 30);
+    final originalStartTime = widget.event.startTime;
+    final originalEndTime = widget.event.endTime;
     final originalColor = widget.event.color;
 
     // 입력 검증
@@ -806,12 +849,17 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
       //   updateLinkedItems = await _showUpdateLinkedItemsDialog(linkedItems);
       // }
 
+      // 시간 설정 있을 때만 시간 유효성 검사
+
       // 일정 정보 업데이트
       if (widget.event.isRoutine) {
         // 루틴 일정 수정
+
         await _updateRoutineSchedule();
       } else {
         // 일반 일정 수정
+
+        // 종료일 시작일 비교
         await _updateNormalSchedule();
       }
 
@@ -829,7 +877,7 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
       // 상세 화면 닫기 후 다시 열기 (이렇게 하면 최신 정보로 갱신됨)
       Navigator.of(context).pop();
     } catch (e) {
-      _showToast('수정 중 오류가 발생했습니다: $e');
+      // _showToast('수정 중 오류가 발생했습니다: $e');
 
       // 원래 값으로 되돌리기
       _titleController.text = originalTitle;
@@ -1095,6 +1143,7 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
 
     // 모든 이벤트와 시간 충돌 확인
     for (var event in events) {
+      if (!event.hasTimeSet) continue;
       final eventStartMinutes = event.startTime!.hour * 60 + event.startTime!.minute;
       final eventEndMinutes = event.endTime!.hour * 60 + event.endTime!.minute;
 

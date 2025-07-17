@@ -775,6 +775,7 @@ class _AddScheduleState extends State<AddSchedule> {
 
     // 모든 이벤트와 시간 충돌 확인
     for (var event in events) {
+      if (!event.hasTimeSet) continue;
       final eventStartMinutes = event.startTime!.hour * 60 + event.startTime!.minute;
       final eventEndMinutes = event.endTime!.hour * 60 + event.endTime!.minute;
 
