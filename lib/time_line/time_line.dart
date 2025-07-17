@@ -295,11 +295,14 @@ class _TimeLineState extends State<TimeLine> {
                           Container(
                             width: eventWidth - (2 * eventHorizontalPadding),
                             height: height,
-                            padding: const EdgeInsets.all(8),
+                            padding: event.durationMinutes >= 30 ? const EdgeInsets.all(8) : const EdgeInsets.all(4),
                             decoration: BoxDecoration(
-                              color: (_draggingEvent == event && _hasConflict)
-                                  ? Colors.red.withOpacity(0.7) // 충돌 시 빨간색 표시
-                                  : (_draggingEvent == event)
+                              color:
+                                  // 드래그 되는 component만 빨간색 처리하도록 주석 처리함
+                                  // (_draggingEvent == event && _hasConflict)
+                                  //     ? Colors.red.withOpacity(0.7) // 충돌 시 빨간색 표시
+                                  //     :
+                                  (_draggingEvent == event)
                                       ? event.color.withOpacity(0.7) // 드래그 중
                                       : event.color, // 일반 상태
                               borderRadius: BorderRadius.circular(5),
@@ -333,32 +336,36 @@ class _TimeLineState extends State<TimeLine> {
                                 // 텍스트가 너비를 초과하는지 확인
                                 final overflowed = textPainter.didExceedMaxLines;
 
-                                return Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      event.title,
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                        fontSize: eventFontSize,
-                                      ),
-                                      overflow: overflowed ? TextOverflow.clip : TextOverflow.ellipsis,
-                                    ),
-                                    // 드래그 중에는 원래 시간 표시 (더이상 변경된 시간을 텍스트로 표시하지 않음)
-                                    // 40분 초과 일정에만 시간 표시 (높이 기준이 아닌 실제 기간으로 판단)
-                                    if (event.durationMinutes > 40)
-                                      Padding(
-                                        padding: const EdgeInsets.only(top: 4),
-                                        child: Text(
-                                          '${_formatTime(event.startTime!)} - ${_formatTime(event.endTime!)}',
-                                          style: const TextStyle(
+                                return SingleChildScrollView(
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      if (event.durationMinutes >= 20)
+                                        Text(
+                                          event.title,
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
                                             color: Colors.white,
-                                            fontSize: 10,
+                                            fontSize: eventFontSize,
+                                          ),
+                                          overflow: overflowed ? TextOverflow.clip : TextOverflow.ellipsis,
+                                        ),
+                                      // 드래그 중에는 원래 시간 표시 (더이상 변경된 시간을 텍스트로 표시하지 않음)
+                                      // 40분 초과 일정에만 시간 표시 (높이 기준이 아닌 실제 기간으로 판단)
+                                      if (event.durationMinutes > 40)
+                                        Padding(
+                                          padding: const EdgeInsets.only(top: 4),
+                                          child: Text(
+                                            '${_formatTime(event.startTime!)} - ${_formatTime(event.endTime!)}',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 10,
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                  ],
+                                    ],
+                                  ),
                                 );
                               },
                             ),
@@ -709,32 +716,34 @@ class _TimeLineState extends State<TimeLine> {
             ),
           ],
         ),
-        child: Column(
-          // mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              event.title,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: _hasConflict ? Colors.white : Colors.white.withOpacity(0.9),
-                fontSize: eventFontSize,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-            // 40분 초과 일정에만 그림자에도 시간 표시
-            if (event.durationMinutes > 40) ...[
-              const SizedBox(height: 4),
+        child: SingleChildScrollView(
+          physics: const NeverScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               Text(
-                '${_formatTime(draggedTimes['start']!)} - ${_formatTime(draggedTimes['end']!)}',
+                event.title,
                 style: TextStyle(
-                  color: _hasConflict ? Colors.white : Colors.white.withOpacity(0.9),
-                  fontSize: 10,
                   fontWeight: FontWeight.bold,
+                  color: _hasConflict ? Colors.white : Colors.white.withOpacity(0.9),
+                  fontSize: eventFontSize,
                 ),
+                overflow: TextOverflow.ellipsis,
               ),
+              // 40분 초과 일정에만 그림자에도 시간 표시
+              if (event.durationMinutes > 40) ...[
+                const SizedBox(height: 4),
+                Text(
+                  '${_formatTime(draggedTimes['start']!)} - ${_formatTime(draggedTimes['end']!)}',
+                  style: TextStyle(
+                    color: _hasConflict ? Colors.white : Colors.white.withOpacity(0.9),
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
