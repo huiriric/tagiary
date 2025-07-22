@@ -16,7 +16,7 @@ class DiaryItem extends HiveObject {
   final String content;
 
   @HiveField(4)
-  final int? categoryId; // 카테고리 ID (태그 그룹에서 선택)
+  final int? categoryId; // 카테고리 ID (일기 카테고리 - 태그와는 별개)
 
   @HiveField(5)
   final List<int> tagIds; // 연결된 태그 ID 목록

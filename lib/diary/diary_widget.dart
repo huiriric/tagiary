@@ -3,8 +3,8 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:tagiary/component/slide_up_container.dart';
 import 'package:tagiary/constants/colors.dart';
-import 'package:tagiary/diary_widget/diary_editor.dart';
-import 'package:tagiary/diary_widget/diary_detail.dart';
+import 'package:tagiary/diary/diary_editor.dart';
+import 'package:tagiary/diary/diary_detail.dart';
 import 'package:tagiary/tables/diary/diary_item.dart';
 import 'package:tagiary/tables/diary/tag.dart';
 import 'package:tagiary/tables/diary/tag_group.dart';
@@ -281,7 +281,7 @@ class _DiaryWidgetState extends State<DiaryWidget> {
                     color: Colors.white,
                   ),
                 ),
-                backgroundColor: tag.color,
+                backgroundColor: Colors.white,
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 visualDensity: VisualDensity.compact,
                 padding: EdgeInsets.zero,

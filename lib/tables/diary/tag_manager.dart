@@ -15,44 +15,120 @@ class TagManager {
   Future<void> init() async {
     await tagRepository.init();
     await groupRepository.init();
-    await groupRepository.setupDefaultGroups(); // 기본 그룹 설정
+    await groupRepository.setupDefaultCategories(); // 기본 카테고리 설정
   }
 
-  // 태그 정보 가져오기 (이름과 색상)
+  // === 태그 관련 메서드 ===
+  
+  // 태그 정보 가져오기
   TagInfo? getTagInfo(int tagId) {
     final tag = tagRepository.getTag(tagId);
     if (tag == null) return null;
 
-    final group = groupRepository.getGroup(tag.groupId);
-    if (group == null) return null;
-
     return TagInfo(
       id: tag.id,
       name: tag.name,
-      groupId: group.id,
-      groupName: group.name,
-      color: Color(group.colorValue),
+      usageCount: tag.usageCount,
+      lastUsed: tag.lastUsed,
     );
   }
 
   // 태그 ID 목록에서 TagInfo 목록 가져오기
   List<TagInfo> getTagInfoList(List<int> tagIds) {
     List<TagInfo> result = [];
-    
+
     for (int tagId in tagIds) {
       final tagInfo = getTagInfo(tagId);
       if (tagInfo != null) {
         result.add(tagInfo);
       }
     }
-    
+
     return result;
   }
 
-  // 모든 그룹 가져오기
-  List<TagGroupInfo> getAllGroupInfo() {
+  // 모든 태그 가져오기 (사용 빈도순 정렬)
+  List<TagInfo> getAllTagsSorted() {
+    return tagRepository.getTagsSorted().map((tag) {
+      return TagInfo(
+        id: tag.id,
+        name: tag.name,
+        usageCount: tag.usageCount,
+        lastUsed: tag.lastUsed,
+      );
+    }).toList();
+  }
+
+  // 태그 검색
+  List<TagInfo> searchTags(String query) {
+    return tagRepository.searchTagsSorted(query).map((tag) {
+      return TagInfo(
+        id: tag.id,
+        name: tag.name,
+        usageCount: tag.usageCount,
+        lastUsed: tag.lastUsed,
+      );
+    }).toList();
+  }
+
+  // 새 태그 추가 또는 기존 태그 반환
+  Future<int> addOrGetTag(String name) async {
+    // 기존 태그 찾기
+    final existingTag = tagRepository.getTagByName(name);
+    if (existingTag != null) {
+      // 사용 빈도 증가
+      await tagRepository.incrementUsage(existingTag.id);
+      return existingTag.id;
+    }
+
+    // 새 태그 추가
+    final tag = Tag(
+      id: 0,
+      name: name,
+      usageCount: 1,
+      lastUsed: DateTime.now(),
+    );
+
+    return await tagRepository.addTag(tag);
+  }
+
+  // 태그 사용 빈도 증가
+  Future<void> incrementTagUsage(int tagId) async {
+    await tagRepository.incrementUsage(tagId);
+  }
+
+  // 태그 삭제
+  Future<void> deleteTag(int tagId) async {
+    await tagRepository.deleteTag(tagId);
+  }
+
+  // 태그 이름 수정
+  Future<void> updateTagName(int tagId, String newName) async {
+    final tag = tagRepository.getTag(tagId);
+    if (tag != null) {
+      tag.name = newName;
+      await tagRepository.updateTag(tag);
+    }
+  }
+
+  // === 카테고리 관련 메서드 ===
+
+  // 카테고리 정보 가져오기
+  CategoryInfo? getCategoryInfo(int categoryId) {
+    final category = groupRepository.getGroup(categoryId);
+    if (category == null) return null;
+
+    return CategoryInfo(
+      id: category.id,
+      name: category.name,
+      color: Color(category.colorValue),
+    );
+  }
+
+  // 모든 카테고리 가져오기
+  List<CategoryInfo> getAllCategories() {
     return groupRepository.getAllGroups().map((group) {
-      return TagGroupInfo(
+      return CategoryInfo(
         id: group.id,
         name: group.name,
         color: Color(group.colorValue),
@@ -60,45 +136,30 @@ class TagManager {
     }).toList();
   }
 
-  // 그룹별 태그 목록 가져오기
-  Map<TagGroupInfo, List<Tag>> getTagsByGroup() {
-    Map<TagGroupInfo, List<Tag>> result = {};
-    
-    final groups = groupRepository.getAllGroups();
-    for (final group in groups) {
-      final groupInfo = TagGroupInfo(
-        id: group.id,
-        name: group.name,
-        color: Color(group.colorValue),
-      );
-      
-      final tags = tagRepository.getTagsByGroup(group.id);
-      result[groupInfo] = tags;
-    }
-    
-    return result;
-  }
-
-  // 새 태그 그룹 추가
-  Future<int> addTagGroup(String name, Color color) async {
-    final group = TagGroup(
+  // 새 카테고리 추가
+  Future<int> addCategory(String name, Color color) async {
+    final category = TagGroup(
       id: 0,
       name: name,
       colorValue: color.value,
     );
-    
-    return await groupRepository.addGroup(group);
+
+    return await groupRepository.addGroup(category);
   }
 
-  // 새 태그 추가
-  Future<int> addTag(String name, int groupId) async {
-    final tag = Tag(
-      id: 0,
-      name: name,
-      groupId: groupId,
-    );
-    
-    return await tagRepository.addTag(tag);
+  // 카테고리 수정
+  Future<void> updateCategory(int categoryId, String name, Color color) async {
+    final category = groupRepository.getGroup(categoryId);
+    if (category != null) {
+      category.name = name;
+      category.colorValue = color.value;
+      await groupRepository.updateGroup(category);
+    }
+  }
+
+  // 카테고리 삭제
+  Future<void> deleteCategory(int categoryId) async {
+    await groupRepository.deleteGroup(categoryId);
   }
 }
 
@@ -106,26 +167,33 @@ class TagManager {
 class TagInfo {
   final int id;
   final String name;
-  final int groupId;
-  final String groupName;
-  final Color color;
+  final int usageCount;
+  final DateTime lastUsed;
 
   TagInfo({
     required this.id,
     required this.name,
-    required this.groupId,
-    required this.groupName,
-    required this.color,
+    required this.usageCount,
+    required this.lastUsed,
   });
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is TagInfo && other.id == id;
+  }
+
+  @override
+  int get hashCode => id.hashCode;
 }
 
-// UI 표시용 태그 그룹 정보 클래스
-class TagGroupInfo {
+// UI 표시용 카테고리 정보 클래스
+class CategoryInfo {
   final int id;
   final String name;
   final Color color;
 
-  TagGroupInfo({
+  CategoryInfo({
     required this.id,
     required this.name,
     required this.color,
@@ -134,7 +202,7 @@ class TagGroupInfo {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    return other is TagGroupInfo && other.id == id;
+    return other is CategoryInfo && other.id == id;
   }
 
   @override

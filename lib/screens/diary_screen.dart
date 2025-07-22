@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
-import 'package:tagiary/diary_widget/diary_editor.dart';
-import 'package:tagiary/diary_widget/diary_detail.dart';
+import 'package:tagiary/diary/diary_editor.dart';
+import 'package:tagiary/diary/diary_detail.dart';
 import 'package:tagiary/tables/diary/diary_item.dart';
 import 'package:tagiary/tables/diary/tag.dart';
 import 'package:tagiary/tables/diary/tag_group.dart';
 import 'package:tagiary/tables/diary/tag_manager.dart';
 
 class DiaryScreen extends StatefulWidget {
-  const DiaryScreen({Key? key}) : super(key: key);
+  const DiaryScreen({super.key});
 
   @override
   State<DiaryScreen> createState() => _DiaryScreenState();
@@ -35,17 +35,17 @@ class _DiaryScreenState extends State<DiaryScreen> {
       // 다이어리 리포지토리 초기화
       _diaryRepository = DiaryRepository();
       await _diaryRepository.init();
-      
+
       // 태그 관련 리포지토리 초기화
       final tagRepository = TagRepository();
       final tagGroupRepository = TagGroupRepository();
-      
+
       _tagManager = TagManager(
         tagRepository: tagRepository,
         groupRepository: tagGroupRepository,
       );
       await _tagManager.init();
-      
+
       // 다이어리 데이터 로드
       await _loadDiariesForMonth(_selectedDate);
     } catch (e) {
@@ -60,23 +60,23 @@ class _DiaryScreenState extends State<DiaryScreen> {
 
   Future<void> _loadDiariesForMonth(DateTime date) async {
     if (!mounted) return;
-    
+
     setState(() {
       _isLoading = true;
     });
-    
+
     try {
       // 모든 다이어리 가져오기
       final allDiaries = _diaryRepository.getAllItems();
-      
+
       // 선택된 달의 다이어리만 필터링
       final filteredDiaries = allDiaries.where((diary) {
         return diary.date.year == date.year && diary.date.month == date.month;
       }).toList();
-      
+
       // 날짜 내림차순으로 정렬 (최신순)
       filteredDiaries.sort((a, b) => b.date.compareTo(a.date));
-      
+
       setState(() {
         _diaries = filteredDiaries;
         _isLoading = false;
@@ -150,7 +150,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
               ],
             ),
           ),
-          
+
           // 다이어리 목록
           Expanded(
             child: _isLoading
@@ -203,7 +203,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
   Widget _buildDiaryCard(DiaryItem diary) {
     final dateFormat = DateFormat('M월 d일 (E)', 'ko_KR');
     final tagInfos = _tagManager.getTagInfoList(diary.tagIds);
-    
+
     return Card(
       margin: const EdgeInsets.only(bottom: 16.0),
       shape: RoundedRectangleBorder(
@@ -226,7 +226,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              
+
               // 제목
               Text(
                 diary.title,
@@ -238,7 +238,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 8),
-              
+
               // 내용 미리보기
               Text(
                 diary.content,
@@ -250,25 +250,32 @@ class _DiaryScreenState extends State<DiaryScreen> {
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 12),
-              
+
               // 태그
               if (tagInfos.isNotEmpty)
                 Wrap(
                   spacing: 4,
                   runSpacing: 4,
                   children: tagInfos.map((tag) {
-                    return Chip(
-                      label: Text(
-                        tag.name,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.white,
-                        ),
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.grey[300]!),
                       ),
-                      backgroundColor: tag.color,
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      visualDensity: VisualDensity.compact,
-                      padding: EdgeInsets.zero,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            tag.name,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
+                      ),
                     );
                   }).toList(),
                 ),

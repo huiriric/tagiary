@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:tagiary/diary_widget/diary_editor.dart';
+import 'package:tagiary/diary/diary_editor.dart';
 import 'package:tagiary/tables/diary/diary_item.dart';
 import 'package:tagiary/tables/diary/tag_manager.dart';
 
@@ -34,12 +34,12 @@ class _DiaryDetailPageState extends State<DiaryDetailPage> {
   @override
   Widget build(BuildContext context) {
     // 카테고리 정보 가져오기
-    TagGroupInfo? categoryInfo;
+    CategoryInfo? categoryInfo;
     if (_diary.categoryId != null) {
-      final allGroups = widget.tagManager.getAllGroupInfo();
-      categoryInfo = allGroups.firstWhere(
+      final allCategories = widget.tagManager.getAllCategories();
+      categoryInfo = allCategories.firstWhere(
         (group) => group.id == _diary.categoryId,
-        orElse: () => allGroups.first,
+        orElse: () => allCategories.first,
       );
     }
 
@@ -91,7 +91,7 @@ class _DiaryDetailPageState extends State<DiaryDetailPage> {
             const SizedBox(height: 16),
 
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 // 카테고리 표시 (왼쪽)
                 if (categoryInfo != null)
@@ -104,6 +104,7 @@ class _DiaryDetailPageState extends State<DiaryDetailPage> {
                       ),
                       label: Text(
                         categoryInfo.name,
+                        // textAlign: TextAlign.center,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 12,
@@ -147,16 +148,25 @@ class _DiaryDetailPageState extends State<DiaryDetailPage> {
                 spacing: 8,
                 runSpacing: 8,
                 children: tagInfos.map((tag) {
-                  return Chip(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(50),
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey[300]!),
                     ),
-                    side: BorderSide.none,
-                    label: Text(
-                      tag.name,
-                      style: const TextStyle(color: Colors.white),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          tag.name,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ],
                     ),
-                    backgroundColor: tag.color,
                   );
                 }).toList(),
               ),

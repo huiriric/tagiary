@@ -60,12 +60,12 @@ class TagGroupRepository {
     return _groups.values.toList();
   }
 
-  // 기본 그룹 설정 (앱 첫 실행시 호출)
-  Future<void> setupDefaultGroups() async {
+  // 기본 카테고리 설정 (앱 첫 실행시 호출)
+  Future<void> setupDefaultCategories() async {
     if (_groups.isEmpty) {
       await addGroup(TagGroup(
         id: 0,
-        name: '일반',
+        name: '일상',
         colorValue: Colors.grey.value,
       ));
 
@@ -79,6 +79,18 @@ class TagGroupRepository {
         id: 0,
         name: '활동',
         colorValue: Colors.blue.value,
+      ));
+
+      await addGroup(TagGroup(
+        id: 0,
+        name: '여행',
+        colorValue: Colors.green.value,
+      ));
+
+      await addGroup(TagGroup(
+        id: 0,
+        name: '업무',
+        colorValue: Colors.orange.value,
       ));
     }
   }
