@@ -19,7 +19,7 @@ import 'package:tagiary/tables/schedule/schedule_item.dart';
 import 'package:tagiary/tables/schedule_routine/schedule_routine_item.dart';
 import 'package:tagiary/todo_widget/todo_widget.dart';
 import 'package:tagiary/todo_routine_widget/todo_routine_widget.dart';
-import 'package:tagiary/diary_widget/diary_widget.dart';
+import 'package:tagiary/diary/diary_widget.dart';
 import 'package:tagiary/tables/diary/diary_item.dart';
 import 'package:tagiary/tables/diary/tag.dart';
 import 'package:tagiary/tables/diary/tag_group.dart';

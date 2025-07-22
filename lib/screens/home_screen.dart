@@ -6,7 +6,7 @@ import 'package:tagiary/time_line/time_line.dart';
 import 'package:tagiary/time_line/add_schedule.dart';
 import 'package:tagiary/todo_widget/todo_widget.dart';
 import 'package:tagiary/todo_routine_widget/todo_routine_widget.dart';
-import 'package:tagiary/diary_widget/diary_widget.dart';
+import 'package:tagiary/diary/diary_widget.dart';
 import 'package:tagiary/settings/settings.dart';
 
 class HomeScreen extends StatefulWidget {
