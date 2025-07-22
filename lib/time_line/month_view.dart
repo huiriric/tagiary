@@ -136,8 +136,6 @@ class _MonthViewState extends State<MonthView> {
                     ? const SizedBox()
                     : Stack(
                         children: [
-                          // 기간 일정 오버레이 레이어
-                          ..._buildMultiDayEventBars(),
                           // 기본 달력 그리드 (날짜 + 단일 이벤트)
                           GridView.builder(
                             // padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -243,6 +241,8 @@ class _MonthViewState extends State<MonthView> {
                               );
                             },
                           ),
+                          // 기간 일정 오버레이 레이어
+                          ..._buildMultiDayEventBars(),
                         ],
                       );
               },
@@ -437,7 +437,7 @@ class _MonthViewState extends State<MonthView> {
                         icon: const Icon(Icons.add, color: Colors.black87),
                         onPressed: () async {
                           Navigator.pop(context);
-                          void asdf = await _showAddScheduleDialog(context, date);
+                          await _showAddScheduleDialog(context, date);
                           setState(() {
                             // 일정 추가 후 상태 업데이트
                             _loadMonthEvents();
@@ -742,10 +742,10 @@ class _MonthViewState extends State<MonthView> {
 
         indicators.add(
           Positioned(
-            left: dayOfWeek * cellWidth + segmentPadding,
-            top: weekIndex * cellHeight + 16 + (3 * 18) + 16, // 3번째 레이어 아래
-            width: cellWidth - (segmentPadding * 2),
-            height: 14,
+            left: dayOfWeek * cellWidth + cellWidth - 18 - segmentPadding,
+            top: (weekIndex + 1) * cellHeight - segmentPadding * 2.5 - 18, // 3번째 레이어 아래
+            width: 18,
+            height: 18,
             child: GestureDetector(
               onTap: () {
                 // 해당 날짜의 모든 이벤트 보기
@@ -758,7 +758,7 @@ class _MonthViewState extends State<MonthView> {
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.grey.shade400,
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(9),
                 ),
                 child: Center(
                   child: Text(
