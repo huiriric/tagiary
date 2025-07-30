@@ -6,24 +6,24 @@ class DiaryItem extends HiveObject {
   @HiveField(0)
   late int id;
 
-  @HiveField(1)
-  final String title;
+  // @HiveField(1)
+  // final String title;
 
-  @HiveField(2)
+  @HiveField(1)
   final DateTime date;
 
-  @HiveField(3)
+  @HiveField(2)
   final String content;
 
-  @HiveField(4)
+  @HiveField(3)
   final int? categoryId; // 카테고리 ID (일기 카테고리 - 태그와는 별개)
 
-  @HiveField(5)
+  @HiveField(4)
   final List<int> tagIds; // 연결된 태그 ID 목록
 
   DiaryItem({
     required this.id,
-    required this.title,
+    // required this.title,
     required this.date,
     required this.content,
     this.categoryId,
@@ -67,27 +67,29 @@ class DiaryRepository {
   }
 
   List<DiaryItem>? getDateItem(DateTime date) {
-    return _item.values.where((item) => item.date.year == date.year && item.date.month == date.month && item.date.day == date.day).toList();
+    List<DiaryItem> list = _item.values.where((item) => item.date.year == date.year && item.date.month == date.month && item.date.day == date.day).toList();
+    list.sort((a, b) => b.id.compareTo(a.id));
+    return list;
   }
 
   List<DiaryItem> getAllItems() {
     List<DiaryItem> list = _item.values.toList();
     // 일기 최신 순으로 가져오기
-    list.sort((a, b) => b.date.compareTo(a.date));
+    list.sort((a, b) => b.id.compareTo(a.id));
     return list;
   }
 
   // 카테고리별 다이어리 가져오기
   List<DiaryItem> getItemsByCategory(int categoryId) {
     List<DiaryItem> list = _item.values.where((item) => item.categoryId == categoryId).toList();
-    list.sort((a, b) => b.date.compareTo(a.date));
+    list.sort((a, b) => b.id.compareTo(a.id));
     return list;
   }
 
   // 태그별 다이어리 가져오기
   List<DiaryItem> getItemsByTag(int tagId) {
     List<DiaryItem> list = _item.values.where((item) => item.tagIds.contains(tagId)).toList();
-    list.sort((a, b) => b.date.compareTo(a.date));
+    list.sort((a, b) => b.id.compareTo(a.id));
     return list;
   }
 
@@ -95,8 +97,8 @@ class DiaryRepository {
   List<DiaryItem> searchItems(String query) {
     String lowercaseQuery = query.toLowerCase();
     List<DiaryItem> list =
-        _item.values.where((item) => item.title.toLowerCase().contains(lowercaseQuery) || item.content.toLowerCase().contains(lowercaseQuery)).toList();
-    list.sort((a, b) => b.date.compareTo(a.date));
+        _item.values.where((item) => item.content.toLowerCase().contains(lowercaseQuery) || item.content.toLowerCase().contains(lowercaseQuery)).toList();
+    list.sort((a, b) => b.id.compareTo(a.id));
     return list;
   }
 }
