@@ -503,10 +503,10 @@ class _RoutineHistoryViewState extends State<RoutineHistoryView> {
 
     return Container(
       height: width / 7,
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.withOpacity(0.2), width: 0.5),
-        color: isToday ? Colors.blue.withOpacity(0.1) : null,
-      ),
+      decoration: const BoxDecoration(
+          // border: Border.all(color: Colors.grey.withOpacity(0.2), width: 0.5),
+          // color: isToday ? Colors.blue[100] : null,
+          ),
       child: Stack(
         children: [
           Align(
