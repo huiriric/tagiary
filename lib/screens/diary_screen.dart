@@ -211,7 +211,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
       ),
       elevation: 2,
       child: InkWell(
-        onTap: () => _showDiaryDetail(context, diary),
+        onTap: () => _editDiary(context, diary),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -228,16 +228,16 @@ class _DiaryScreenState extends State<DiaryScreen> {
               const SizedBox(height: 8),
 
               // 제목
-              Text(
-                diary.title,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 8),
+              // Text(
+              //   diary.title,
+              //   style: const TextStyle(
+              //     fontSize: 18,
+              //     fontWeight: FontWeight.bold,
+              //   ),
+              //   maxLines: 1,
+              //   overflow: TextOverflow.ellipsis,
+              // ),
+              // const SizedBox(height: 8),
 
               // 내용 미리보기
               Text(
@@ -286,25 +286,6 @@ class _DiaryScreenState extends State<DiaryScreen> {
     );
   }
 
-  void _showDiaryDetail(BuildContext context, DiaryItem diary) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => DiaryDetailPage(
-          diary: diary,
-          tagManager: _tagManager,
-          onEdit: () {
-            _loadDiariesForMonth(_selectedDate);
-          },
-          onDelete: () {
-            _diaryRepository.deleteDiary(diary.id);
-            _loadDiariesForMonth(_selectedDate);
-          },
-        ),
-      ),
-    );
-  }
-
   void _addNewDiary(BuildContext context) {
     Navigator.push(
       context,
@@ -313,12 +294,46 @@ class _DiaryScreenState extends State<DiaryScreen> {
           date: DateTime.now(),
           diary: null,
           tagManager: _tagManager,
+          isEdit: false,
           onSave: (DiaryItem diary) async {
             await _diaryRepository.addDiary(diary);
             _loadDiariesForMonth(_selectedDate);
+            setState(() {});
           },
         ),
       ),
     );
+  }
+
+  void _editDiary(BuildContext context, DiaryItem diary) async {
+    // 다이어리 에디터 페이지를 MaterialPageRoute로 직접 생성
+    final editRoute = MaterialPageRoute<DiaryItem>(
+      builder: (context) => DiaryEditorPage(
+        diary: diary,
+        date: diary.date,
+        tagManager: _tagManager,
+        isEdit: true,
+        onEdit: () => setState(() {
+          _loadDiariesForMonth(_selectedDate);
+        }),
+        // onSave: (updatedDiary) async {
+        //   // 다이어리 저장 로직
+        //   final repo = DiaryRepository();
+        //   await repo.init();
+        //   await repo.updateDiary(updatedDiary);
+        //   setState(() {});
+        // },
+      ),
+    );
+
+    // 에디터 페이지로 이동하고 결과를 기다림
+    final result = await Navigator.push<DiaryItem>(context, editRoute);
+
+    // 수정된 다이어리가 있으면 상태 업데이트
+    if (result != null && mounted) {
+      setState(() {
+        diary = result;
+      });
+    }
   }
 }

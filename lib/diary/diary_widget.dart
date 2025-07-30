@@ -190,16 +190,16 @@ class _DiaryWidgetState extends State<DiaryWidget> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                _todayDiary!.title,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 4),
+              // Text(
+              //   _todayDiary!.title,
+              //   style: const TextStyle(
+              //     fontSize: 13,
+              //     fontWeight: FontWeight.w600,
+              //   ),
+              //   maxLines: 1,
+              //   overflow: TextOverflow.ellipsis,
+              // ),
+              // const SizedBox(height: 4),
               // 내용 미리보기
               Text(
                 _todayDiary!.content,
@@ -306,9 +306,11 @@ class _DiaryWidgetState extends State<DiaryWidget> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => DiaryDetailPage(
+        builder: (context) => DiaryEditorPage(
           diary: _todayDiary!,
+          date: _todayDiary!.date,
           tagManager: _tagManager,
+          isEdit: true,
           onEdit: () {
             _loadDiary();
           },
@@ -336,6 +338,7 @@ class _DiaryWidgetState extends State<DiaryWidget> {
           date: dateOnly,
           diary: null, // 새 다이어리
           tagManager: _tagManager,
+          isEdit: false,
           onSave: (DiaryItem diary) async {
             await _diaryRepository.addDiary(diary);
             _loadDiary();

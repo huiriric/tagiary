@@ -10,14 +10,20 @@ class DiaryEditorPage extends StatefulWidget {
   final DiaryItem? diary;
   final DateTime date;
   final TagManager tagManager;
-  final Function(DiaryItem) onSave;
+  final bool isEdit;
+  final Function(DiaryItem)? onSave;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
   const DiaryEditorPage({
     super.key,
     this.diary,
     required this.date,
     required this.tagManager,
-    required this.onSave,
+    required this.isEdit,
+    this.onSave,
+    this.onEdit,
+    this.onDelete,
   });
 
   @override
@@ -25,9 +31,11 @@ class DiaryEditorPage extends StatefulWidget {
 }
 
 class _DiaryEditorPageState extends State<DiaryEditorPage> {
-  late TextEditingController _titleController;
+  late DiaryRepository _diaryRepository;
+  // late TextEditingController _titleController;
   late TextEditingController _contentController;
   late TextEditingController _tagCont;
+  late FocusNode _contentFocus;
   int? _selectedCategoryId;
   List<int> _selectedTagIds = [];
   List<String> tags = [];
@@ -43,13 +51,17 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
     super.initState();
     _selectedDate = widget.date; // 초기 날짜 설정
     _tagCont = TextEditingController(text: null);
+    _diaryRepository = DiaryRepository();
 
     // 태그 입력 필드 변화 감지
     _tagCont.addListener(_onTagInputChanged);
 
+    // _contentFocus auto focus
+    _contentFocus = FocusNode();
+
     // 수정 모드인 경우 기존 데이터로 초기화
     if (widget.diary != null) {
-      _titleController = TextEditingController(text: widget.diary!.title);
+      // _titleController = TextEditingController(text: widget.diary!.title);
       _contentController = TextEditingController(text: widget.diary!.content);
       _selectedCategoryId = widget.diary!.categoryId;
       _selectedTagIds = List<int>.from(widget.diary!.tagIds);
@@ -58,9 +70,177 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
       final existingTags = widget.tagManager.getTagInfoList(_selectedTagIds);
       tags = existingTags.map((tag) => tag.name).toList();
     } else {
-      _titleController = TextEditingController();
+      // _titleController = TextEditingController();
       _contentController = TextEditingController();
     }
+  }
+
+  @override
+  void dispose() {
+    // _titleController.dispose();
+    _contentController.dispose();
+    _tagCont.removeListener(_onTagInputChanged);
+    _tagCont.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(widget.diary == null ? '새 다이어리' : '다이어리 수정'),
+        ),
+        body: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : SafeArea(
+                bottom: false,
+                child: GestureDetector(
+                  onTap: () {
+                    FocusScope.of(context).unfocus();
+                    setState(() {
+                      _showSearchResults = false;
+                    });
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // 날짜 선택 카드
+                        Row(
+                          children: [
+                            Expanded(
+                              child: InkWell(
+                                onTap: _selectDate,
+                                child: Card(
+                                  elevation: 0,
+                                  color: Colors.grey[100],
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            const Icon(Icons.calendar_today, size: 20),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              '${_selectedDate.year}년 ${_selectedDate.month}월 ${_selectedDate.day}일',
+                                              style: const TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const Icon(Icons.arrow_drop_down, color: Colors.grey),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            ActionChip(
+                              side: BorderSide.none,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(50),
+                              ),
+                              label: Text(_selectedCategoryId != null ? widget.tagManager.groupRepository.getGroup(_selectedCategoryId!)!.name : '카테고리'),
+                              labelStyle: TextStyle(color: _selectedCategoryId != null ? Colors.white : Colors.black),
+                              onPressed: _buildCategorySelector,
+                              backgroundColor: _selectedCategoryId != null
+                                  ? Color(widget.tagManager.groupRepository.getGroup(_selectedCategoryId!)!.colorValue)
+                                  : Colors.grey[300],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+
+                        // 제목 입력
+                        // TextField(
+                        //   decoration: const InputDecoration(
+                        //       labelText: '제목',
+                        //       border: UnderlineInputBorder(
+                        //         borderSide: BorderSide(color: Colors.grey),
+                        //       ),
+                        //       enabledBorder: UnderlineInputBorder(
+                        //         borderSide: BorderSide(color: Colors.grey),
+                        //       ),
+                        //       focusedBorder: UnderlineInputBorder(
+                        //         borderSide: BorderSide(color: Colors.grey),
+                        //       ),
+                        //       hintText: '제목을 입력하세요',
+                        //       hintStyle: TextStyle(
+                        //         fontSize: 17,
+                        //         fontWeight: FontWeight.w400,
+                        //       )),
+                        //   controller: _titleController,
+                        //   style: const TextStyle(
+                        //     fontSize: 17,
+                        //     fontWeight: FontWeight.bold,
+                        //   ),
+                        //   maxLength: 50,
+                        // ),
+                        // const SizedBox(height: 16),
+
+                        // 내용 입력
+                        Expanded(
+                          child: TextField(
+                            controller: _contentController,
+                            focusNode: _contentFocus,
+                            autofocus: widget.isEdit ? false : true,
+                            onChanged: (value) => setState(() {}),
+                            decoration: const InputDecoration(
+                              labelText: '내용',
+                              border: OutlineInputBorder(borderSide: BorderSide.none),
+                              focusedBorder: OutlineInputBorder(),
+                              hintText: '오늘의 기록을 남겨보세요',
+                              alignLabelWithHint: true,
+                            ),
+                            style: const TextStyle(
+                              fontSize: 15,
+                            ),
+                            maxLines: null,
+                            minLines: null,
+                            expands: true,
+                            textAlignVertical: TextAlignVertical.top,
+                          ),
+                        ),
+                        // const SizedBox(height: 16),
+                        // 태그 선택
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 16.0),
+                          child: _buildTagSelector(),
+                        ),
+
+                        // Expanded(child: Container()),
+                        // 저장 버튼
+                        if (!widget.isEdit || !noChanged())
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8, top: 12),
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: _saveDiary,
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                ),
+                                child: Text(
+                                  widget.isEdit ? '수정하기' : '저장하기',
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+      ),
+    );
   }
 
   // 태그 입력 변화 감지 함수
@@ -100,6 +280,33 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
     });
   }
 
+  // 변경사항 확인 함수
+  bool noChanged() {
+    if (widget.diary == null) return true; // 새 일기는 항상 변경된 것으로 처리
+
+    final originalDiary = widget.diary!;
+
+    // 날짜 비교 (년, 월, 일만 비교)
+    final originalDate = DateTime(originalDiary.date.year, originalDiary.date.month, originalDiary.date.day);
+    final currentDate = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
+    if (originalDate != currentDate) return false;
+
+    // 카테고리 비교
+    if (originalDiary.categoryId != _selectedCategoryId) return false;
+
+    // 내용 비교
+    if (originalDiary.content != _contentController.text.trim()) return false;
+
+    // 태그 리스트 비교
+    final originalTags = widget.tagManager.getTagInfoList(originalDiary.tagIds).map((tag) => tag.name).toSet();
+    final currentTags = tags.toSet();
+    if (!originalTags.containsAll(currentTags) || !currentTags.containsAll(originalTags)) {
+      return false;
+    }
+
+    return true; // 모든 값이 같으면 true 반환
+  }
+
   // 날짜 선택 다이얼로그 표시
   Future<void> _selectDate() async {
     final DateTime? picked = await showDatePicker(
@@ -121,7 +328,7 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
                 foregroundColor: Colors.black, // 버튼 텍스트 색상
               ),
             ),
-            dialogBackgroundColor: Colors.white,
+            dialogTheme: const DialogThemeData(backgroundColor: Colors.white),
           ),
           child: child!,
         );
@@ -133,154 +340,6 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
         _selectedDate = picked;
       });
     }
-  }
-
-  @override
-  void dispose() {
-    _titleController.dispose();
-    _contentController.dispose();
-    _tagCont.removeListener(_onTagInputChanged);
-    _tagCont.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.diary == null ? '새 다이어리' : '다이어리 수정'),
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : GestureDetector(
-              onTap: () {
-                FocusScope.of(context).unfocus();
-                setState(() {
-                  _showSearchResults = false;
-                });
-              },
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // 날짜 선택 카드
-                    Row(
-                      children: [
-                        Expanded(
-                          child: InkWell(
-                            onTap: _selectDate,
-                            child: Card(
-                              elevation: 0,
-                              color: Colors.grey[100],
-                              child: Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        const Icon(Icons.calendar_today, size: 20),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          '${_selectedDate.year}년 ${_selectedDate.month}월 ${_selectedDate.day}일',
-                                          style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const Icon(Icons.arrow_drop_down, color: Colors.grey),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        ActionChip(
-                          side: BorderSide.none,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(50),
-                          ),
-                          label: Text(_selectedCategoryId != null ? widget.tagManager.groupRepository.getGroup(_selectedCategoryId!)!.name : '카테고리'),
-                          labelStyle: TextStyle(color: _selectedCategoryId != null ? Colors.white : Colors.black),
-                          onPressed: _buildCategorySelector,
-                          backgroundColor: _selectedCategoryId != null
-                              ? Color(widget.tagManager.groupRepository.getGroup(_selectedCategoryId!)!.colorValue)
-                              : Colors.grey[300],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    // 제목 입력
-                    TextField(
-                      decoration: const InputDecoration(
-                          labelText: '제목',
-                          border: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.grey),
-                          ),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.grey),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.grey),
-                          ),
-                          hintText: '제목을 입력하세요',
-                          hintStyle: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w400,
-                          )),
-                      controller: _titleController,
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLength: 50,
-                    ),
-                    const SizedBox(height: 16),
-
-                    // 내용 입력
-                    TextField(
-                      controller: _contentController,
-                      decoration: const InputDecoration(
-                        labelText: '내용',
-                        border: OutlineInputBorder(),
-                        hintText: '오늘의 기록을 남겨보세요',
-                        alignLabelWithHint: true,
-                      ),
-                      style: const TextStyle(
-                        fontSize: 15,
-                      ),
-                      maxLines: 10,
-                      minLines: 5,
-                    ),
-                    const SizedBox(height: 16),
-                    // 태그 선택
-                    _buildTagSelector(),
-
-                    const SizedBox(height: 32),
-
-                    // 저장 버튼
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _saveDiary,
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                        ),
-                        child: const Text(
-                          '저장하기',
-                          style: TextStyle(fontSize: 16),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-    );
   }
 
   void _buildCategorySelector() {
@@ -392,7 +451,7 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
                   ),
                 ),
                 style: const TextStyle(
-                  fontSize: 16,
+                  fontSize: 15,
                 ),
                 onTap: () {
                   // 입력 필드 포커스 시 검색 결과 표시
@@ -434,14 +493,15 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
                   ),
                 ),
                 Wrap(
-                  spacing: 6,
-                  runSpacing: 4,
+                  spacing: 4,
+                  runSpacing: 6,
                   children: _searchResults.map((tag) {
                     return GestureDetector(
                       onTap: () => _addTag(tag.name),
                       child: Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        height: 32,
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(16),
@@ -479,8 +539,8 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
         // 선택된 태그 리스트
         if (tags.isNotEmpty)
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: 6,
+            runSpacing: 6,
             children: tags
                 .map(
                   (e) => GestureDetector(
@@ -488,7 +548,8 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
                       tags.remove(e);
                     }),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      height: 32,
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
@@ -631,15 +692,15 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
   }
 
   void _saveDiary() async {
-    final title = _titleController.text.trim();
+    // final title = _titleController.text.trim();
     final content = _contentController.text.trim();
 
-    if (title.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('제목을 입력해주세요')),
-      );
-      return;
-    }
+    // if (title.isEmpty) {
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     const SnackBar(content: Text('제목을 입력해주세요')),
+    //   );
+    //   return;
+    // }
 
     if (content.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -652,50 +713,58 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
       _isLoading = true;
     });
 
-    try {
-      // 태그 문자열들을 태그 ID로 변환
-      List<int> finalTagIds = [];
-      for (String tagName in tags) {
-        final tagId = await widget.tagManager.addOrGetTag(tagName);
-        finalTagIds.add(tagId);
-      }
-
-      // 날짜는 년, 월, 일 정보만 포함하도록 설정
-      final dateOnly = DateTime(
-        _selectedDate.year,
-        _selectedDate.month,
-        _selectedDate.day,
-      );
-
-      final DiaryItem newDiary = DiaryItem(
-        id: widget.diary?.id ?? 0, // 신규는 0, 수정은 기존 ID
-        title: title,
-        date: dateOnly,
-        content: content,
-        categoryId: _selectedCategoryId,
-        tagIds: finalTagIds,
-      );
-
-      await widget.onSave(newDiary);
-
-      setState(() {
-        _isLoading = false;
-      });
-
-      if (mounted) {
-        // 수정된 다이어리를 결과로 반환하며 화면 닫기
-        Navigator.pop(context, newDiary);
-      }
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('저장 중 오류가 발생했습니다: $e')),
-        );
-      }
+    // try {
+    // 태그 문자열들을 태그 ID로 변환
+    List<int> finalTagIds = [];
+    for (String tagName in tags) {
+      final tagId = await widget.tagManager.addOrGetTag(tagName);
+      finalTagIds.add(tagId);
     }
+
+    // 날짜는 년, 월, 일 정보만 포함하도록 설정
+    final dateOnly = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+    );
+
+    final DiaryItem newDiary = DiaryItem(
+      id: widget.diary?.id ?? 0, // 신규는 0, 수정은 기존 ID
+      // title: title,
+      date: dateOnly,
+      content: content,
+      categoryId: _selectedCategoryId,
+      tagIds: finalTagIds,
+    );
+
+    await _diaryRepository.init();
+    if (widget.isEdit) {
+      _diaryRepository.updateDiary(newDiary);
+      widget.onEdit!();
+    } else {
+      _diaryRepository.addDiary(newDiary);
+      await widget.onSave!(newDiary);
+    }
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (mounted) {
+      // 수정된 다이어리를 결과로 반환하며 화면 닫기
+      Navigator.pop(context, newDiary);
+      setState(() {});
+    }
+    // } catch (e) {
+    //   setState(() {
+    //     _isLoading = false;
+    //   });
+
+    //   if (mounted) {
+    //     ScaffoldMessenger.of(context).showSnackBar(
+    //       SnackBar(content: Text('저장 중 오류가 발생했습니다: $e')),
+    //     );
+    //   }
+    // }
   }
 }
