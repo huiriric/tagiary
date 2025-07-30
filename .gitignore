@@ -5,9 +5,11 @@
 *.swp
 .DS_Store
 .atom/
+.build/
 .buildlog/
 .history
 .svn/
+.swiftpm/
 migrate_working_dir/
 
 # IntelliJ related
@@ -79,3 +81,15 @@ fastlane/report.xml
 fastlane/Preview.html
 fastlane/screenshots/
 fastlane/test_output/
+
+# DevTools options (auto-generated)
+devtools_options.yaml
+
+# iOS build artifacts and configuration
+ios/Flutter/AppFrameworkInfo.plist
+ios/Podfile.lock
+ios/Runner.xcodeproj/project.pbxproj
+ios/Runner.xcodeproj/xcshareddata/xcschemes/Runner.xcscheme
+
+# Pub dependency lock file (can be regenerated)
+pubspec.lock
