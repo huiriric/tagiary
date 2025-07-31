@@ -65,32 +65,8 @@ class TagGroupRepository {
     if (_groups.isEmpty) {
       await addGroup(TagGroup(
         id: 0,
-        name: '일상',
-        colorValue: Colors.grey.value,
-      ));
-
-      await addGroup(TagGroup(
-        id: 0,
-        name: '감정',
-        colorValue: Colors.red.value,
-      ));
-
-      await addGroup(TagGroup(
-        id: 0,
-        name: '활동',
-        colorValue: Colors.blue.value,
-      ));
-
-      await addGroup(TagGroup(
-        id: 0,
-        name: '여행',
-        colorValue: Colors.green.value,
-      ));
-
-      await addGroup(TagGroup(
-        id: 0,
-        name: '업무',
-        colorValue: Colors.orange.value,
+        name: '일반',
+        colorValue: Colors.blueGrey.value,
       ));
     }
   }

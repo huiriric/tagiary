@@ -203,6 +203,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
   Widget _buildDiaryCard(DiaryItem diary) {
     final dateFormat = DateFormat('M월 d일 (E)', 'ko_KR');
     final tagInfos = _tagManager.getTagInfoList(diary.tagIds);
+    final categoryInfo = _tagManager.groupRepository.getGroup(diary.categoryId!);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16.0),
@@ -218,12 +219,28 @@ class _DiaryScreenState extends State<DiaryScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // 날짜
-              Text(
-                dateFormat.format(diary.date),
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 14,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    dateFormat.format(diary.date),
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 14,
+                    ),
+                  ),
+                  Chip(
+                    side: BorderSide.none,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                    label: Text(
+                      categoryInfo!.name,
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                    backgroundColor: Color(categoryInfo.colorValue),
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
 
@@ -258,6 +275,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
                   runSpacing: 4,
                   children: tagInfos.map((tag) {
                     return Container(
+                      height: 32,
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
                         color: Colors.white,
@@ -323,6 +341,9 @@ class _DiaryScreenState extends State<DiaryScreen> {
         //   await repo.updateDiary(updatedDiary);
         //   setState(() {});
         // },
+        onDelete: () => setState(() {
+          _loadDiariesForMonth(_selectedDate);
+        }),
       ),
     );
 

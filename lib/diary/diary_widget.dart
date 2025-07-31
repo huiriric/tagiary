@@ -315,7 +315,6 @@ class _DiaryWidgetState extends State<DiaryWidget> {
             _loadDiary();
           },
           onDelete: () {
-            _diaryRepository.deleteDiary(_todayDiary!.id);
             _loadDiary();
           },
         ),

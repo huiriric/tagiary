@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:tagiary/component/slide_up_container.dart';
 import 'package:tagiary/constants/colors.dart';
 import 'package:tagiary/diary/tag_selector.dart';
@@ -90,7 +91,21 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         appBar: AppBar(
-          title: Text(widget.diary == null ? '새 다이어리' : '다이어리 수정'),
+          title: Text(
+            widget.diary == null ? '새 다이어리' : '다이어리',
+            style: const TextStyle(
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          actions: [
+            if (widget.isEdit)
+              IconButton(
+                onPressed: () => deleteDialog(widget.diary!.id),
+                icon: const Icon(Icons.delete_outline),
+                color: Colors.red,
+              )
+          ],
         ),
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())
@@ -713,58 +728,93 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
       _isLoading = true;
     });
 
-    // try {
-    // 태그 문자열들을 태그 ID로 변환
-    List<int> finalTagIds = [];
-    for (String tagName in tags) {
-      final tagId = await widget.tagManager.addOrGetTag(tagName);
-      finalTagIds.add(tagId);
+    try {
+      // 태그 문자열들을 태그 ID로 변환
+      List<int> finalTagIds = [];
+      for (String tagName in tags) {
+        final tagId = await widget.tagManager.addOrGetTag(tagName);
+        finalTagIds.add(tagId);
+      }
+
+      // 날짜는 년, 월, 일 정보만 포함하도록 설정
+      final dateOnly = DateTime(
+        _selectedDate.year,
+        _selectedDate.month,
+        _selectedDate.day,
+      );
+
+      final DiaryItem newDiary = DiaryItem(
+        id: widget.diary?.id ?? 0, // 신규는 0, 수정은 기존 ID
+        // title: title,
+        date: dateOnly,
+        content: content,
+        categoryId: _selectedCategoryId ?? 1,
+        tagIds: finalTagIds,
+      );
+
+      await _diaryRepository.init();
+      if (widget.isEdit) {
+        _diaryRepository.updateDiary(newDiary);
+        widget.onEdit!();
+      } else {
+        // _diaryRepository.addDiary(newDiary);
+        await widget.onSave!(newDiary);
+      }
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (mounted) {
+        // 수정된 다이어리를 결과로 반환하며 화면 닫기
+        Navigator.pop(context, newDiary);
+        setState(() {});
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('저장 중 오류가 발생했습니다: $e')),
+        );
+      }
     }
+  }
 
-    // 날짜는 년, 월, 일 정보만 포함하도록 설정
-    final dateOnly = DateTime(
-      _selectedDate.year,
-      _selectedDate.month,
-      _selectedDate.day,
-    );
-
-    final DiaryItem newDiary = DiaryItem(
-      id: widget.diary?.id ?? 0, // 신규는 0, 수정은 기존 ID
-      // title: title,
-      date: dateOnly,
-      content: content,
-      categoryId: _selectedCategoryId,
-      tagIds: finalTagIds,
-    );
-
+  void deleteDiary(int id) async {
     await _diaryRepository.init();
-    if (widget.isEdit) {
-      _diaryRepository.updateDiary(newDiary);
-      widget.onEdit!();
-    } else {
-      _diaryRepository.addDiary(newDiary);
-      await widget.onSave!(newDiary);
-    }
+    await _diaryRepository.deleteDiary(id);
+    Navigator.pop(context);
+    Navigator.pop(context);
+    widget.onDelete!();
+    Fluttertoast.showToast(
+      msg: '다이어리가 삭제되었습니다.',
+      toastLength: Toast.LENGTH_LONG, // 더 긴 시간 표시
+      gravity: ToastGravity.BOTTOM,
+      timeInSecForIosWeb: 3, // iOS와 웹에서 3초 동안 표시
+      backgroundColor: Colors.black87,
+      textColor: Colors.white,
+    );
+  }
 
-    setState(() {
-      _isLoading = false;
-    });
-
-    if (mounted) {
-      // 수정된 다이어리를 결과로 반환하며 화면 닫기
-      Navigator.pop(context, newDiary);
-      setState(() {});
-    }
-    // } catch (e) {
-    //   setState(() {
-    //     _isLoading = false;
-    //   });
-
-    //   if (mounted) {
-    //     ScaffoldMessenger.of(context).showSnackBar(
-    //       SnackBar(content: Text('저장 중 오류가 발생했습니다: $e')),
-    //     );
-    //   }
-    // }
+  void deleteDialog(int id) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        content: const Text('다이어리르 삭제하시겠습니까?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('취소')),
+          TextButton(
+            onPressed: () => deleteDiary(id),
+            child: const Text(
+              '삭제',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
