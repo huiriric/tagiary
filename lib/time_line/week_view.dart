@@ -125,10 +125,24 @@ class _WeekViewState extends State<WeekView> {
       // 해당 날짜의 일반 일정
       List<Event> dateEvents = sRepo.getDateItems(currentDate).toList();
 
-      // 해당 요일의 루틴 일정
+      // 해당 요일의 루틴 일정 (createdAt 필터링 적용)
       // ScheduleRoutineRepository.getItemsByDay는 dayIndex: 0(일요일) ~ 6(토요일) 순서 사용
-      List<Event> routineEvents = srRepo.getItemsByDayWithTime(dayOfWeek).toList();
-      List<Event> noTimeRoutineEvents = srRepo.getItemsByDayWithoutTime(dayOfWeek).toList();
+      List<Event> routineEvents = srRepo.getItemsByDayWithTime(dayOfWeek)
+          .where((event) {
+            // createdAt이 null이거나 해당 날짜 이전에 생성된 루틴만 표시
+            final routineItem = srRepo.getItem(event.id);
+            if (routineItem?.createdAt == null) return true;
+            return !routineItem!.createdAt.isAfter(currentDate);
+          })
+          .toList();
+      List<Event> noTimeRoutineEvents = srRepo.getItemsByDayWithoutTime(dayOfWeek)
+          .where((event) {
+            // createdAt이 null이거나 해당 날짜 이전에 생성된 루틴만 표시
+            final routineItem = srRepo.getItem(event.id);
+            if (routineItem?.createdAt == null) return true;
+            return !routineItem!.createdAt.isAfter(currentDate);
+          })
+          .toList();
 
       // 시간 있는 일정과 없는 일정 모두 포함
       weekEvents[dayOfWeek] = [

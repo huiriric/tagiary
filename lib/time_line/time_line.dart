@@ -66,6 +66,13 @@ class _TimeLineState extends State<TimeLine> {
     // 비동기 초기화를 별도 메서드로 분리
     _initializeData();
     _timelineCont = ScrollController();
+
+    // 오늘 날짜인 경우에만 초기화 완료 후 현재 시간으로 스크롤
+    if (_isToday(widget.date)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToCurrentTime();
+      });
+    }
   }
 
   @override
@@ -75,6 +82,13 @@ class _TimeLineState extends State<TimeLine> {
     // 날짜가 변경되었을 때만 데이터 다시 로드
     if (oldWidget.date != widget.date) {
       loadEventsForDate();
+
+      // 날짜가 오늘인 경우에만 현재 시간으로 스크롤
+      if (_isToday(widget.date)) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _scrollToCurrentTime();
+        });
+      }
     }
   }
 
@@ -105,9 +119,23 @@ class _TimeLineState extends State<TimeLine> {
 
       // 선택된 날짜의 모든 일정 이벤트 가져오기
       final allScheduleEvents = sRepo.getDateItems(widget.date).toList();
-      // 선택된 요일의 루틴 이벤트 가져오기
-      final timeRoutineEvents = srRepo.getItemsByDayWithTime(dayOfWeek).toList();
-      final noTimeRoutineEvents = srRepo.getItemsByDayWithoutTime(dayOfWeek).toList();
+      // 선택된 요일의 루틴 이벤트 가져오기 (createdAt 필터링 적용)
+      final timeRoutineEvents = srRepo.getItemsByDayWithTime(dayOfWeek)
+          .where((event) {
+            // createdAt이 null이거나 해당 날짜 이전에 생성된 루틴만 표시
+            final routineItem = srRepo.getItem(event.id);
+            if (routineItem?.createdAt == null) return true;
+            return !routineItem!.createdAt.isAfter(widget.date);
+          })
+          .toList();
+      final noTimeRoutineEvents = srRepo.getItemsByDayWithoutTime(dayOfWeek)
+          .where((event) {
+            // createdAt이 null이거나 해당 날짜 이전에 생성된 루틴만 표시
+            final routineItem = srRepo.getItem(event.id);
+            if (routineItem?.createdAt == null) return true;
+            return !routineItem!.createdAt.isAfter(widget.date);
+          })
+          .toList();
 
       // 시간 있는 이벤트와 없는 이벤트 구분
       final timeEvents = allScheduleEvents.where((e) => e.hasTimeSet).toList();
@@ -817,5 +845,45 @@ class _TimeLineState extends State<TimeLine> {
     if (result == true) {
       loadEventsForDate();
     }
+  }
+
+  // 현재 시간으로 스크롤하는 메서드
+  void _scrollToCurrentTime() {
+    if (!mounted) return;
+
+    final now = DateTime.now();
+    const currentHour = 21;
+    final currentMinute = now.minute;
+
+    // 현재 시간이 타임라인 범위 내에 있는지 확인
+    if (currentHour < _startHour || currentHour > _endHour) {
+      return; // 범위 밖이면 스크롤하지 않음
+    }
+
+    // 현재 시간에 해당하는 스크롤 위치 계산
+    final currentTimeInMinutes = currentHour * 60 + currentMinute;
+    final startTimeInMinutes = _startHour * 60;
+    final scrollPosition = (currentTimeInMinutes - startTimeInMinutes) / 60 * _hourHeight;
+
+    // 화면 중앙에 현재 시간이 오도록 조정 (선택사항)
+    final screenHeight = MediaQuery.of(context).size.height;
+    final adjustedPosition = scrollPosition + (screenHeight * 3.0); // 상단 30% 지점에 위치
+
+    // 스크롤 범위 체크
+    final maxScrollExtent = (_endHour - _startHour) * _hourHeight - screenHeight;
+    final finalPosition = adjustedPosition.clamp(0.0, maxScrollExtent);
+
+    // 애니메이션과 함께 스크롤
+    _timelineCont.animateTo(
+      finalPosition,
+      duration: const Duration(milliseconds: 800),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  // 날짜가 오늘인지 확인하는 헬퍼 메서드
+  bool _isToday(DateTime date) {
+    final now = DateTime.now();
+    return date.year == now.year && date.month == now.month && date.day == now.day;
   }
 }

@@ -596,42 +596,42 @@ class _AddScheduleState extends State<AddSchedule> {
   }
 
   // Todo Routine에 추가하는 메서드 (루틴 일정일 때)
-  Future<void> _addToTodoRoutine() async {
-    final checkRoutineRepository = CheckRoutineRepository();
-    await checkRoutineRepository.init();
+  // Future<void> _addToTodoRoutine() async {
+  //   final checkRoutineRepository = CheckRoutineRepository();
+  //   await checkRoutineRepository.init();
 
-    final newRoutine = CheckRoutineItem(
-        id: 0, // 저장소에서 할당
-        content: title,
-        colorValue: selectedColor.value,
-        check: false,
-        updated: DateTime.now(),
-        daysOfWeek: selectedDays);
+  //   final newRoutine = CheckRoutineItem(
+  //       id: 0, // 저장소에서 할당
+  //       content: title,
+  //       colorValue: selectedColor.value,
+  //       check: false,
+  //       updated: DateTime.now(),
+  //       daysOfWeek: selectedDays);
 
-    final routineId = await checkRoutineRepository.addItem(newRoutine);
+  //   final routineId = await checkRoutineRepository.addItem(newRoutine);
 
-    // 일정과 루틴 사이의 연결 정보 저장
-    final routineRepository = ScheduleRoutineRepository();
-    await routineRepository.init();
+  //   // 일정과 루틴 사이의 연결 정보 저장
+  //   final routineRepository = ScheduleRoutineRepository();
+  //   await routineRepository.init();
 
-    // 가장 최근 추가된 루틴 ID 가져오기
-    final routines = routineRepository.getAllItems();
-    final latestRoutine = routines.isNotEmpty ? routines.last : null;
+  //   // 가장 최근 추가된 루틴 ID 가져오기
+  //   final routines = routineRepository.getAllItems();
+  //   final latestRoutine = routines.isNotEmpty ? routines.last : null;
 
-    if (latestRoutine != null) {
-      final linkRepo = ScheduleLinkRepository();
-      await linkRepo.init();
+  //   if (latestRoutine != null) {
+  //     final linkRepo = ScheduleLinkRepository();
+  //     await linkRepo.init();
 
-      final newLink = ScheduleLinkItem(
-        scheduleId: latestRoutine.id,
-        isRoutine: true,
-        linkedItemId: routineId,
-        linkedItemType: LinkItemType.todoRoutine,
-      );
+  //     final newLink = ScheduleLinkItem(
+  //       scheduleId: latestRoutine.id,
+  //       isRoutine: true,
+  //       linkedItemId: routineId,
+  //       linkedItemType: LinkItemType.todoRoutine,
+  //     );
 
-      await linkRepo.addItem(newLink);
-    }
-  }
+  //     await linkRepo.addItem(newLink);
+  //   }
+  // }
 
   Future<void> _saveNormalSchedule() async {
     // 일정 중복 체크
@@ -960,7 +960,7 @@ class _AddScheduleState extends State<AddSchedule> {
 String formatDate(DateTime date) {
   final DateTime now = DateTime.now();
   List<String> week = ['일', '월', '화', '수', '목', '금', '토'];
-  return '${now.year == date.year ? '' : {'${date.year}년 '}}${date.month}월 ${date.day}일 (${week[date.weekday % 7]})';
+  return '${now.year == date.year ? '' : '${date.year}년 '}${date.month}월 ${date.day}일 (${week[date.weekday % 7]})';
 }
 
 String formatTime(TimeOfDay time) {

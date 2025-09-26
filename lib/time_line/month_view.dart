@@ -312,8 +312,22 @@ class _MonthViewState extends State<MonthView> {
       int routineIndex;
       routineIndex = day.weekday % 7;
 
-      List<Event> routineEvents = srRepo.getItemsByDayWithTime(routineIndex).toList();
-      List<Event> routineNoTimeEvents = srRepo.getItemsByDayWithoutTime(routineIndex).toList();
+      List<Event> routineEvents = srRepo.getItemsByDayWithTime(routineIndex)
+          .where((event) {
+            // createdAt이 null이거나 해당 날짜 이전에 생성된 루틴만 표시
+            final routineItem = srRepo.getItem(event.id);
+            if (routineItem?.createdAt == null) return true;
+            return !routineItem!.createdAt.isAfter(dateKey);
+          })
+          .toList();
+      List<Event> routineNoTimeEvents = srRepo.getItemsByDayWithoutTime(routineIndex)
+          .where((event) {
+            // createdAt이 null이거나 해당 날짜 이전에 생성된 루틴만 표시
+            final routineItem = srRepo.getItem(event.id);
+            if (routineItem?.createdAt == null) return true;
+            return !routineItem!.createdAt.isAfter(dateKey);
+          })
+          .toList();
 
       // 모든 일정 합치기 (시간 있는/없는 일정 모두 포함)
       monthEvents[dateKey] = [
@@ -811,8 +825,22 @@ class _MonthViewState extends State<MonthView> {
     for (DateTime day in _daysInMonth) {
       if (day.month == widget.selectedDate.month) {
         int routineIndex = day.weekday % 7;
-        List<Event> routineEvents = srRepo.getItemsByDayWithTime(routineIndex).toList();
-        List<Event> routineNoTimeEvents = srRepo.getItemsByDayWithoutTime(routineIndex).toList();
+        List<Event> routineEvents = srRepo.getItemsByDayWithTime(routineIndex)
+            .where((event) {
+              // createdAt이 null이거나 해당 날짜 이전에 생성된 루틴만 표시
+              final routineItem = srRepo.getItem(event.id);
+              if (routineItem?.createdAt == null) return true;
+              return !routineItem!.createdAt.isAfter(day);
+            })
+            .toList();
+        List<Event> routineNoTimeEvents = srRepo.getItemsByDayWithoutTime(routineIndex)
+            .where((event) {
+              // createdAt이 null이거나 해당 날짜 이전에 생성된 루틴만 표시
+              final routineItem = srRepo.getItem(event.id);
+              if (routineItem?.createdAt == null) return true;
+              return !routineItem!.createdAt.isAfter(day);
+            })
+            .toList();
 
         // 루틴 일정들을 해당 날짜로 설정
         for (Event routine in [...routineEvents, ...routineNoTimeEvents]) {

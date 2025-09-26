@@ -945,46 +945,46 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
   }
 
   // 연결된 항목들 수정
-  Future<void> _updateLinkedItems(List<ScheduleLinkItem> linkedItems) async {
-    final checkRepo = CheckRepository();
-    await checkRepo.init();
+  // Future<void> _updateLinkedItems(List<ScheduleLinkItem> linkedItems) async {
+  //   final checkRepo = CheckRepository();
+  //   await checkRepo.init();
 
-    final routineRepo = CheckRoutineRepository();
-    await routineRepo.init();
+  //   final routineRepo = CheckRoutineRepository();
+  //   await routineRepo.init();
 
-    for (var link in linkedItems) {
-      if (link.linkedItemType == LinkItemType.todo) {
-        // 할 일 수정
-        final item = checkRepo.getItem(link.linkedItemId);
-        if (item != null) {
-          final updatedItem = CheckItem(
-            id: item.id,
-            content: _titleController.text, // 제목 동기화
-            dueDate: item.dueDate, // 기존 마감일 유지
-            startDate: item.startDate, // 기존 시작일 유지
-            doneDate: item.doneDate, // 기존 완료일 유지
-            colorValue: _selectedColor.value, // 색상 동기화
-            check: item.check, // 완료 상태 유지
-          );
-          await checkRepo.updateItem(updatedItem);
-        }
-      } else if (link.linkedItemType == LinkItemType.todoRoutine) {
-        // 루틴 할 일 수정
-        final item = routineRepo.getItem(link.linkedItemId);
-        if (item != null) {
-          final updatedItem = CheckRoutineItem(
-            id: item.id,
-            content: _titleController.text, // 제목 동기화
-            colorValue: _selectedColor.value, // 색상 동기화
-            check: item.check, // 완료 상태 유지
-            updated: item.updated, // 업데이트 시간 유지
-            daysOfWeek: selectedDays!, // 요일 설정 유지
-          );
-          await routineRepo.updateItem(updatedItem);
-        }
-      }
-    }
-  }
+  //   for (var link in linkedItems) {
+  //     if (link.linkedItemType == LinkItemType.todo) {
+  //       // 할 일 수정
+  //       final item = checkRepo.getItem(link.linkedItemId);
+  //       if (item != null) {
+  //         final updatedItem = CheckItem(
+  //           id: item.id,
+  //           content: _titleController.text, // 제목 동기화
+  //           dueDate: item.dueDate, // 기존 마감일 유지
+  //           startDate: item.startDate, // 기존 시작일 유지
+  //           doneDate: item.doneDate, // 기존 완료일 유지
+  //           colorValue: _selectedColor.value, // 색상 동기화
+  //           check: item.check, // 완료 상태 유지
+  //         );
+  //         await checkRepo.updateItem(updatedItem);
+  //       }
+  //     } else if (link.linkedItemType == LinkItemType.todoRoutine) {
+  //       // 루틴 할 일 수정
+  //       final item = routineRepo.getItem(link.linkedItemId);
+  //       if (item != null) {
+  //         final updatedItem = CheckRoutineItem(
+  //           id: item.id,
+  //           content: _titleController.text, // 제목 동기화
+  //           colorValue: _selectedColor.value, // 색상 동기화
+  //           check: item.check, // 완료 상태 유지
+  //           updated: item.updated, // 업데이트 시간 유지
+  //           daysOfWeek: selectedDays!, // 요일 설정 유지
+  //         );
+  //         await routineRepo.updateItem(updatedItem);
+  //       }
+  //     }
+  //   }
+  // }
 
   // 일반 일정 중복 확인
   Future<bool> _checkNormalScheduleConflict(int eventId, DateTime date) async {
