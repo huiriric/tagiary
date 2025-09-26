@@ -328,6 +328,7 @@ class _RoutineDetailState extends State<RoutineDetail> {
       CheckRoutineItem itemToUpdate = CheckRoutineItem(
         id: widget.item.id,
         content: _content,
+        startDate: widget.item.startDate,
         colorValue: _colorValue,
         check: widget.item.check,
         updated: widget.item.updated,

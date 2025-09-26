@@ -288,7 +288,7 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
                       if (onRoutineChanged != null) {
                         onRoutineChanged();
                       }
-                      _showToast(value ? '루틴을 완료했습니다' : '루틴 체크를 해제했습니다');
+                      _showToast(value ? '${routine.content} 루틴을 완료했습니다' : '${routine.content} 루틴 체크를 해제했습니다');
                     });
                   },
                   shape: const CircleBorder(),
@@ -652,6 +652,7 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
     final updatedRoutine = CheckRoutineItem(
       id: routine.id,
       content: routine.content,
+      startDate: routine.startDate,
       colorValue: routine.colorValue,
       check: checked, // 오늘의 완료 상태
       updated: DateTime.now(), // 타임스탬프 업데이트
@@ -723,6 +724,7 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
           child: SlideUpContainer(
             child: AddRoutine(
               onRoutineAdded: onRoutineChanged,
+              selectedDate: _displayDate,
               start: start,
               end: end,
             ),

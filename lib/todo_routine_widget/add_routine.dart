@@ -4,16 +4,20 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:hive/hive.dart';
 import 'package:tagiary/component/day_picker/day_picker.dart';
 import 'package:tagiary/constants/colors.dart';
+import 'package:tagiary/screens/home_screen.dart';
 import 'package:tagiary/tables/check_routine/check_routine_item.dart';
+import 'package:tagiary/time_line/add_schedule.dart';
 
 class AddRoutine extends StatefulWidget {
   final VoidCallback? onRoutineAdded; // 루틴 추가 후 호출할 콜백 함수
+  DateTime selectedDate;
   TimeOfDay start;
   TimeOfDay end;
 
   AddRoutine({
     super.key,
     this.onRoutineAdded,
+    required this.selectedDate,
     required this.start,
     required this.end,
   });
@@ -31,6 +35,9 @@ class _AddRoutineState extends State<AddRoutine> {
 
   // bool hasTimeSet = false; // 시간 설정 여부 체크박스
 
+  // 시작 날짜
+  late DateTime startDate;
+
   // 요일 선택 상태
   List<bool> selectedDays = List.generate(7, (index) => false);
 
@@ -46,6 +53,7 @@ class _AddRoutineState extends State<AddRoutine> {
   void initState() {
     super.initState();
     contentCont = TextEditingController();
+    startDate = widget.selectedDate;
     selectedColor = scheduleColors[0];
     start = widget.start;
     end = widget.end;
@@ -126,7 +134,39 @@ class _AddRoutineState extends State<AddRoutine> {
                 //     ),
                 //   ],
                 // ),
-                // 요일 선택기
+                // 시작 날짜
+                const Text(
+                  '시작일',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                TextButton(
+                  style: TextButton.styleFrom(
+                    backgroundColor: const Color(0x1140608A),
+                  ),
+                  onPressed: () async {
+                    final selectedDate = await showBlackWhiteDatePicker(
+                      context: context,
+                      initialDate: startDate,
+                    );
+                    if (selectedDate != null) {
+                      setState(() {
+                        startDate = selectedDate;
+                      });
+                    }
+                  },
+                  child: Text(
+                    formatDate(startDate),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                      color: Color(0xFF40608A),
+                    ),
+                  ),
+                ),
+                // 요일 선택
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 10.0),
                   child: DayPicker(
@@ -279,6 +319,7 @@ class _AddRoutineState extends State<AddRoutine> {
     final newRoutine = CheckRoutineItem(
       id: 0, // 저장소에서 ID 할당
       content: content,
+      startDate: startDate,
       colorValue: selectedColor.value,
       check: false,
       updated: DateTime.now(),
