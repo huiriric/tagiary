@@ -525,7 +525,14 @@ class _RoutineScreenState extends State<RoutineScreen> {
     // Repository가 초기화되지 않았으면 빈 위젯 반환
     if (!_isRepositoryInitialized) return const SizedBox.shrink();
 
-    final routines = _repository.getAllItems().where((routine) => routine.daysOfWeek[date.weekday % 7]).toList();
+    // 날짜 비교를 위해 시간 정보 제거
+    final dateOnly = DateTime(date.year, date.month, date.day);
+
+    final routines = _repository.getAllItems().where((routine) {
+      // 해당 요일에 루틴이 설정되어 있고, 루틴 시작일 이후인 경우만 포함
+      final routineStartDate = DateTime(routine.startDate.year, routine.startDate.month, routine.startDate.day);
+      return routine.daysOfWeek[date.weekday % 7] && !dateOnly.isBefore(routineStartDate);
+    }).toList();
 
     if (routines.isEmpty) return const SizedBox.shrink();
 
@@ -569,7 +576,14 @@ class _RoutineScreenState extends State<RoutineScreen> {
     // Repository가 초기화되지 않았으면 리턴
     if (!_isRepositoryInitialized) return;
 
-    final routines = _repository.getAllItems().where((routine) => routine.daysOfWeek[date.weekday % 7]).toList();
+    // 날짜 비교를 위해 시간 정보 제거
+    final dateOnly = DateTime(date.year, date.month, date.day);
+
+    final routines = _repository.getAllItems().where((routine) {
+      // 해당 요일에 루틴이 설정되어 있고, 루틴 시작일 이후인 경우만 포함
+      final routineStartDate = DateTime(routine.startDate.year, routine.startDate.month, routine.startDate.day);
+      return routine.daysOfWeek[date.weekday % 7] && !dateOnly.isBefore(routineStartDate);
+    }).toList();
 
     if (routines.isEmpty) return;
 
@@ -658,6 +672,7 @@ class _RoutineScreenState extends State<RoutineScreen> {
               onRoutineAdded: () {
                 setState(() {});
               },
+              selectedDate: selectedDate,
               start: start,
               end: end,
             ),

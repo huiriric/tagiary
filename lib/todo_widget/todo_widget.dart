@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:tagiary/component/slide_up_container.dart';
@@ -138,7 +139,7 @@ class _TodoWidgetState extends State<TodoWidget> {
     final inProgressTodos = todos.where((todo) => todo.check == CheckEnum.inProgress).toList()
       ..sort((a, b) => b.id.compareTo(a.id)); // Using id as proxy for update time
     // Show at most 3 items in preview
-    final previewTodos = [...pendingTodos.take(3), ...inProgressTodos.take(3)];
+    final previewTodos = [...inProgressTodos.take(3), ...pendingTodos.take(3)];
 
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
@@ -162,7 +163,9 @@ class _TodoWidgetState extends State<TodoWidget> {
             tristate: true,
             value: getCheckboxValue(todo.check),
             onChanged: (value) {
-              _updateTodoCheckEnum(todo, _getNextStatus(todo.check));
+              setState(() {
+                _updateTodoCheckEnum(todo, _getNextStatus(todo.check));
+              });
             },
             shape: const CircleBorder(),
             activeColor: Color(todo.colorValue),
@@ -413,6 +416,11 @@ class _TodoWidgetState extends State<TodoWidget> {
     );
 
     _repository.updateItem(updatedTodo);
+    value == CheckEnum.done
+        ? _showToast('${todo.content} 완료!')
+        : value == CheckEnum.inProgress
+            ? _showToast('${todo.content} 시작!')
+            : null;
   }
 
   void _deleteTodo(CheckItem todo) {
@@ -482,6 +490,23 @@ class _TodoWidgetState extends State<TodoWidget> {
           ),
         ),
       ),
+    );
+  }
+
+  void _showToast(String message) {
+    // Exception 텍스트가 포함되어 있으면 제거
+    String cleanMessage = message;
+    if (message.contains('Exception:')) {
+      cleanMessage = message.replaceAll('Exception:', '').trim();
+    }
+
+    Fluttertoast.showToast(
+      msg: cleanMessage,
+      toastLength: Toast.LENGTH_LONG, // 더 긴 시간 표시
+      gravity: ToastGravity.BOTTOM,
+      timeInSecForIosWeb: 3, // iOS와 웹에서 3초 동안 표시
+      backgroundColor: Colors.black87,
+      textColor: Colors.white,
     );
   }
 }
