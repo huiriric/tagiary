@@ -88,8 +88,25 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
     // 선택된 날짜의 요일 가져오기 (0: 일요일, 1: 월요일, ... 6: 토요일)
     final displayDayOfWeek = _displayDate.weekday % 7; // 0(일)~6(토) 범위로 변환
 
-    // 선택된 요일에 해당하는 루틴만 필터링
+    // 선택된 요일에 해당하고 루틴 시작일을 고려한 루틴만 필터링
     final filteredRoutines = allRoutines.where((routine) {
+      // 루틴 시작일 체크 (시간 정보 제거)
+      final routineStartDate = DateTime(
+        routine.startDate.year,
+        routine.startDate.month,
+        routine.startDate.day,
+      );
+      final displayDate = DateTime(
+        _displayDate.year,
+        _displayDate.month,
+        _displayDate.day,
+      );
+
+      // 표시 날짜가 루틴 시작일 이전이면 제외
+      if (displayDate.isBefore(routineStartDate)) {
+        return false;
+      }
+
       // daysOfWeek가 null이거나 길이가 7이 아닌 경우 기본값 처리
       if (routine.daysOfWeek.length != 7) {
         return true; // 기존 데이터는 모든 요일에 표시
@@ -282,14 +299,13 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
           leading: _isToday
               ? Checkbox(
                   value: routine.check,
-                  onChanged: (value) {
-                    setState(() {
-                      _updateRoutineCheck(routine, value!);
-                      if (onRoutineChanged != null) {
-                        onRoutineChanged();
-                      }
-                      _showToast(value ? '${routine.content} 루틴을 완료했습니다' : '${routine.content} 루틴 체크를 해제했습니다');
-                    });
+                  onChanged: (value) async {
+                    await _updateRoutineCheck(routine, value!);
+                    if (onRoutineChanged != null) {
+                      onRoutineChanged();
+                    }
+                    _showToast(value ? '${routine.content} 루틴을 완료했습니다' : '${routine.content} 루틴 체크를 해제했습니다');
+                    setState(() {});
                   },
                   shape: const CircleBorder(),
                   activeColor: Color(routine.colorValue),
@@ -420,11 +436,21 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
       // 이번 주에 루틴이 예정된 날짜 수 계산
       int routineScheduledDays = 0;
 
+      // 루틴 시작일 (시간 정보 제거)
+      final routineStartDate = DateTime(
+        routine.startDate.year,
+        routine.startDate.month,
+        routine.startDate.day,
+      );
+
       // 이번 주의 일요일부터 토요일까지의 모든 날짜 확인
       print(daysOfWeek);
       for (int i = 0; i < 7; i++) {
         final date = firstDayOfWeek.add(Duration(days: i));
         final dayOfWeek = date.weekday % 7; // 0(일)~6(토)
+
+        // 루틴 시작일 이후의 날짜만 포함
+        if (date.isBefore(routineStartDate)) continue;
 
         // 오늘 또는 오늘 이전의 날짜만 포함 (미래 날짜는 제외)
         // if (date.isAfter(today)) continue;
@@ -540,11 +566,21 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
       return historyDate.isAfter(firstDayOfMonth.subtract(const Duration(days: 1))) && historyDate.isBefore(lastDayOfMonth.add(const Duration(days: 1)));
     }).toList();
 
-    // 이번 달에 루틴이 예정된 날짜 수 계산 (전체 달 기준)
+    // 루틴 시작일 (시간 정보 제거)
+    final routineStartDate = DateTime(
+      routine.startDate.year,
+      routine.startDate.month,
+      routine.startDate.day,
+    );
+
+    // 이번 달에 루틴이 예정된 날짜 수 계산 (루틴 시작일 이후만)
     int scheduledDays = 0;
     for (int day = 1; day <= lastDayOfMonth.day; day++) {
       final date = DateTime(selectedMonth.year, selectedMonth.month, day);
       final dayOfWeek = date.weekday % 7; // 0(일)~6(토)
+
+      // 루틴 시작일 이후의 날짜만 포함
+      if (date.isBefore(routineStartDate)) continue;
 
       if (daysOfWeek[dayOfWeek]) {
         scheduledDays++;
@@ -640,7 +676,7 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
     return totalCompleted / totalScheduledDays;
   }
 
-  void _updateRoutineCheck(CheckRoutineItem routine, bool value) {
+  Future<void> _updateRoutineCheck(CheckRoutineItem routine, bool value) async {
     // 단순 체크 업데이트 대신 기록 추가 메소드 사용
     _checkRoutine(routine, value);
   }
