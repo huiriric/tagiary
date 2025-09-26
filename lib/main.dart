@@ -124,6 +124,7 @@ class MyApp extends StatelessWidget {
         Locale('ko', 'KR'), // 한국어
         Locale('en', 'US'), // 영어
       ],
+      debugShowCheckedModeBanner: false,
       home: const MainScreen(),
     );
   }

@@ -47,12 +47,21 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Tagiary',
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-          ),
+        title: Row(
+          children: [
+            Image.asset(
+              'images/mrPlando.png',
+              width: 30,
+            ),
+            const Padding(padding: EdgeInsets.only(left: 2)),
+            const Text(
+              'Mr.Plando',
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -232,7 +241,7 @@ Future<DateTime?> showBlackWhiteDatePicker({
               foregroundColor: Colors.black, // 버튼 텍스트 색상
             ),
           ),
-          dialogBackgroundColor: Colors.white,
+          dialogTheme: const DialogThemeData(backgroundColor: Colors.white),
         ),
         child: child!,
       );
