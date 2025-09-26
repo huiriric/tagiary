@@ -19,18 +19,21 @@ class ScheduleRoutineItem extends HiveObject {
   final List<bool> daysOfWeek; // [월,화,수,목,금,토,일] - true means the schedule applies to that day
 
   @HiveField(4)
-  final int? startHour;
+  final DateTime createdAt = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
 
   @HiveField(5)
-  final int? startMinute;
+  final int? startHour;
 
   @HiveField(6)
-  final int? endHour;
+  final int? startMinute;
 
   @HiveField(7)
-  final int? endMinute;
+  final int? endHour;
 
   @HiveField(8)
+  final int? endMinute;
+
+  @HiveField(9)
   final int colorValue;
 
   bool get hasTimeInfo => startHour != null && startMinute != null && endHour != null && endMinute != null;

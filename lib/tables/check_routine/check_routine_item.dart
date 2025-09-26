@@ -11,20 +11,24 @@ class CheckRoutineItem extends HiveObject {
   final String content;
 
   @HiveField(2)
+  final DateTime startDate;
+
+  @HiveField(3)
   final int colorValue;
 
-  @HiveField(7)
+  @HiveField(4)
   late bool check;
 
-  @HiveField(8)
+  @HiveField(5)
   late DateTime updated;
 
-  @HiveField(9)
+  @HiveField(6)
   final List<bool> daysOfWeek; // 요일별 반복 여부 [일, 월, 화, 수, 목, 금, 토]
 
   CheckRoutineItem({
     required this.id,
     required this.content,
+    required this.startDate,
     required this.colorValue,
     required this.check,
     required this.updated,
@@ -35,6 +39,7 @@ class CheckRoutineItem extends HiveObject {
   factory CheckRoutineItem.fromLegacy({
     required int id,
     required String content,
+    required DateTime startDate,
     required int colorValue,
     required bool check,
     required DateTime updated,
@@ -42,6 +47,7 @@ class CheckRoutineItem extends HiveObject {
     return CheckRoutineItem(
       id: id,
       content: content,
+      startDate: startDate,
       colorValue: colorValue,
       check: check,
       updated: updated,

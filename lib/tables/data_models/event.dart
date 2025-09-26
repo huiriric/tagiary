@@ -4,6 +4,7 @@ class Event {
   final int id;
   final String title;
   final String description;
+  final DateTime? createdAt;
   final DateTime? date; // 날짜 정보 추가
   final DateTime? endDate; // 멀티데이 이벤트를 위한 종료 날짜
   final List<bool>? daysOfWeek;
@@ -18,6 +19,7 @@ class Event {
     required this.id,
     required this.title,
     required this.description,
+    this.createdAt,
     this.date,
     this.endDate, // 멀티데이 이벤트를 위한 종료 날짜
     required this.daysOfWeek,
