@@ -4,7 +4,7 @@
 # This file should be version controlled and should not be manually edited.
 
 version:
-  revision: "fa70e610cc244750b07321c466385d821533ee68"
+  revision: "9ceb7614fa9410ae5c50a2a4f6ace4386a3b457a"
   channel: "main"
 
 project_type: app
@@ -13,26 +13,26 @@ project_type: app
 migration:
   platforms:
     - platform: root
-      create_revision: fa70e610cc244750b07321c466385d821533ee68
-      base_revision: fa70e610cc244750b07321c466385d821533ee68
+      create_revision: 9ceb7614fa9410ae5c50a2a4f6ace4386a3b457a
+      base_revision: 9ceb7614fa9410ae5c50a2a4f6ace4386a3b457a
     - platform: android
-      create_revision: fa70e610cc244750b07321c466385d821533ee68
-      base_revision: fa70e610cc244750b07321c466385d821533ee68
+      create_revision: 9ceb7614fa9410ae5c50a2a4f6ace4386a3b457a
+      base_revision: 9ceb7614fa9410ae5c50a2a4f6ace4386a3b457a
     - platform: ios
-      create_revision: fa70e610cc244750b07321c466385d821533ee68
-      base_revision: fa70e610cc244750b07321c466385d821533ee68
+      create_revision: 9ceb7614fa9410ae5c50a2a4f6ace4386a3b457a
+      base_revision: 9ceb7614fa9410ae5c50a2a4f6ace4386a3b457a
     - platform: linux
-      create_revision: fa70e610cc244750b07321c466385d821533ee68
-      base_revision: fa70e610cc244750b07321c466385d821533ee68
+      create_revision: 9ceb7614fa9410ae5c50a2a4f6ace4386a3b457a
+      base_revision: 9ceb7614fa9410ae5c50a2a4f6ace4386a3b457a
     - platform: macos
-      create_revision: fa70e610cc244750b07321c466385d821533ee68
-      base_revision: fa70e610cc244750b07321c466385d821533ee68
+      create_revision: 9ceb7614fa9410ae5c50a2a4f6ace4386a3b457a
+      base_revision: 9ceb7614fa9410ae5c50a2a4f6ace4386a3b457a
     - platform: web
-      create_revision: fa70e610cc244750b07321c466385d821533ee68
-      base_revision: fa70e610cc244750b07321c466385d821533ee68
+      create_revision: 9ceb7614fa9410ae5c50a2a4f6ace4386a3b457a
+      base_revision: 9ceb7614fa9410ae5c50a2a4f6ace4386a3b457a
     - platform: windows
-      create_revision: fa70e610cc244750b07321c466385d821533ee68
-      base_revision: fa70e610cc244750b07321c466385d821533ee68
+      create_revision: 9ceb7614fa9410ae5c50a2a4f6ace4386a3b457a
+      base_revision: 9ceb7614fa9410ae5c50a2a4f6ace4386a3b457a
 
   # User provided section
 
