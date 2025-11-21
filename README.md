@@ -1,4 +1,4 @@
-# Tagiary
+# Mr.Plando
 
 A personal Flutter project for diary management with tagging functionality.
 

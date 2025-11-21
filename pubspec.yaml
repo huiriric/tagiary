@@ -1,4 +1,4 @@
-name: tagiary
+name: Mr.Plando
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -59,9 +59,19 @@ dev_dependencies:
   flutter_lints: ^4.0.0
   build_runner: ^2.4.12
   hive_generator: ^2.0.1
+  flutter_launcher_icons: ^0.14.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
+
+# Flutter Launcher Icons configuration
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "images/mr_plando_with_body_background.png"
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "images/mr_plando_with_body_background.png"
+  remove_alpha_ios: true  # iOS App Store 제출을 위해 투명도 제거
 
 # The following section is specific to Flutter packages.
 flutter:
