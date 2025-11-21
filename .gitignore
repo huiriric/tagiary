@@ -93,3 +93,18 @@ ios/Runner.xcodeproj/xcshareddata/xcschemes/Runner.xcscheme
 
 # Pub dependency lock file (can be regenerated)
 pubspec.lock
+
+# Backup folders
+ios_backup_*/
+
+# Utility scripts
+scripts/
+
+# Personal Claude configuration
+.claude/
+
+# Unnecessary platform folders (mobile-only app)
+linux/
+macos/
+web/
+windows/
