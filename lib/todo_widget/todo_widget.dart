@@ -7,6 +7,7 @@ import 'package:tagiary/constants/colors.dart';
 import 'package:tagiary/tables/check/check_enum.dart';
 import 'package:tagiary/tables/check/check_item.dart';
 import 'package:tagiary/todo_widget/add_todo/add_todo.dart';
+import 'package:tagiary/widgets/home_widget_provider.dart';
 
 class TodoWidget extends StatefulWidget {
   const TodoWidget({super.key});
@@ -421,6 +422,9 @@ class _TodoWidgetState extends State<TodoWidget> {
         : value == CheckEnum.inProgress
             ? _showToast('${todo.content} 시작!')
             : null;
+
+    // 홈 화면 위젯 업데이트
+    // HomeWidgetProvider.updateTodoWidget();
   }
 
   void _deleteTodo(CheckItem todo) {

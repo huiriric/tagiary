@@ -13,6 +13,7 @@ import 'package:tagiary/tables/data_models/event.dart';
 import 'package:tagiary/tables/schedule/schedule_item.dart';
 import 'package:tagiary/tables/schedule_routine/schedule_routine_item.dart';
 import 'package:tagiary/tables/schedule_links/schedule_link_item.dart';
+import 'package:tagiary/widgets/home_widget_provider.dart';
 
 class AddSchedule extends StatefulWidget {
   DateTime date;
@@ -553,6 +554,9 @@ class _AddScheduleState extends State<AddSchedule> {
     );
 
     await scheduleRepository.addItem(newSchedule);
+
+    // 홈 화면 위젯 업데이트
+    // HomeWidgetProvider.updateWeeklyScheduleWidget();
   }
 
   // Todo에 추가하는 메서드 (일반 일정일 때)

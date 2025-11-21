@@ -151,12 +151,6 @@ class _TimelineScreenState extends State<TimelineScreen> {
               ),
             ],
           ),
-          IconButton(
-            icon: const Icon(Icons.settings_outlined, color: Colors.black),
-            onPressed: () {
-              // 설정 화면으로 이동
-            },
-          ),
         ],
       ),
       floatingActionButton: FloatingActionButton(

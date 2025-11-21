@@ -13,6 +13,7 @@ import 'package:tagiary/tables/check/check_item.dart';
 import 'package:tagiary/tables/check_routine/check_routine_item.dart';
 import 'package:tagiary/tables/schedule_links/schedule_link_item.dart';
 import 'package:tagiary/time_line/add_schedule.dart';
+import 'package:tagiary/widgets/home_widget_provider.dart';
 
 class ScheduleDetails extends StatefulWidget {
   final Event event;
@@ -715,6 +716,9 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
 
       // 삭제 성공 알림
       _showToast('일정이 삭제되었습니다');
+
+      // 홈 화면 위젯 업데이트
+      // HomeWidgetProvider.updateWeeklyScheduleWidget();
 
       // 콜백 호출하여 메인 화면 업데이트
       widget.onUpdate();

@@ -120,22 +120,18 @@ class _TimeLineState extends State<TimeLine> {
       // 선택된 날짜의 모든 일정 이벤트 가져오기
       final allScheduleEvents = sRepo.getDateItems(widget.date).toList();
       // 선택된 요일의 루틴 이벤트 가져오기 (createdAt 필터링 적용)
-      final timeRoutineEvents = srRepo.getItemsByDayWithTime(dayOfWeek)
-          .where((event) {
-            // createdAt이 null이거나 해당 날짜 이전에 생성된 루틴만 표시
-            final routineItem = srRepo.getItem(event.id);
-            if (routineItem?.createdAt == null) return true;
-            return !routineItem!.createdAt.isAfter(widget.date);
-          })
-          .toList();
-      final noTimeRoutineEvents = srRepo.getItemsByDayWithoutTime(dayOfWeek)
-          .where((event) {
-            // createdAt이 null이거나 해당 날짜 이전에 생성된 루틴만 표시
-            final routineItem = srRepo.getItem(event.id);
-            if (routineItem?.createdAt == null) return true;
-            return !routineItem!.createdAt.isAfter(widget.date);
-          })
-          .toList();
+      final timeRoutineEvents = srRepo.getItemsByDayWithTime(dayOfWeek).where((event) {
+        // createdAt이 null이거나 해당 날짜 이전에 생성된 루틴만 표시
+        final routineItem = srRepo.getItem(event.id);
+        if (routineItem?.createdAt == null) return true;
+        return !routineItem!.createdAt.isAfter(widget.date);
+      }).toList();
+      final noTimeRoutineEvents = srRepo.getItemsByDayWithoutTime(dayOfWeek).where((event) {
+        // createdAt이 null이거나 해당 날짜 이전에 생성된 루틴만 표시
+        final routineItem = srRepo.getItem(event.id);
+        if (routineItem?.createdAt == null) return true;
+        return !routineItem!.createdAt.isAfter(widget.date);
+      }).toList();
 
       // 시간 있는 이벤트와 없는 이벤트 구분
       final timeEvents = allScheduleEvents.where((e) => e.hasTimeSet).toList();
@@ -191,7 +187,12 @@ class _TimeLineState extends State<TimeLine> {
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: event.color,
-                      borderRadius: BorderRadius.circular(5),
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(12),
+                        topRight: Radius.circular(6),
+                        bottomLeft: Radius.circular(6),
+                        bottomRight: Radius.circular(12),
+                      ),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withOpacity(0.1),

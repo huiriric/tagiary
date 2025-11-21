@@ -88,8 +88,6 @@ class _DiaryWidgetState extends State<DiaryWidget> {
       _isLoading = true;
     });
 
-    print('DiaryWidget - 다이어리 로드 시작: ${widget.date}');
-
     try {
       // 날짜 정보를 년, 월, 일만 포함하도록 변환 (시간 정보 제거)
       final dateOnly = DateTime(

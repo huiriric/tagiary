@@ -261,7 +261,10 @@ class _RoutineScreenState extends State<RoutineScreen> {
   Widget routineCalendar() {
     final List<String> weekdays = ['일', '월', '화', '수', '목', '금', '토'];
 
-    return Card(
+    return ValueListenableBuilder(
+      valueListenable: Hive.box<RoutineHistory>('routineHistoryBox').listenable(),
+      builder: (context, Box<RoutineHistory> historyBox, _) {
+        return Card(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
@@ -318,11 +321,11 @@ class _RoutineScreenState extends State<RoutineScreen> {
                     });
                   },
                   child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.transparent,
-                      borderRadius: BorderRadius.circular(5),
-                      border: Border.all(color: Colors.grey.withOpacity(0.3), width: 1),
-                    ),
+                    // decoration: BoxDecoration(
+                    //   color: Colors.transparent,
+                    //   borderRadius: BorderRadius.circular(5),
+                    //   border: Border.all(color: Colors.grey.withOpacity(0.3), width: 1),
+                    // ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
@@ -397,6 +400,8 @@ class _RoutineScreenState extends State<RoutineScreen> {
         ),
       ),
     );
+      },
+    );
   }
 
   Widget routineWeekView() {
@@ -404,7 +409,10 @@ class _RoutineScreenState extends State<RoutineScreen> {
     final startOfWeek = selectedDate.subtract(Duration(days: selectedDate.weekday % 7));
     final weekDays = List.generate(7, (index) => startOfWeek.add(Duration(days: index)));
 
-    return Card(
+    return ValueListenableBuilder(
+      valueListenable: Hive.box<RoutineHistory>('routineHistoryBox').listenable(),
+      builder: (context, Box<RoutineHistory> historyBox, _) {
+        return Card(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
@@ -518,6 +526,8 @@ class _RoutineScreenState extends State<RoutineScreen> {
         ),
       ),
     );
+      },
+    );
   }
 
   // 루틴 체크박스 위젯 빌더
@@ -529,9 +539,20 @@ class _RoutineScreenState extends State<RoutineScreen> {
     final dateOnly = DateTime(date.year, date.month, date.day);
 
     final routines = _repository.getAllItems().where((routine) {
-      // 해당 요일에 루틴이 설정되어 있고, 루틴 시작일 이후인 경우만 포함
+      // 해당 요일에 루틴이 설정되어 있는지 확인
+      if (!routine.daysOfWeek[date.weekday % 7]) return false;
+
+      // 루틴 시작일 이후인지 확인
       final routineStartDate = DateTime(routine.startDate.year, routine.startDate.month, routine.startDate.day);
-      return routine.daysOfWeek[date.weekday % 7] && !dateOnly.isBefore(routineStartDate);
+      if (dateOnly.isBefore(routineStartDate)) return false;
+
+      // 종료일이 설정되어 있고, 표시 날짜가 종료일 이후이면 제외
+      if (routine.endDate != null) {
+        final routineEndDate = DateTime(routine.endDate!.year, routine.endDate!.month, routine.endDate!.day);
+        if (dateOnly.isAfter(routineEndDate)) return false;
+      }
+
+      return true;
     }).toList();
 
     if (routines.isEmpty) return const SizedBox.shrink();
@@ -580,9 +601,20 @@ class _RoutineScreenState extends State<RoutineScreen> {
     final dateOnly = DateTime(date.year, date.month, date.day);
 
     final routines = _repository.getAllItems().where((routine) {
-      // 해당 요일에 루틴이 설정되어 있고, 루틴 시작일 이후인 경우만 포함
+      // 해당 요일에 루틴이 설정되어 있는지 확인
+      if (!routine.daysOfWeek[date.weekday % 7]) return false;
+
+      // 루틴 시작일 이후인지 확인
       final routineStartDate = DateTime(routine.startDate.year, routine.startDate.month, routine.startDate.day);
-      return routine.daysOfWeek[date.weekday % 7] && !dateOnly.isBefore(routineStartDate);
+      if (dateOnly.isBefore(routineStartDate)) return false;
+
+      // 종료일이 설정되어 있고, 표시 날짜가 종료일 이후이면 제외
+      if (routine.endDate != null) {
+        final routineEndDate = DateTime(routine.endDate!.year, routine.endDate!.month, routine.endDate!.day);
+        if (dateOnly.isAfter(routineEndDate)) return false;
+      }
+
+      return true;
     }).toList();
 
     if (routines.isEmpty) return;

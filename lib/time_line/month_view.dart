@@ -138,6 +138,7 @@ class _MonthViewState extends State<MonthView> {
                         children: [
                           // 기본 달력 그리드 (날짜 + 단일 이벤트)
                           GridView.builder(
+                            physics: const NeverScrollableScrollPhysics(), // 스크롤 비활성화
                             // padding: const EdgeInsets.symmetric(vertical: 16.0),
                             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: 7,

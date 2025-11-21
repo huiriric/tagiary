@@ -5,6 +5,7 @@ import 'package:tagiary/screens/home_screen.dart';
 import 'package:tagiary/screens/routine_screen.dart';
 import 'package:tagiary/screens/diary_screen.dart';
 import 'package:tagiary/settings/settings.dart';
+import 'package:tagiary/widgets/home_widget_provider.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -15,6 +16,13 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 2; // 기본값을 홈으로 설정
+
+  @override
+  void initState() {
+    super.initState();
+    // 앱 시작 시 모든 위젯 업데이트
+    // HomeWidgetProvider.updateAllWidgets();
+  }
 
   // 탭에 표시될 화면들
   final List<Widget> _pages = [
@@ -43,7 +51,7 @@ class _MainScreenState extends State<MainScreen> {
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.timeline),
-            label: '타임라인',
+            label: '일정',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.check_box),

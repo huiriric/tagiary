@@ -252,8 +252,11 @@ class _AddTodoState extends State<AddTodo> {
               Positioned(
                 top: 0,
                 right: 0,
-                child: isLoading
-                    ? const SizedBox(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (isLoading)
+                      const SizedBox(
                         width: 24,
                         height: 24,
                         child: CircularProgressIndicator(
@@ -261,7 +264,8 @@ class _AddTodoState extends State<AddTodo> {
                           valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
                         ),
                       )
-                    : IconButton(
+                    else
+                      IconButton(
                         onPressed: _saveTodo,
                         icon: const Icon(
                           Icons.check,
@@ -269,6 +273,18 @@ class _AddTodoState extends State<AddTodo> {
                           size: 32,
                         ),
                       ),
+                    // 수정 모드일 때만 삭제 버튼 표시
+                    if (widget.todoToEdit != null && !isLoading)
+                      IconButton(
+                        onPressed: () => _deleteTodo(widget.todoToEdit!),
+                        icon: const Icon(
+                          Icons.delete_outline,
+                          color: Colors.red,
+                          size: 28,
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -412,6 +428,35 @@ class _AddTodoState extends State<AddTodo> {
       timeInSecForIosWeb: 3,
       backgroundColor: Colors.black87,
       textColor: Colors.white,
+    );
+  }
+
+  void _deleteTodo(CheckItem todo) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('할 일 삭제'),
+        content: const Text('이 할 일을 삭제하시겠습니까?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () async {
+              final repository = CheckRepository();
+              await repository.init();
+              repository.deleteItem(todo.id);
+              Navigator.pop(context); // 다이얼로그 닫기
+              Navigator.pop(context); // AddTodo 화면 닫기
+              if (widget.onTodoAdded != null) {
+                widget.onTodoAdded!(); // 화면 갱신
+              }
+            },
+            child: const Text('삭제'),
+          ),
+        ],
+      ),
     );
   }
 }
