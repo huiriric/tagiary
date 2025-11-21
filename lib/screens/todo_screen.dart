@@ -108,24 +108,37 @@ class _TodoScreenState extends State<TodoScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  ...pendingTodos.map((todo) => _buildTodoItem(todo)),
-                  const SizedBox(height: 24),
-                ],
-                if (pendingTodos.isNotEmpty && inProgressTodos.isNotEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Divider(
-                      thickness: 1,
-                    ),
-                  )
-                else if (pendingTodos.isNotEmpty && doneTodos.isNotEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Divider(
-                      thickness: 1,
+                  // const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        crossAxisSpacing: 4,
+                        mainAxisSpacing: 4,
+                        childAspectRatio: 1.2,
+                      ),
+                      itemCount: pendingTodos.length,
+                      itemBuilder: (context, index) => _buildTodoItem(pendingTodos[index]),
                     ),
                   ),
+                ],
+                // if (pendingTodos.isNotEmpty && inProgressTodos.isNotEmpty)
+                //   const Padding(
+                //     padding: EdgeInsets.symmetric(horizontal: 16.0),
+                //     child: Divider(
+                //       thickness: 1,
+                //     ),
+                //   )
+                // else if (pendingTodos.isNotEmpty && doneTodos.isNotEmpty)
+                //   const Padding(
+                //     padding: EdgeInsets.symmetric(horizontal: 16.0),
+                //     child: Divider(
+                //       thickness: 1,
+                //     ),
+                //   ),
                 if (inProgressTodos.isNotEmpty) ...[
                   const Padding(
                     padding: EdgeInsets.all(16.0),
@@ -137,8 +150,21 @@ class _TodoScreenState extends State<TodoScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  ...inProgressTodos.map((todo) => _buildTodoItem(todo)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        crossAxisSpacing: 4,
+                        mainAxisSpacing: 4,
+                        childAspectRatio: 1.2,
+                      ),
+                      itemCount: inProgressTodos.length,
+                      itemBuilder: (context, index) => _buildTodoItem(inProgressTodos[index]),
+                    ),
+                  ),
                 ],
                 // if (pendingTodos.isNotEmpty && doneTodos.isNotEmpty)
                 //   const Padding(
@@ -147,13 +173,13 @@ class _TodoScreenState extends State<TodoScreen> {
                 //       thickness: 1,
                 //     ),
                 //   ),
-                if (inProgressTodos.isNotEmpty && doneTodos.isNotEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Divider(
-                      thickness: 1,
-                    ),
-                  ),
+                // if (inProgressTodos.isNotEmpty && doneTodos.isNotEmpty)
+                //   const Padding(
+                //     padding: EdgeInsets.symmetric(horizontal: 16.0),
+                //     child: Divider(
+                //       thickness: 1,
+                //     ),
+                //   ),
                 if (doneTodos.isNotEmpty) ...[
                   const Padding(
                     padding: EdgeInsets.all(16.0),
@@ -165,8 +191,21 @@ class _TodoScreenState extends State<TodoScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  ...doneTodos.map((todo) => _buildTodoItem(todo)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        crossAxisSpacing: 4,
+                        mainAxisSpacing: 4,
+                        childAspectRatio: 1.2,
+                      ),
+                      itemCount: doneTodos.length,
+                      itemBuilder: (context, index) => _buildTodoItem(doneTodos[index]),
+                    ),
+                  ),
                 ],
               ],
             ),
@@ -188,53 +227,57 @@ class _TodoScreenState extends State<TodoScreen> {
   }
 
   Widget _buildTodoItem(CheckItem todo) {
-    return InkWell(
-      onTap: () => _showEditTodoDialog(context, todo),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4.0),
-        child: ListTile(
-          contentPadding: const EdgeInsets.only(left: 0, right: 4),
-          dense: true,
-          visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
-          leading: Checkbox(
-            tristate: true,
-            value: getCheckboxValue(todo.check),
-            onChanged: (value) {
-              _updateTodoCheckEnum(todo, _getNextStatus(todo.check));
-            },
-            shape: const CircleBorder(),
-            activeColor: Color(todo.colorValue),
-            side: BorderSide(
-              color: todo.check != CheckEnum.pending ? Colors.transparent : Color(todo.colorValue),
-              width: 2,
-            ),
-          ),
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.center,
+    return Card(
+      elevation: 2,
+      shape: const RoundedRectangleBorder(
+        borderRadius:
+            BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(12), bottomRight: Radius.circular(24), bottomLeft: Radius.circular(12)),
+      ),
+      child: InkWell(
+        onTap: () => _showEditTodoDialog(context, todo),
+        borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(24), topRight: Radius.circular(12), bottomRight: Radius.circular(24), bottomLeft: Radius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 2.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Checkbox(
+                    tristate: true,
+                    value: getCheckboxValue(todo.check),
+                    onChanged: (value) {
+                      _updateTodoCheckEnum(todo, _getNextStatus(todo.check));
+                    },
+                    shape: const CircleBorder(),
+                    activeColor: Color(todo.colorValue),
+                    side: BorderSide(
+                      color: todo.check != CheckEnum.pending ? Colors.transparent : Color(todo.colorValue),
+                      width: 2,
+                    ),
+                  ),
+                  if (todo.dueDate != null)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 4.0, top: 4.0),
+                      child: _buildDDay(todo.dueDate!),
+                    ),
+                ],
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
                 child: Text(
                   todo.content,
                   style: TextStyle(
                     color: todo.check == CheckEnum.done ? Colors.grey : Colors.black,
-                    fontSize: 16,
+                    fontSize: 14,
                     overflow: TextOverflow.ellipsis,
                   ),
+                  textAlign: TextAlign.start,
                 ),
               ),
-              if (todo.dueDate != null)
-                Padding(
-                  padding: const EdgeInsets.only(left: 8.0),
-                  child: _buildDDay(todo.dueDate!),
-                ),
             ],
-          ),
-          trailing: IconButton(
-            icon: const Icon(Icons.delete_outline),
-            onPressed: () {
-              _deleteTodo(todo);
-            },
           ),
         ),
       ),
