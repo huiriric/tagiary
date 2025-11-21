@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:tagiary/component/day_picker/day_picker.dart';
 import 'package:tagiary/constants/colors.dart';
+import 'package:tagiary/screens/home_screen.dart';
 import 'package:tagiary/tables/check_routine/check_routine_item.dart';
 import 'package:tagiary/tables/check_routine/routine_history.dart';
+import 'package:tagiary/time_line/add_schedule.dart';
 
 class RoutineDetail extends StatefulWidget {
   CheckRoutineItem item;
@@ -22,6 +24,8 @@ class _RoutineDetailState extends State<RoutineDetail> {
   late String _content;
   late int _colorValue;
   late List<bool> _daysOfWeek;
+  late DateTime _startDate;
+  DateTime? _endDate;
   late TextEditingController _contentController;
   late FocusNode _contentFocusNode;
   Key _dayPickerKey = UniqueKey(); // DayPicker의 상태를 유지하기 위한 키
@@ -32,6 +36,8 @@ class _RoutineDetailState extends State<RoutineDetail> {
     _content = widget.item.content;
     _colorValue = widget.item.colorValue;
     _daysOfWeek = widget.item.daysOfWeek;
+    _startDate = widget.item.startDate;
+    _endDate = widget.item.endDate;
     _contentController = TextEditingController(text: _content);
     _contentFocusNode = FocusNode();
   }
@@ -114,6 +120,8 @@ class _RoutineDetailState extends State<RoutineDetail> {
                                 _content = _contentController.text = widget.item.content; // 원래 내용으로 되돌리기
                                 _colorValue = widget.item.colorValue; // 원래 색상으로 되돌리기
                                 _daysOfWeek = widget.item.daysOfWeek; // 원래 요일로 되돌리기
+                                _startDate = widget.item.startDate; // 원래 시작일로 되돌리기
+                                _endDate = widget.item.endDate; // 원래 종료일로 되돌리기
                                 _isEditing = false;
                                 _dayPickerKey = UniqueKey(); // DayPicker 상태 초기화
                               });
@@ -183,6 +191,110 @@ class _RoutineDetailState extends State<RoutineDetail> {
                 //     ),
                 //   ],
                 // ),
+                // 시작 날짜와 종료 날짜를 나란히 배치
+                Row(
+                  children: [
+                    // 시작 날짜
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            '시작일',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          TextButton(
+                            style: TextButton.styleFrom(
+                              backgroundColor: const Color(0x1140608A),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            ),
+                            onPressed: () async {
+                              final selectedDate = await showBlackWhiteDatePicker(
+                                context: context,
+                                initialDate: _startDate,
+                              );
+                              if (selectedDate != null) {
+                                setState(() {
+                                  _startDate = selectedDate;
+                                  // 종료일이 시작일보다 이전이면 null로 리셋
+                                  if (_endDate != null && _endDate!.isBefore(selectedDate)) {
+                                    _endDate = null;
+                                  }
+                                });
+                              }
+                            },
+                            child: Text(
+                              formatDate(_startDate),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                                color: Color(0xFF40608A),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // 종료 날짜
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            '종료일',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          TextButton(
+                            style: TextButton.styleFrom(
+                              backgroundColor: _endDate != null ? const Color(0x1140608A) : Colors.grey.shade200,
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            ),
+                            onPressed: () async {
+                              final selectedDate = await showBlackWhiteDatePicker(
+                                context: context,
+                                initialDate: _endDate ?? _startDate,
+                              );
+                              if (selectedDate != null) {
+                                // 종료일이 시작일보다 이전이면 설정 불가
+                                if (selectedDate.isBefore(_startDate)) {
+                                  _showToast('종료일은 시작일 이후여야 합니다');
+                                } else {
+                                  setState(() {
+                                    _endDate = selectedDate;
+                                  });
+                                }
+                              }
+                            },
+                            onLongPress: () {
+                              // 길게 누르면 종료일 제거 (무기한)
+                              setState(() {
+                                _endDate = null;
+                              });
+                              _showToast('종료일을 제거했습니다 (무기한)');
+                            },
+                            child: Text(
+                              _endDate != null ? formatDate(_endDate!) : '무기한',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                                color: _endDate != null ? const Color(0xFF40608A) : Colors.grey,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
                 // 요일 선택기
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 10.0),
@@ -299,7 +411,9 @@ class _RoutineDetailState extends State<RoutineDetail> {
     final isContentChanged = _content != widget.item.content;
     final isColorChanged = _colorValue != widget.item.colorValue;
     final isDaysOfWeekChanged = _daysOfWeek != widget.item.daysOfWeek;
-    return isContentChanged || isColorChanged || isDaysOfWeekChanged;
+    final isStartDateChanged = _startDate != widget.item.startDate;
+    final isEndDateChanged = _endDate != widget.item.endDate;
+    return isContentChanged || isColorChanged || isDaysOfWeekChanged || isStartDateChanged || isEndDateChanged;
   }
 
   Future<void> _editRoutine(VoidCallback? onRoutineEdited) async {
@@ -328,11 +442,12 @@ class _RoutineDetailState extends State<RoutineDetail> {
       CheckRoutineItem itemToUpdate = CheckRoutineItem(
         id: widget.item.id,
         content: _content,
-        startDate: widget.item.startDate,
+        startDate: _startDate,
         colorValue: _colorValue,
         check: widget.item.check,
         updated: widget.item.updated,
         daysOfWeek: _daysOfWeek,
+        endDate: _endDate,
       );
 
       // 예시: 데이터베이스에 저장하는 코드
@@ -341,7 +456,8 @@ class _RoutineDetailState extends State<RoutineDetail> {
       _showToast('루틴이 수정되었습니다');
       Navigator.pop(context); // 루틴 상세 페이지 닫기
     } catch (e) {
-      _showToast('루틴이 수정되었습니다');
+      _showToast('루틴이 수정 중 오류가 발생했습니다');
+      print(e);
     } finally {
       setState(() {
         _isLoading = false;

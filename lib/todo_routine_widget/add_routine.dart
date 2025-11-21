@@ -38,6 +38,9 @@ class _AddRoutineState extends State<AddRoutine> {
   // 시작 날짜
   late DateTime startDate;
 
+  // 종료 날짜 (null이면 무기한)
+  DateTime? endDate;
+
   // 요일 선택 상태
   List<bool> selectedDays = List.generate(7, (index) => false);
 
@@ -134,37 +137,109 @@ class _AddRoutineState extends State<AddRoutine> {
                 //     ),
                 //   ],
                 // ),
-                // 시작 날짜
-                const Text(
-                  '시작일',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                TextButton(
-                  style: TextButton.styleFrom(
-                    backgroundColor: const Color(0x1140608A),
-                  ),
-                  onPressed: () async {
-                    final selectedDate = await showBlackWhiteDatePicker(
-                      context: context,
-                      initialDate: startDate,
-                    );
-                    if (selectedDate != null) {
-                      setState(() {
-                        startDate = selectedDate;
-                      });
-                    }
-                  },
-                  child: Text(
-                    formatDate(startDate),
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                      color: Color(0xFF40608A),
+                // 시작 날짜와 종료 날짜를 나란히 배치
+                Row(
+                  children: [
+                    // 시작 날짜
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            '시작일',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          TextButton(
+                            style: TextButton.styleFrom(
+                              backgroundColor: const Color(0x1140608A),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            ),
+                            onPressed: () async {
+                              final selectedDate = await showBlackWhiteDatePicker(
+                                context: context,
+                                initialDate: startDate,
+                              );
+                              if (selectedDate != null) {
+                                setState(() {
+                                  startDate = selectedDate;
+                                  // 종료일이 시작일보다 이전이면 null로 리셋
+                                  if (endDate != null && endDate!.isBefore(selectedDate)) {
+                                    endDate = null;
+                                  }
+                                });
+                              }
+                            },
+                            child: Text(
+                              formatDate(startDate),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                                color: Color(0xFF40608A),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 12),
+                    // 종료 날짜
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            '종료일',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          TextButton(
+                            style: TextButton.styleFrom(
+                              backgroundColor: endDate != null ? const Color(0x1140608A) : Colors.grey.shade200,
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            ),
+                            onPressed: () async {
+                              final selectedDate = await showBlackWhiteDatePicker(
+                                context: context,
+                                initialDate: endDate ?? startDate,
+                              );
+                              if (selectedDate != null) {
+                                // 종료일이 시작일보다 이전이면 설정 불가
+                                if (selectedDate.isBefore(startDate)) {
+                                  _showToast('종료일은 시작일 이후여야 합니다');
+                                } else {
+                                  setState(() {
+                                    endDate = selectedDate;
+                                  });
+                                }
+                              }
+                            },
+                            onLongPress: () {
+                              // 길게 누르면 종료일 제거 (무기한)
+                              setState(() {
+                                endDate = null;
+                              });
+                              _showToast('종료일을 제거했습니다 (무기한)');
+                            },
+                            child: Text(
+                              endDate != null ? formatDate(endDate!) : '무기한',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                                color: endDate != null ? const Color(0xFF40608A) : Colors.grey,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
                 // 요일 선택
                 Padding(
@@ -324,6 +399,7 @@ class _AddRoutineState extends State<AddRoutine> {
       check: false,
       updated: DateTime.now(),
       daysOfWeek: selectedDays,
+      endDate: endDate, // 종료일 추가 (null 가능)
     );
 
     await routineRepository.addItem(newRoutine);

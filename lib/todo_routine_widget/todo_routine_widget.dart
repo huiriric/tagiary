@@ -9,6 +9,7 @@ import 'package:tagiary/tables/check_routine/routine_history.dart';
 import 'package:tagiary/todo_routine_widget/add_routine.dart';
 import 'package:tagiary/todo_routine_widget/routine_detail.dart';
 import 'package:tagiary/todo_routine_widget/routine_history_view.dart';
+import 'package:tagiary/widgets/home_widget_provider.dart';
 
 class TodoRoutineWidget extends StatefulWidget {
   final DateTime? date; // 표시할 날짜 (null이면 오늘 날짜)
@@ -88,7 +89,7 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
     // 선택된 날짜의 요일 가져오기 (0: 일요일, 1: 월요일, ... 6: 토요일)
     final displayDayOfWeek = _displayDate.weekday % 7; // 0(일)~6(토) 범위로 변환
 
-    // 선택된 요일에 해당하고 루틴 시작일을 고려한 루틴만 필터링
+    // 선택된 요일에 해당하고 루틴 시작일/종료일을 고려한 루틴만 필터링
     final filteredRoutines = allRoutines.where((routine) {
       // 루틴 시작일 체크 (시간 정보 제거)
       final routineStartDate = DateTime(
@@ -105,6 +106,18 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
       // 표시 날짜가 루틴 시작일 이전이면 제외
       if (displayDate.isBefore(routineStartDate)) {
         return false;
+      }
+
+      // 종료일이 설정되어 있고, 표시 날짜가 종료일 이후이면 제외
+      if (routine.endDate != null) {
+        final routineEndDate = DateTime(
+          routine.endDate!.year,
+          routine.endDate!.month,
+          routine.endDate!.day,
+        );
+        if (displayDate.isAfter(routineEndDate)) {
+          return false;
+        }
       }
 
       // daysOfWeek가 null이거나 길이가 7이 아닌 경우 기본값 처리
@@ -163,30 +176,35 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
                   ),
                   // // 중앙에 주간 달성률 표시 (오늘 날짜일 때만 표시)
                   // if (filteredRoutines.isNotEmpty)
-                  FutureBuilder<double>(
-                    future: _getWeeklyCompletionRate(allRoutines),
-                    builder: (context, snapshot) {
-                      if (snapshot.hasData) {
-                        final completionRate = snapshot.data!;
-                        return Padding(
-                          padding: EdgeInsets.symmetric(horizontal: widget.fromMain == false ? 8.0 : 0),
-                          child: Row(
-                            children: [
-                              Text(
-                                '주간 ${(completionRate * 100).toStringAsFixed(1)}%',
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.grey,
-                                ),
+                  ValueListenableBuilder(
+                    valueListenable: Hive.box<RoutineHistory>('routineHistoryBox').listenable(),
+                    builder: (context, Box<RoutineHistory> historyBox, _) {
+                      return FutureBuilder<double>(
+                        future: _getWeeklyCompletionRate(allRoutines),
+                        builder: (context, snapshot) {
+                          if (snapshot.hasData) {
+                            final completionRate = snapshot.data!;
+                            return Padding(
+                              padding: EdgeInsets.symmetric(horizontal: widget.fromMain == false ? 8.0 : 0),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    '주간 ${(completionRate * 100).toStringAsFixed(1)}%',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                  if (widget.fromMain == false) const SizedBox(width: 4),
+                                  if (widget.fromMain == false) _buildProgressIndicator(completionRate),
+                                ],
                               ),
-                              if (widget.fromMain == false) const SizedBox(width: 4),
-                              if (widget.fromMain == false) _buildProgressIndicator(completionRate),
-                            ],
-                          ),
-                        );
-                      } else {
-                        return const SizedBox.shrink();
-                      }
+                            );
+                          } else {
+                            return const SizedBox.shrink();
+                          }
+                        },
+                      );
                     },
                   ),
                   GestureDetector(
@@ -265,32 +283,37 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
                 ),
               ),
               if (widget.fromMain == false)
-                FutureBuilder<double>(
-                  future: _getRoutineMonthlyCompletionRate(routine.id),
-                  builder: (context, snapshot) {
-                    if (snapshot.hasData) {
-                      return SizedBox(
-                        width: 110,
-                        // margin: const EdgeInsets.only(right: 8.0),
-                        child: Row(
-                          children: [
-                            Text(
-                              '월간 ${(snapshot.data! * 100).toStringAsFixed(1)}%',
-                              style: const TextStyle(
-                                fontSize: 10,
-                                color: Colors.grey,
-                              ),
+                ValueListenableBuilder(
+                  valueListenable: Hive.box<RoutineHistory>('routineHistoryBox').listenable(),
+                  builder: (context, Box<RoutineHistory> historyBox, _) {
+                    return FutureBuilder<double>(
+                      future: _getRoutineMonthlyCompletionRate(routine.id),
+                      builder: (context, snapshot) {
+                        if (snapshot.hasData) {
+                          return SizedBox(
+                            width: 110,
+                            // margin: const EdgeInsets.only(right: 8.0),
+                            child: Row(
+                              children: [
+                                Text(
+                                  '월간 ${(snapshot.data! * 100).toStringAsFixed(1)}%',
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                const SizedBox(width: 2),
+                                Expanded(
+                                  child: _buildProgressIndicator(snapshot.data!),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 2),
-                            Expanded(
-                              child: _buildProgressIndicator(snapshot.data!),
-                            ),
-                          ],
-                        ),
-                      );
-                    } else {
-                      return const SizedBox.shrink();
-                    }
+                          );
+                        } else {
+                          return const SizedBox.shrink();
+                        }
+                      },
+                    );
                   },
                 ),
             ],
@@ -301,11 +324,12 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
                   value: routine.check,
                   onChanged: (value) async {
                     await _updateRoutineCheck(routine, value!);
+                    _showToast(value ? '${routine.content} 루틴을 완료했습니다' : '${routine.content} 루틴 체크를 해제했습니다');
+                    // setState를 먼저 호출한 후 콜백 실행
+                    setState(() {});
                     if (onRoutineChanged != null) {
                       onRoutineChanged();
                     }
-                    _showToast(value ? '${routine.content} 루틴을 완료했습니다' : '${routine.content} 루틴 체크를 해제했습니다');
-                    setState(() {});
                   },
                   shape: const CircleBorder(),
                   activeColor: Color(routine.colorValue),
@@ -443,6 +467,16 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
         routine.startDate.day,
       );
 
+      // 루틴 종료일 체크 (시간 정보 제거)
+      DateTime? routineEndDate;
+      if (routine.endDate != null) {
+        routineEndDate = DateTime(
+          routine.endDate!.year,
+          routine.endDate!.month,
+          routine.endDate!.day,
+        );
+      }
+
       // 이번 주의 일요일부터 토요일까지의 모든 날짜 확인
       print(daysOfWeek);
       for (int i = 0; i < 7; i++) {
@@ -451,6 +485,9 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
 
         // 루틴 시작일 이후의 날짜만 포함
         if (date.isBefore(routineStartDate)) continue;
+
+        // 루틴 종료일 이후의 날짜는 제외
+        if (routineEndDate != null && date.isAfter(routineEndDate)) continue;
 
         // 오늘 또는 오늘 이전의 날짜만 포함 (미래 날짜는 제외)
         // if (date.isAfter(today)) continue;
@@ -504,6 +541,21 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
       daysOfWeek = List.generate(7, (index) => true);
     }
 
+    // 루틴 시작일과 종료일 (시간 정보 제거)
+    final routineStartDate = DateTime(
+      routine.startDate.year,
+      routine.startDate.month,
+      routine.startDate.day,
+    );
+    DateTime? routineEndDate;
+    if (routine.endDate != null) {
+      routineEndDate = DateTime(
+        routine.endDate!.year,
+        routine.endDate!.month,
+        routine.endDate!.day,
+      );
+    }
+
     // 해당 루틴의 모든 완료 기록 가져오기
     final allHistory = _historyRepository.getHistoryForRoutine(routineId);
 
@@ -522,6 +574,12 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
     for (int i = 0; i <= weekday; i++) {
       final date = firstDayOfWeek.add(Duration(days: i));
       final dayOfWeek = date.weekday % 7; // 0(일)~6(토)
+
+      // 루틴 시작일 이후의 날짜만 포함
+      if (date.isBefore(routineStartDate)) continue;
+
+      // 루틴 종료일 이후의 날짜는 제외
+      if (routineEndDate != null && date.isAfter(routineEndDate)) continue;
 
       if (daysOfWeek[dayOfWeek]) {
         scheduledDays++;
@@ -572,6 +630,15 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
       routine.startDate.month,
       routine.startDate.day,
     );
+    // 루틴 종료일 (시간 정보 제거)
+    DateTime? routineEndDate;
+    if (routine.endDate != null) {
+      routineEndDate = DateTime(
+        routine.endDate!.year,
+        routine.endDate!.month,
+        routine.endDate!.day,
+      );
+    }
 
     // 이번 달에 루틴이 예정된 날짜 수 계산 (루틴 시작일 이후만)
     int scheduledDays = 0;
@@ -581,6 +648,9 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
 
       // 루틴 시작일 이후의 날짜만 포함
       if (date.isBefore(routineStartDate)) continue;
+
+      // 루틴 종료일 이후의 날짜는 제외
+      if (routineEndDate != null && date.isAfter(routineEndDate)) continue;
 
       if (daysOfWeek[dayOfWeek]) {
         scheduledDays++;
@@ -640,11 +710,32 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
         daysOfWeek = List.generate(7, (index) => true);
       }
 
+      // 루틴 시작일과 종료일 (시간 정보 제거)
+      final routineStartDate = DateTime(
+        routine.startDate.year,
+        routine.startDate.month,
+        routine.startDate.day,
+      );
+      DateTime? routineEndDate;
+      if (routine.endDate != null) {
+        routineEndDate = DateTime(
+          routine.endDate!.year,
+          routine.endDate!.month,
+          routine.endDate!.day,
+        );
+      }
+
       // 이번 달 전체에 루틴이 예정된 날짜 수 계산
       int routineScheduledDays = 0;
       for (int day = 1; day <= lastDayOfMonth.day; day++) {
         final date = DateTime(selectedMonth.year, selectedMonth.month, day);
         final dayOfWeek = date.weekday % 7; // 0(일)~6(토)
+
+        // 루틴 시작일 이후의 날짜만 포함
+        if (date.isBefore(routineStartDate)) continue;
+
+        // 루틴 종료일 이후의 날짜는 제외
+        if (routineEndDate != null && date.isAfter(routineEndDate)) continue;
 
         if (daysOfWeek[dayOfWeek]) {
           routineScheduledDays++;
@@ -685,14 +776,9 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
     // 루틴 체크 상태 업데이트
     // 주의: 체크 상태는 "오늘 완료했는지" 여부만 의미함
     // 다른 날짜에서는 RoutineHistory를 참조하여 완료 여부 확인
-    final updatedRoutine = CheckRoutineItem(
-      id: routine.id,
-      content: routine.content,
-      startDate: routine.startDate,
-      colorValue: routine.colorValue,
-      check: checked, // 오늘의 완료 상태
-      updated: DateTime.now(), // 타임스탬프 업데이트
-      daysOfWeek: routine.daysOfWeek, // 요일 정보 유지
+    final updatedRoutine = routine.copyWith(
+      check: checked,
+      updated: DateTime.now(),
     );
 
     await _repository.updateItem(updatedRoutine);
@@ -709,6 +795,9 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
       // 체크 해제 시 오늘 날짜의 기록 삭제
       await _deleteRoutineHistoryForToday(routine.id);
     }
+
+    // 홈 화면 위젯 업데이트
+    // HomeWidgetProvider.updateRoutineWidget();
   }
 
   // 오늘 날짜의, 특정 루틴 기록만 삭제하는 메서드

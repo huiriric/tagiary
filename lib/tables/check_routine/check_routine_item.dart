@@ -25,6 +25,9 @@ class CheckRoutineItem extends HiveObject {
   @HiveField(6)
   final List<bool> daysOfWeek; // 요일별 반복 여부 [일, 월, 화, 수, 목, 금, 토]
 
+  @HiveField(7)
+  final DateTime? endDate; // 루틴 종료일 (null이면 무기한)
+
   CheckRoutineItem({
     required this.id,
     required this.content,
@@ -33,7 +36,31 @@ class CheckRoutineItem extends HiveObject {
     required this.check,
     required this.updated,
     required this.daysOfWeek,
+    this.endDate,
   });
+
+  // copyWith 메서드 - 일부 필드만 변경할 때 사용
+  CheckRoutineItem copyWith({
+    int? id,
+    String? content,
+    DateTime? startDate,
+    int? colorValue,
+    bool? check,
+    DateTime? updated,
+    List<bool>? daysOfWeek,
+    DateTime? endDate,
+  }) {
+    return CheckRoutineItem(
+      id: id ?? this.id,
+      content: content ?? this.content,
+      startDate: startDate ?? this.startDate,
+      colorValue: colorValue ?? this.colorValue,
+      check: check ?? this.check,
+      updated: updated ?? this.updated,
+      daysOfWeek: daysOfWeek ?? this.daysOfWeek,
+      endDate: endDate ?? this.endDate,
+    );
+  }
 
   // 기존 데이터와의 호환성을 위한 팩토리 생성자
   factory CheckRoutineItem.fromLegacy({
@@ -107,8 +134,8 @@ class CheckRoutineRepository {
     List<CheckRoutineItem> list = _item.values.toList();
     for (var e in list) {
       if (isBeforeToday(e.updated) && e.check) {
-        e.check = false;
-        updateItem(e);
+        final updated = e.copyWith(check: false);
+        await updateItem(updated);
       }
     }
   }
@@ -120,9 +147,11 @@ class CheckRoutineRepository {
     await historyRepo.init();
 
     // Update the routine check status
-    routine.check = checked;
-    routine.updated = DateTime.now();
-    await updateItem(routine);
+    final updatedRoutine = routine.copyWith(
+      check: checked,
+      updated: DateTime.now(),
+    );
+    await updateItem(updatedRoutine);
 
     // If checking the routine (not unchecking), record in history
     if (checked) {
