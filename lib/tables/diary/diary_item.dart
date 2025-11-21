@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 part 'diary_item.g.dart';
 
@@ -72,6 +73,16 @@ class DiaryRepository {
     return list;
   }
 
+  // 특정 월의 다이어리 가져오기
+  List<DiaryItem> getItemsByMonth(DateTime date) {
+    List<DiaryItem> list = _item.values
+        .where((item) => item.date.year == date.year && item.date.month == date.month)
+        .toList();
+    // 날짜 내림차순으로 정렬 (최신순)
+    list.sort((a, b) => b.date.compareTo(a.date));
+    return list;
+  }
+
   List<DiaryItem> getAllItems() {
     List<DiaryItem> list = _item.values.toList();
     // 일기 최신 순으로 가져오기
@@ -100,5 +111,37 @@ class DiaryRepository {
         _item.values.where((item) => item.content.toLowerCase().contains(lowercaseQuery) || item.content.toLowerCase().contains(lowercaseQuery)).toList();
     list.sort((a, b) => b.id.compareTo(a.id));
     return list;
+  }
+
+  // 선택된 달의 각 날짜별 카테고리 색상 리스트 가져오기 (같은 색상끼리 그룹화)
+  Map<int, List<Color>> getCategoryColorsByDate(DateTime month, dynamic tagGroupRepository) {
+    // Get all diaries for the month
+    List<DiaryItem> monthDiaries = getItemsByMonth(month);
+
+    // Group by day
+    Map<int, List<DiaryItem>> diariesByDay = {};
+    for (var diary in monthDiaries) {
+      int day = diary.date.day;
+      if (!diariesByDay.containsKey(day)) {
+        diariesByDay[day] = [];
+      }
+      diariesByDay[day]!.add(diary);
+    }
+
+    // Convert to color list with same colors grouped
+    Map<int, List<Color>> result = {};
+    diariesByDay.forEach((day, diaries) {
+      // Sort by categoryId to group same colors together
+      diaries.sort((a, b) => (a.categoryId ?? 0).compareTo(b.categoryId ?? 0));
+
+      result[day] = diaries
+          .map((d) {
+            var group = tagGroupRepository.getGroup(d.categoryId);
+            return group != null ? Color(group.colorValue) : const Color(0xFF9E9E9E);
+          })
+          .toList();
+    });
+
+    return result;
   }
 }
