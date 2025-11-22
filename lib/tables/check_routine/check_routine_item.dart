@@ -1,5 +1,5 @@
 import 'package:hive/hive.dart';
-import 'package:tagiary/tables/check_routine/routine_history.dart';
+import 'package:mrplando/tables/check_routine/routine_history.dart';
 part 'check_routine_item.g.dart';
 
 @HiveType(typeId: 3)

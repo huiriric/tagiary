@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:tagiary/provider.dart';
+import 'package:mrplando/provider.dart';
 
 class Settings extends StatefulWidget {
   const Settings({super.key});

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import 'package:tagiary/tables/data_models/event.dart';
-import 'package:tagiary/main.dart';
+import 'package:mrplando/tables/data_models/event.dart';
+import 'package:mrplando/main.dart';
 part 'schedule_item.g.dart';
 
 @HiveType(typeId: 0)
@@ -129,71 +129,65 @@ class ScheduleRepository {
   }
 
   Iterable<Event> getDateItems(DateTime date) {
-    return _item.values
-        .where((item) {
-          DateTime itemStartDate = DateTime(item.year, item.month, item.date);
-          DateTime targetDate = DateTime(date.year, date.month, date.day);
-          
-          // endDate가 없는 경우: 시작 날짜가 일치하는지 확인
-          if (!item.hasMultiDay) {
-            return itemStartDate.isAtSameMomentAs(targetDate);
-          }
-          
-          // endDate가 있는 경우: 타겟 날짜가 시작일과 종료일 사이에 있는지 확인
-          DateTime itemEndDate = DateTime(item.endYear!, item.endMonth!, item.endDate!);
-          return targetDate.isAtSameMomentAs(itemStartDate) ||
-                 targetDate.isAtSameMomentAs(itemEndDate) ||
-                 (targetDate.isAfter(itemStartDate) && targetDate.isBefore(itemEndDate));
-        })
-        .map((e) => e.toEvent());
+    return _item.values.where((item) {
+      DateTime itemStartDate = DateTime(item.year, item.month, item.date);
+      DateTime targetDate = DateTime(date.year, date.month, date.day);
+
+      // endDate가 없는 경우: 시작 날짜가 일치하는지 확인
+      if (!item.hasMultiDay) {
+        return itemStartDate.isAtSameMomentAs(targetDate);
+      }
+
+      // endDate가 있는 경우: 타겟 날짜가 시작일과 종료일 사이에 있는지 확인
+      DateTime itemEndDate = DateTime(item.endYear!, item.endMonth!, item.endDate!);
+      return targetDate.isAtSameMomentAs(itemStartDate) ||
+          targetDate.isAtSameMomentAs(itemEndDate) ||
+          (targetDate.isAfter(itemStartDate) && targetDate.isBefore(itemEndDate));
+    }).map((e) => e.toEvent());
   }
 
   // 시간 정보가 없는 일정만 가져오기
   Iterable<Event> getNoTimeItems(DateTime date) {
-    return _item.values
-        .where((item) {
-          DateTime itemStartDate = DateTime(item.year, item.month, item.date);
-          DateTime targetDate = DateTime(date.year, date.month, date.day);
-          
-          // 날짜 범위 체크
-          bool isInDateRange;
-          if (!item.hasMultiDay) {
-            isInDateRange = itemStartDate.isAtSameMomentAs(targetDate);
-          } else {
-            DateTime itemEndDate = DateTime(item.endYear!, item.endMonth!, item.endDate!);
-            isInDateRange = targetDate.isAtSameMomentAs(itemStartDate) ||
-                           targetDate.isAtSameMomentAs(itemEndDate) ||
-                           (targetDate.isAfter(itemStartDate) && targetDate.isBefore(itemEndDate));
-          }
-          
-          // 날짜 범위에 포함되고 시간 정보가 없는 일정만
-          return isInDateRange && (item.startHour == null || item.endHour == null);
-        })
-        .map((e) => e.toEvent());
+    return _item.values.where((item) {
+      DateTime itemStartDate = DateTime(item.year, item.month, item.date);
+      DateTime targetDate = DateTime(date.year, date.month, date.day);
+
+      // 날짜 범위 체크
+      bool isInDateRange;
+      if (!item.hasMultiDay) {
+        isInDateRange = itemStartDate.isAtSameMomentAs(targetDate);
+      } else {
+        DateTime itemEndDate = DateTime(item.endYear!, item.endMonth!, item.endDate!);
+        isInDateRange = targetDate.isAtSameMomentAs(itemStartDate) ||
+            targetDate.isAtSameMomentAs(itemEndDate) ||
+            (targetDate.isAfter(itemStartDate) && targetDate.isBefore(itemEndDate));
+      }
+
+      // 날짜 범위에 포함되고 시간 정보가 없는 일정만
+      return isInDateRange && (item.startHour == null || item.endHour == null);
+    }).map((e) => e.toEvent());
   }
 
   // 시간 정보가 있는 일정만 가져오기
   Iterable<Event> getTimeItems(DateTime date) {
-    return _item.values
-        .where((item) {
-          DateTime itemStartDate = DateTime(item.year, item.month, item.date);
-          DateTime targetDate = DateTime(date.year, date.month, date.day);
-          
-          // 날짜 범위 체크
-          bool isInDateRange;
-          if (!item.hasMultiDay) {
-            isInDateRange = itemStartDate.isAtSameMomentAs(targetDate);
-          } else {
-            DateTime itemEndDate = DateTime(item.endYear!, item.endMonth!, item.endDate!);
-            isInDateRange = targetDate.isAtSameMomentAs(itemStartDate) ||
-                           targetDate.isAtSameMomentAs(itemEndDate) ||
-                           (targetDate.isAfter(itemStartDate) && targetDate.isBefore(itemEndDate));
-          }
-          
-          // 날짜 범위에 포함되고 시간 정보가 있는 일정만
-          return isInDateRange && item.startHour != null && item.endHour != null;
-        })
-        .map((e) => e.toEvent());
+    return _item.values.where((item) {
+      DateTime itemStartDate = DateTime(item.year, item.month, item.date);
+      DateTime targetDate = DateTime(date.year, date.month, date.day);
+
+      // 날짜 범위 체크
+      bool isInDateRange;
+      if (!item.hasMultiDay) {
+        isInDateRange = itemStartDate.isAtSameMomentAs(targetDate);
+      } else {
+        DateTime itemEndDate = DateTime(item.endYear!, item.endMonth!, item.endDate!);
+        isInDateRange = targetDate.isAtSameMomentAs(itemStartDate) ||
+            targetDate.isAtSameMomentAs(itemEndDate) ||
+            (targetDate.isAfter(itemStartDate) && targetDate.isBefore(itemEndDate));
+      }
+
+      // 날짜 범위에 포함되고 시간 정보가 있는 일정만
+      return isInDateRange && item.startHour != null && item.endHour != null;
+    }).map((e) => e.toEvent());
   }
 
   Future<void> updateItem(ScheduleItem item) async {

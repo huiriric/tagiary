@@ -1,7 +1,7 @@
 // import 'package:flutter/material.dart';
 // import 'package:intl/intl.dart';
-// import 'package:tagiary/tables/check_routine/check_routine_item.dart';
-// import 'package:tagiary/tables/check_routine/routine_history.dart';
+// import 'package:mrplando/tables/check_routine/check_routine_item.dart';
+// import 'package:mrplando/tables/check_routine/routine_history.dart';
 
 // class RoutineHistoryView extends StatefulWidget {
 //   final CheckRoutineItem routine;
