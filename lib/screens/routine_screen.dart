@@ -4,8 +4,10 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:mrplando/component/slide_up_container.dart';
 import 'package:mrplando/tables/check_routine/check_routine_item.dart';
 import 'package:mrplando/tables/check_routine/routine_history.dart';
-import 'package:mrplando/todo_routine_widget/add_routine.dart';
-import 'package:mrplando/todo_routine_widget/todo_routine_widget.dart';
+import 'package:mrplando/routine_widget/add_routine.dart';
+import 'package:mrplando/routine_widget/routine_widget.dart';
+import 'package:mrplando/routine_widget/routine_history_view.dart';
+import 'package:mrplando/routine_widget/routine_detail.dart';
 
 class RoutineScreen extends StatefulWidget {
   const RoutineScreen({super.key});
@@ -17,7 +19,7 @@ class RoutineScreen extends StatefulWidget {
 class _RoutineScreenState extends State<RoutineScreen> {
   late CheckRoutineRepository _repository;
   late RoutineHistoryRepository _historyRepository;
-  int _selectedDayIndex = DateTime.now().weekday % 7; // 오늘 요일 (0: 일요일, 1: 월요일, ... 6: 토요일)
+  final int _selectedDayIndex = DateTime.now().weekday % 7; // 오늘 요일 (0: 일요일, 1: 월요일, ... 6: 토요일)
 
   //날짜별 루틴 기록
   final Map<DateTime, List<RoutineHistory>> _routineHistory = {};
@@ -101,7 +103,7 @@ class _RoutineScreenState extends State<RoutineScreen> {
       ),
       body: !_isRepositoryInitialized
           ? const Center(child: CircularProgressIndicator()) // 로딩 표시
-          : Column(mainAxisSize: MainAxisSize.min, children: [
+          : Column(children: [
               // 요일 선택 버튼 row
               // Padding(
               //   padding: const EdgeInsets.all(16.0),
@@ -238,7 +240,10 @@ class _RoutineScreenState extends State<RoutineScreen> {
 
               // 달력 또는 주간 뷰 표시
               Expanded(
-                child: routineCalendar(),
+                child: Align(
+                  alignment: AlignmentGeometry.topLeft,
+                  child: routineCalendar(),
+                ),
               ),
             ]),
     );
@@ -343,6 +348,8 @@ class _RoutineScreenState extends State<RoutineScreen> {
           child: Padding(
             padding: const EdgeInsets.all(8.0),
             child: Wrap(
+              alignment: WrapAlignment.start,
+              crossAxisAlignment: WrapCrossAlignment.start,
               spacing: 12,
               runSpacing: 12,
               children: activeRoutines.map((routine) => _buildRoutineCalendar(routine, historyBox)).toList(),
@@ -373,83 +380,107 @@ class _RoutineScreenState extends State<RoutineScreen> {
   Widget _buildRoutineCalendar(CheckRoutineItem routine, Box<RoutineHistory> historyBox) {
     final List<String> weekdays = ['일', '월', '화', '수', '목', '금', '토'];
     final screenWidth = MediaQuery.of(context).size.width;
-    final calendarWidth = (screenWidth - 48) / 2; // 양쪽 여백 16 + 중간 간격 12
+    final calendarWidth = (screenWidth - 28) / 2; // 양쪽 여백 8 + 중간 간격 12
 
-    return Container(
-      width: calendarWidth,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => RoutineHistoryView(routine: routine),
           ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 루틴 제목
-            Text(
-              routine.content,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+        );
+      },
+      child: Container(
+        width: calendarWidth,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha(13),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
             ),
-            const SizedBox(height: 8),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 루틴 제목과 수정 아이콘
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      routine.content,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      _showEditRoutineDialog(routine);
+                    },
+                    child: const Icon(
+                      Icons.edit,
+                      size: 16,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
 
-            // 요일 헤더
-            Row(
-              children: weekdays
-                  .map((day) => Expanded(
-                        child: Center(
-                          child: Text(
-                            day,
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: day == '일' ? Colors.red : (day == '토' ? Colors.blue : Colors.black87),
+              // 요일 헤더
+              Row(
+                children: weekdays
+                    .map((day) => Expanded(
+                          child: Center(
+                            child: Text(
+                              day,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: day == '일' ? Colors.red : (day == '토' ? Colors.blue : Colors.black87),
+                              ),
                             ),
                           ),
-                        ),
-                      ))
-                  .toList(),
-            ),
-            const SizedBox(height: 4),
-
-            // 미니 달력 그리드
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 7,
-                childAspectRatio: 1.0,
-                crossAxisSpacing: 2,
-                mainAxisSpacing: 2,
+                        ))
+                    .toList(),
               ),
-              itemCount: _daysInMonth.length,
-              itemBuilder: (context, index) {
-                final date = _daysInMonth[index];
-                final isCurrentMonth = date.month == selectedDate.month;
-                final isToday = _isToday(date);
+              const SizedBox(height: 4),
 
-                // 해당 날짜에 루틴이 완료되었는지 확인
-                final isCompleted = _isRoutineCompletedOnDate(routine, date, historyBox);
+              // 미니 달력 그리드
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 7,
+                  childAspectRatio: 1.0,
+                  crossAxisSpacing: 2,
+                  mainAxisSpacing: 2,
+                ),
+                itemCount: _daysInMonth.length,
+                itemBuilder: (context, index) {
+                  final date = _daysInMonth[index];
+                  final isCurrentMonth = date.month == selectedDate.month;
+                  final isToday = _isToday(date);
 
-                // 루틴이 해당 날짜에 활성화되어 있는지 확인
-                final isActiveOnDate = _isRoutineActiveOnDate(routine, date);
+                  // 해당 날짜에 루틴이 완료되었는지 확인
+                  final isCompleted = _isRoutineCompletedOnDate(routine, date, historyBox);
 
-                return GestureDetector(
-                  onTap: isCurrentMonth && isActiveOnDate ? () => _toggleRoutineForDate(routine, date) : null,
-                  child: Container(
+                  // 루틴이 해당 날짜에 활성화되어 있는지 확인
+                  final isActiveOnDate = _isRoutineActiveOnDate(routine, date);
+
+                  return Container(
                     decoration: BoxDecoration(
                       color: !isCurrentMonth
                           ? Colors.transparent
@@ -477,11 +508,11 @@ class _RoutineScreenState extends State<RoutineScreen> {
                         ),
                       ),
                     ),
-                  ),
-                );
-              },
-            ),
-          ],
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -545,131 +576,131 @@ class _RoutineScreenState extends State<RoutineScreen> {
     setState(() {});
   }
 
-  Widget routineWeekView() {
-    // 현재 주의 날짜들 계산
-    final startOfWeek = selectedDate.subtract(Duration(days: selectedDate.weekday % 7));
-    final weekDays = List.generate(7, (index) => startOfWeek.add(Duration(days: index)));
+  // Widget routineWeekView() {
+  //   // 현재 주의 날짜들 계산
+  //   final startOfWeek = selectedDate.subtract(Duration(days: selectedDate.weekday % 7));
+  //   final weekDays = List.generate(7, (index) => startOfWeek.add(Duration(days: index)));
 
-    return ValueListenableBuilder(
-      valueListenable: Hive.box<RoutineHistory>('routineHistoryBox').listenable(),
-      builder: (context, Box<RoutineHistory> historyBox, _) {
-        return Card(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          elevation: 1,
-          color: Colors.white,
-          // margin: const EdgeInsets.all(16),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // 주간 뷰 헤더
-                Row(
-                  children: weekdays
-                      .asMap()
-                      .entries
-                      .map((entry) => Expanded(
-                            child: Center(
-                              child: Text(
-                                entry.value,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: entry.value == '일' ? Colors.red : (entry.value == '토' ? Colors.blue : Colors.black87),
-                                ),
-                              ),
-                            ),
-                          ))
-                      .toList(),
-                ),
-                const SizedBox(height: 8),
+  //   return ValueListenableBuilder(
+  //     valueListenable: Hive.box<RoutineHistory>('routineHistoryBox').listenable(),
+  //     builder: (context, Box<RoutineHistory> historyBox, _) {
+  //       return Card(
+  //         shape: RoundedRectangleBorder(
+  //           borderRadius: BorderRadius.circular(12),
+  //         ),
+  //         elevation: 1,
+  //         color: Colors.white,
+  //         // margin: const EdgeInsets.all(16),
+  //         child: Padding(
+  //           padding: const EdgeInsets.all(16),
+  //           child: Column(
+  //             mainAxisSize: MainAxisSize.min,
+  //             children: [
+  //               // 주간 뷰 헤더
+  //               Row(
+  //                 children: weekdays
+  //                     .asMap()
+  //                     .entries
+  //                     .map((entry) => Expanded(
+  //                           child: Center(
+  //                             child: Text(
+  //                               entry.value,
+  //                               style: TextStyle(
+  //                                 fontWeight: FontWeight.bold,
+  //                                 color: entry.value == '일' ? Colors.red : (entry.value == '토' ? Colors.blue : Colors.black87),
+  //                               ),
+  //                             ),
+  //                           ),
+  //                         ))
+  //                     .toList(),
+  //               ),
+  //               const SizedBox(height: 8),
 
-                // 주간 날짜와 루틴
-                SizedBox(
-                  height: 100,
-                  child: Row(
-                    children: weekDays.asMap().entries.map((entry) {
-                      final date = entry.value;
-                      final isToday = _isToday(date);
-                      final isSelected = date.year == selectedDate.year && date.month == selectedDate.month && date.day == selectedDate.day;
-                      final isCurrentMonth = date.month == selectedDate.month;
+  //               // 주간 날짜와 루틴
+  //               SizedBox(
+  //                 height: 100,
+  //                 child: Row(
+  //                   children: weekDays.asMap().entries.map((entry) {
+  //                     final date = entry.value;
+  //                     final isToday = _isToday(date);
+  //                     final isSelected = date.year == selectedDate.year && date.month == selectedDate.month && date.day == selectedDate.day;
+  //                     final isCurrentMonth = date.month == selectedDate.month;
 
-                      return Expanded(
-                        child: GestureDetector(
-                          onTap: () => _showDayRoutineDialog(date),
-                          onLongPress: () {
-                            setState(() {
-                              selectedDate = date;
-                              _selectedDayIndex = date.weekday % 7;
-                              _calculateMonthDays();
-                            });
-                          },
-                          child: Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 1),
-                            decoration: BoxDecoration(
-                              color: Colors.transparent,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.grey.withOpacity(0.3), width: 1),
-                            ),
-                            child: Column(
-                              children: [
-                                // 날짜
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 8),
-                                  child: Center(
-                                    child: Container(
-                                      width: 20,
-                                      height: 20,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: isToday ? Theme.of(context).primaryColor : Colors.transparent,
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          '${date.day}',
-                                          style: TextStyle(
-                                            fontWeight: isToday || isSelected ? FontWeight.bold : FontWeight.normal,
-                                            color: !isCurrentMonth
-                                                ? Colors.grey.shade400
-                                                : isToday
-                                                    ? Colors.white
-                                                    : date.weekday == 7 // 일요일
-                                                        ? Colors.red
-                                                        : date.weekday == 6 // 토요일
-                                                            ? Colors.blue
-                                                            : Colors.black87,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
+  //                     return Expanded(
+  //                       child: GestureDetector(
+  //                         onTap: () => _showDayRoutineDialog(date),
+  //                         onLongPress: () {
+  //                           setState(() {
+  //                             selectedDate = date;
+  //                             _selectedDayIndex = date.weekday % 7;
+  //                             _calculateMonthDays();
+  //                           });
+  //                         },
+  //                         child: Container(
+  //                           margin: const EdgeInsets.symmetric(horizontal: 1),
+  //                           decoration: BoxDecoration(
+  //                             color: Colors.transparent,
+  //                             borderRadius: BorderRadius.circular(8),
+  //                             border: Border.all(color: Colors.grey.withOpacity(0.3), width: 1),
+  //                           ),
+  //                           child: Column(
+  //                             children: [
+  //                               // 날짜
+  //                               Padding(
+  //                                 padding: const EdgeInsets.only(top: 8),
+  //                                 child: Center(
+  //                                   child: Container(
+  //                                     width: 20,
+  //                                     height: 20,
+  //                                     decoration: BoxDecoration(
+  //                                       shape: BoxShape.circle,
+  //                                       color: isToday ? Theme.of(context).primaryColor : Colors.transparent,
+  //                                     ),
+  //                                     child: Center(
+  //                                       child: Text(
+  //                                         '${date.day}',
+  //                                         style: TextStyle(
+  //                                           fontWeight: isToday || isSelected ? FontWeight.bold : FontWeight.normal,
+  //                                           color: !isCurrentMonth
+  //                                               ? Colors.grey.shade400
+  //                                               : isToday
+  //                                                   ? Colors.white
+  //                                                   : date.weekday == 7 // 일요일
+  //                                                       ? Colors.red
+  //                                                       : date.weekday == 6 // 토요일
+  //                                                           ? Colors.blue
+  //                                                           : Colors.black87,
+  //                                           fontSize: 12,
+  //                                         ),
+  //                                       ),
+  //                                     ),
+  //                                   ),
+  //                                 ),
+  //                               ),
 
-                                // 루틴 체크박스들 (주간 뷰용 - 스크롤 없음)
-                                Expanded(
-                                  child: Container(
-                                    width: double.infinity,
-                                    padding: const EdgeInsets.all(4),
-                                    child: _buildRoutineCheckboxes(date, false), // false = 전체 버전
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
+  //                               // 루틴 체크박스들 (주간 뷰용 - 스크롤 없음)
+  //                               Expanded(
+  //                                 child: Container(
+  //                                   width: double.infinity,
+  //                                   padding: const EdgeInsets.all(4),
+  //                                   child: _buildRoutineCheckboxes(date, false), // false = 전체 버전
+  //                                 ),
+  //                               ),
+  //                             ],
+  //                           ),
+  //                         ),
+  //                       ),
+  //                     );
+  //                   }).toList(),
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
 
   // 루틴 체크박스 위젯 빌더
   Widget _buildRoutineCheckboxes(DateTime date, bool isCompact) {
@@ -858,5 +889,28 @@ class _RoutineScreenState extends State<RoutineScreen> {
   bool _isToday(DateTime date) {
     final now = DateTime.now();
     return date.year == now.year && date.month == now.month && date.day == now.day;
+  }
+
+  // 루틴 수정 바텀시트
+  void _showEditRoutineDialog(CheckRoutineItem routine) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => AnimatedPadding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        duration: const Duration(milliseconds: 0),
+        curve: Curves.decelerate,
+        child: SingleChildScrollView(
+          child: SlideUpContainer(
+            child: RoutineDetail(
+              item: routine,
+              onUpdated: () {
+                setState(() {});
+              },
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
