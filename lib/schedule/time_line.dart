@@ -6,8 +6,8 @@ import 'package:mrplando/provider.dart';
 import 'package:mrplando/tables/data_models/event.dart';
 import 'package:mrplando/tables/schedule/schedule_item.dart';
 import 'package:mrplando/tables/schedule_routine/schedule_routine_item.dart';
-import 'package:mrplando/time_line/add_schedule.dart';
-import 'package:mrplando/time_line/schedule_details.dart';
+import 'package:mrplando/schedule/add_schedule.dart';
+import 'package:mrplando/schedule/schedule_details.dart';
 
 class TimeLine extends StatefulWidget {
   final DateTime date;
