@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:mrplando/component/slide_up_container.dart';
-import 'package:mrplando/constants/colors.dart';
 import 'package:mrplando/tables/check_routine/check_routine_item.dart';
 import 'package:mrplando/tables/check_routine/routine_history.dart';
-import 'package:mrplando/todo_routine_widget/add_routine.dart';
-import 'package:mrplando/todo_routine_widget/routine_detail.dart';
-import 'package:mrplando/todo_routine_widget/routine_history_view.dart';
-import 'package:mrplando/widgets/home_widget_provider.dart';
+import 'package:mrplando/routine_widget/add_routine.dart';
+import 'package:mrplando/routine_widget/routine_detail.dart';
 
 class TodoRoutineWidget extends StatefulWidget {
   final DateTime? date; // 표시할 날짜 (null이면 오늘 날짜)
