@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:tagiary/screens/timeline_screen.dart';
-import 'package:tagiary/screens/todo_screen.dart';
-import 'package:tagiary/screens/home_screen.dart';
-import 'package:tagiary/screens/routine_screen.dart';
-import 'package:tagiary/screens/diary_screen.dart';
-import 'package:tagiary/settings/settings.dart';
-import 'package:tagiary/widgets/home_widget_provider.dart';
+import 'package:mrplando/screens/timeline_screen.dart';
+import 'package:mrplando/screens/todo_screen.dart';
+import 'package:mrplando/screens/home_screen.dart';
+import 'package:mrplando/screens/routine_screen.dart';
+import 'package:mrplando/screens/diary_screen.dart';
+import 'package:mrplando/settings/settings.dart';
+import 'package:mrplando/widgets/home_widget_provider.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});

@@ -1,8 +1,8 @@
 // import 'package:flutter/material.dart';
-// import 'package:tagiary/constants/colors.dart';
-// import 'package:tagiary/tables/diary/tag.dart';
-// import 'package:tagiary/tables/diary/tag_group.dart';
-// import 'package:tagiary/tables/diary/tag_manager.dart';
+// import 'package:mrplando/constants/colors.dart';
+// import 'package:mrplando/tables/diary/tag.dart';
+// import 'package:mrplando/tables/diary/tag_group.dart';
+// import 'package:mrplando/tables/diary/tag_manager.dart';
 
 // class TagSelectorPage extends StatefulWidget {
 //   final TagManager tagManager;

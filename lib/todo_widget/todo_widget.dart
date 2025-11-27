@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:tagiary/component/slide_up_container.dart';
-import 'package:tagiary/constants/colors.dart';
-import 'package:tagiary/tables/check/check_enum.dart';
-import 'package:tagiary/tables/check/check_item.dart';
-import 'package:tagiary/todo_widget/add_todo/add_todo.dart';
-import 'package:tagiary/widgets/home_widget_provider.dart';
+import 'package:mrplando/component/slide_up_container.dart';
+import 'package:mrplando/constants/colors.dart';
+import 'package:mrplando/tables/check/check_enum.dart';
+import 'package:mrplando/tables/check/check_item.dart';
+import 'package:mrplando/todo_widget/add_todo/add_todo.dart';
+import 'package:mrplando/widgets/home_widget_provider.dart';
 
 class TodoWidget extends StatefulWidget {
   const TodoWidget({super.key});

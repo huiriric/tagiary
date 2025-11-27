@@ -1,5 +1,5 @@
 import 'package:hive/hive.dart';
-import 'package:tagiary/tables/check/check_enum.dart';
+import 'package:mrplando/tables/check/check_enum.dart';
 part 'check_item.g.dart';
 
 @HiveType(typeId: 2)

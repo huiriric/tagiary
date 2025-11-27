@@ -2,11 +2,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:hive/hive.dart';
-import 'package:tagiary/component/day_picker/day_picker.dart';
-import 'package:tagiary/constants/colors.dart';
-import 'package:tagiary/screens/home_screen.dart';
-import 'package:tagiary/tables/check_routine/check_routine_item.dart';
-import 'package:tagiary/time_line/add_schedule.dart';
+import 'package:mrplando/component/day_picker/day_picker.dart';
+import 'package:mrplando/constants/colors.dart';
+import 'package:mrplando/screens/home_screen.dart';
+import 'package:mrplando/tables/check_routine/check_routine_item.dart';
+import 'package:mrplando/time_line/add_schedule.dart';
 
 class AddRoutine extends StatefulWidget {
   final VoidCallback? onRoutineAdded; // 루틴 추가 후 호출할 콜백 함수

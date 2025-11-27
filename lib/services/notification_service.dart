@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter/material.dart';
-import 'package:tagiary/firebase_options.dart';
+import 'package:mrplando/firebase_options.dart';
 import 'dart:async';
 import 'dart:io' show Platform;
 

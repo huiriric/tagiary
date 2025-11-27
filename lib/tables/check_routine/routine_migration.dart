@@ -1,5 +1,5 @@
 import 'package:hive/hive.dart';
-import 'package:tagiary/tables/check_routine/check_routine_item.dart';
+import 'package:mrplando/tables/check_routine/check_routine_item.dart';
 
 /// CheckRoutineItem에 daysOfWeek 필드가 추가되어 기존 데이터를 마이그레이션하기 위한 헬퍼 클래스
 class RoutineMigrationHelper {

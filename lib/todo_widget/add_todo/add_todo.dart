@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:tagiary/constants/colors.dart';
-import 'package:tagiary/tables/check/check_enum.dart';
-import 'package:tagiary/tables/check/check_item.dart';
-import 'package:tagiary/tables/schedule/schedule_item.dart';
-import 'package:tagiary/tables/schedule_links/schedule_link_item.dart';
+import 'package:mrplando/constants/colors.dart';
+import 'package:mrplando/tables/check/check_enum.dart';
+import 'package:mrplando/tables/check/check_item.dart';
+import 'package:mrplando/tables/schedule/schedule_item.dart';
+import 'package:mrplando/tables/schedule_links/schedule_link_item.dart';
 
 class AddTodo extends StatefulWidget {
   final VoidCallback? onTodoAdded; // 할 일 추가 후 호출할 콜백 함수

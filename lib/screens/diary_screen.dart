@@ -339,38 +339,38 @@ class _DiaryScreenState extends State<DiaryScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          // Wrap(
-          //   spacing: 8,
-          //   runSpacing: 4,
-          //   children: categoryCount.entries.map((entry) {
-          //     final categoryId = entry.key;
-          //     final count = entry.value;
-          //     final percentage = (count / totalCount * 100).round();
-          //     final category = _tagManager.groupRepository.getGroup(categoryId);
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            children: categoryCount.entries.map((entry) {
+              final categoryId = entry.key;
+              final count = entry.value;
+              final percentage = (count / totalCount * 100).round();
+              final category = _tagManager.groupRepository.getGroup(categoryId);
 
-          //     return Row(
-          //       mainAxisSize: MainAxisSize.min,
-          //       children: [
-          //         Container(
-          //           width: 12,
-          //           height: 12,
-          //           decoration: BoxDecoration(
-          //             color: category != null ? Color(category.colorValue) : Colors.grey,
-          //             shape: BoxShape.circle,
-          //           ),
-          //         ),
-          //         const SizedBox(width: 4),
-          //         Text(
-          //           '${category?.name ?? '없음'} $count개 ($percentage%)',
-          //           style: const TextStyle(
-          //             fontSize: 12,
-          //             color: Colors.black54,
-          //           ),
-          //         ),
-          //       ],
-          //     );
-          //   }).toList(),
-          // ),
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: category != null ? Color(category.colorValue) : Colors.grey,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${category?.name ?? '없음'} $count개 ($percentage%)',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.black54,
+                    ),
+                  ),
+                ],
+              );
+            }).toList(),
+          ),
         ],
       ),
     );
@@ -562,7 +562,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
                                 children: dayColors
                                     .map((color) => Expanded(
                                           child: Container(
-                                            color: color.withOpacity(0.3),
+                                            color: color.withAlpha(100),
                                           ),
                                         ))
                                     .toList(),
@@ -666,7 +666,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
 
     _tooltipOverlay = OverlayEntry(
       builder: (context) => Positioned(
-        left: position.dx - 70,
+        left: position.dx - 40,
         top: position.dy - 30,
         child: Material(
           color: Colors.transparent,

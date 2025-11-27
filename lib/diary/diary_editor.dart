@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:tagiary/component/slide_up_container.dart';
-import 'package:tagiary/constants/colors.dart';
-import 'package:tagiary/diary/tag_selector.dart';
-import 'package:tagiary/tables/diary/diary_item.dart';
-import 'package:tagiary/tables/diary/tag.dart';
-import 'package:tagiary/tables/diary/tag_manager.dart';
+import 'package:mrplando/component/slide_up_container.dart';
+import 'package:mrplando/constants/colors.dart';
+import 'package:mrplando/diary/tag_selector.dart';
+import 'package:mrplando/tables/diary/diary_item.dart';
+import 'package:mrplando/tables/diary/tag.dart';
+import 'package:mrplando/tables/diary/tag_manager.dart';
 
 class DiaryEditorPage extends StatefulWidget {
   final DiaryItem? diary;
@@ -131,7 +131,7 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
                                 onTap: _selectDate,
                                 child: Card(
                                   elevation: 0,
-                                  color: Colors.grey[100],
+                                  color: const Color(0xFFB09F86),
                                   child: Padding(
                                     padding: const EdgeInsets.all(16.0),
                                     child: Row(
@@ -139,14 +139,11 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
                                       children: [
                                         Row(
                                           children: [
-                                            const Icon(Icons.calendar_today, size: 20),
+                                            const Icon(Icons.calendar_today, size: 20, color: Colors.white),
                                             const SizedBox(width: 8),
                                             Text(
                                               '${_selectedDate.year}년 ${_selectedDate.month}월 ${_selectedDate.day}일',
-                                              style: const TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w500,
-                                              ),
+                                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
                                             ),
                                           ],
                                         ),
@@ -157,6 +154,7 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
                                 ),
                               ),
                             ),
+                            const SizedBox(width: 12),
                             ActionChip(
                               side: BorderSide.none,
                               shape: RoundedRectangleBorder(
@@ -172,34 +170,6 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
                           ],
                         ),
                         const SizedBox(height: 16),
-
-                        // 제목 입력
-                        // TextField(
-                        //   decoration: const InputDecoration(
-                        //       labelText: '제목',
-                        //       border: UnderlineInputBorder(
-                        //         borderSide: BorderSide(color: Colors.grey),
-                        //       ),
-                        //       enabledBorder: UnderlineInputBorder(
-                        //         borderSide: BorderSide(color: Colors.grey),
-                        //       ),
-                        //       focusedBorder: UnderlineInputBorder(
-                        //         borderSide: BorderSide(color: Colors.grey),
-                        //       ),
-                        //       hintText: '제목을 입력하세요',
-                        //       hintStyle: TextStyle(
-                        //         fontSize: 17,
-                        //         fontWeight: FontWeight.w400,
-                        //       )),
-                        //   controller: _titleController,
-                        //   style: const TextStyle(
-                        //     fontSize: 17,
-                        //     fontWeight: FontWeight.bold,
-                        //   ),
-                        //   maxLength: 50,
-                        // ),
-                        // const SizedBox(height: 16),
-
                         // 내용 입력
                         Expanded(
                           child: TextField(
@@ -208,11 +178,14 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
                             autofocus: widget.isEdit ? false : true,
                             onChanged: (value) => setState(() {}),
                             decoration: const InputDecoration(
-                              labelText: '내용',
-                              border: OutlineInputBorder(borderSide: BorderSide.none),
-                              focusedBorder: OutlineInputBorder(),
+                              border: OutlineInputBorder(borderSide: BorderSide.none, borderRadius: BorderRadius.all(Radius.circular(16))),
+                              enabledBorder: OutlineInputBorder(borderSide: BorderSide.none, borderRadius: BorderRadius.all(Radius.circular(16))),
+                              labelText: '기록',
+                              focusedBorder: OutlineInputBorder(borderSide: BorderSide.none, borderRadius: BorderRadius.all(Radius.circular(16))),
                               hintText: '오늘의 기록을 남겨보세요',
                               alignLabelWithHint: true,
+                              filled: true,
+                              fillColor: Color(0xFFF7F6E9),
                             ),
                             style: const TextStyle(
                               fontSize: 15,
@@ -226,7 +199,7 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
                         // const SizedBox(height: 16),
                         // 태그 선택
                         Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 16.0),
+                          padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 12.0),
                           child: _buildTagSelector(),
                         ),
 
@@ -234,7 +207,7 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
                         // 저장 버튼
                         if (!widget.isEdit || !noChanged())
                           Padding(
-                            padding: const EdgeInsets.only(bottom: 8, top: 12),
+                            padding: const EdgeInsets.only(bottom: 8),
                             child: SizedBox(
                               width: double.infinity,
                               child: ElevatedButton(
@@ -803,7 +776,10 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        content: const Text('다이어리르 삭제하시겠습니까?'),
+        content: const Padding(
+          padding: EdgeInsets.all(8.0),
+          child: Text('다이어리를 삭제하시겠습니까?'),
+        ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('취소')),
           TextButton(

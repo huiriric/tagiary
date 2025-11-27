@@ -1,8 +1,8 @@
 // import 'package:flutter/material.dart';
 // import 'package:intl/intl.dart';
-// import 'package:tagiary/diary/diary_editor.dart';
-// import 'package:tagiary/tables/diary/diary_item.dart';
-// import 'package:tagiary/tables/diary/tag_manager.dart';
+// import 'package:mrplando/diary/diary_editor.dart';
+// import 'package:mrplando/tables/diary/diary_item.dart';
+// import 'package:mrplando/tables/diary/tag_manager.dart';
 
 // class DiaryDetailPage extends StatefulWidget {
 //   final DiaryItem diary;

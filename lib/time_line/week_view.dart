@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
-import 'package:tagiary/component/slide_up_container.dart';
-import 'package:tagiary/provider.dart';
-import 'package:tagiary/tables/data_models/event.dart';
-import 'package:tagiary/tables/schedule/schedule_item.dart';
-import 'package:tagiary/tables/schedule_routine/schedule_routine_item.dart';
-import 'package:tagiary/time_line/add_schedule.dart';
-import 'package:tagiary/time_line/schedule_details.dart';
+import 'package:mrplando/component/slide_up_container.dart';
+import 'package:mrplando/provider.dart';
+import 'package:mrplando/tables/data_models/event.dart';
+import 'package:mrplando/tables/schedule/schedule_item.dart';
+import 'package:mrplando/tables/schedule_routine/schedule_routine_item.dart';
+import 'package:mrplando/time_line/add_schedule.dart';
+import 'package:mrplando/time_line/schedule_details.dart';
 
 class WeekView extends StatefulWidget {
   final DateTime selectedDate;
@@ -127,22 +127,18 @@ class _WeekViewState extends State<WeekView> {
 
       // 해당 요일의 루틴 일정 (createdAt 필터링 적용)
       // ScheduleRoutineRepository.getItemsByDay는 dayIndex: 0(일요일) ~ 6(토요일) 순서 사용
-      List<Event> routineEvents = srRepo.getItemsByDayWithTime(dayOfWeek)
-          .where((event) {
-            // createdAt이 null이거나 해당 날짜 이전에 생성된 루틴만 표시
-            final routineItem = srRepo.getItem(event.id);
-            if (routineItem?.createdAt == null) return true;
-            return !routineItem!.createdAt.isAfter(currentDate);
-          })
-          .toList();
-      List<Event> noTimeRoutineEvents = srRepo.getItemsByDayWithoutTime(dayOfWeek)
-          .where((event) {
-            // createdAt이 null이거나 해당 날짜 이전에 생성된 루틴만 표시
-            final routineItem = srRepo.getItem(event.id);
-            if (routineItem?.createdAt == null) return true;
-            return !routineItem!.createdAt.isAfter(currentDate);
-          })
-          .toList();
+      List<Event> routineEvents = srRepo.getItemsByDayWithTime(dayOfWeek).where((event) {
+        // createdAt이 null이거나 해당 날짜 이전에 생성된 루틴만 표시
+        final routineItem = srRepo.getItem(event.id);
+        if (routineItem?.createdAt == null) return true;
+        return !routineItem!.createdAt.isAfter(currentDate);
+      }).toList();
+      List<Event> noTimeRoutineEvents = srRepo.getItemsByDayWithoutTime(dayOfWeek).where((event) {
+        // createdAt이 null이거나 해당 날짜 이전에 생성된 루틴만 표시
+        final routineItem = srRepo.getItem(event.id);
+        if (routineItem?.createdAt == null) return true;
+        return !routineItem!.createdAt.isAfter(currentDate);
+      }).toList();
 
       // 시간 있는 일정과 없는 일정 모두 포함
       weekEvents[dayOfWeek] = [

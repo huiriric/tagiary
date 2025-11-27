@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
-import 'package:tagiary/component/slide_up_container.dart';
-import 'package:tagiary/constants/colors.dart';
-import 'package:tagiary/diary/diary_editor.dart';
-import 'package:tagiary/diary/diary_detail.dart';
-import 'package:tagiary/tables/diary/diary_item.dart';
-import 'package:tagiary/tables/diary/tag.dart';
-import 'package:tagiary/tables/diary/tag_group.dart';
-import 'package:tagiary/tables/diary/tag_manager.dart';
+import 'package:mrplando/component/slide_up_container.dart';
+import 'package:mrplando/constants/colors.dart';
+import 'package:mrplando/diary/diary_editor.dart';
+import 'package:mrplando/diary/diary_detail.dart';
+import 'package:mrplando/tables/diary/diary_item.dart';
+import 'package:mrplando/tables/diary/tag.dart';
+import 'package:mrplando/tables/diary/tag_group.dart';
+import 'package:mrplando/tables/diary/tag_manager.dart';
 
 class DiaryWidget extends StatefulWidget {
   final DateTime date;

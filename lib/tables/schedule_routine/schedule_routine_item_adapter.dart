@@ -1,5 +1,5 @@
 import 'package:hive/hive.dart';
-import 'package:tagiary/tables/schedule_routine/schedule_routine_item.dart';
+import 'package:mrplando/tables/schedule_routine/schedule_routine_item.dart';
 
 class ScheduleRoutineItemAdapter extends TypeAdapter<ScheduleRoutineItem> {
   @override
@@ -11,7 +11,7 @@ class ScheduleRoutineItemAdapter extends TypeAdapter<ScheduleRoutineItem> {
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    
+
     // 안전하게 daysOfWeek 필드 처리
     List<bool> daysOfWeek;
     try {
@@ -74,9 +74,5 @@ class ScheduleRoutineItemAdapter extends TypeAdapter<ScheduleRoutineItem> {
   int get hashCode => typeId.hashCode;
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is ScheduleRoutineItemAdapter &&
-          runtimeType == other.runtimeType &&
-          typeId == other.typeId;
+  bool operator ==(Object other) => identical(this, other) || other is ScheduleRoutineItemAdapter && runtimeType == other.runtimeType && typeId == other.typeId;
 }

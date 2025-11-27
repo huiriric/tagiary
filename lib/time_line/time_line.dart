@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
-import 'package:tagiary/component/slide_up_container.dart';
-import 'package:tagiary/provider.dart';
-import 'package:tagiary/tables/data_models/event.dart';
-import 'package:tagiary/tables/schedule/schedule_item.dart';
-import 'package:tagiary/tables/schedule_routine/schedule_routine_item.dart';
-import 'package:tagiary/time_line/add_schedule.dart';
-import 'package:tagiary/time_line/schedule_details.dart';
+import 'package:mrplando/component/slide_up_container.dart';
+import 'package:mrplando/provider.dart';
+import 'package:mrplando/tables/data_models/event.dart';
+import 'package:mrplando/tables/schedule/schedule_item.dart';
+import 'package:mrplando/tables/schedule_routine/schedule_routine_item.dart';
+import 'package:mrplando/time_line/add_schedule.dart';
+import 'package:mrplando/time_line/schedule_details.dart';
 
 class TimeLine extends StatefulWidget {
   final DateTime date;
