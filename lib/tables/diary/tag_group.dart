@@ -14,10 +14,14 @@ class TagGroup extends HiveObject {
   @HiveField(2)
   int colorValue;
 
+  @HiveField(3)
+  bool isDeleted;
+
   TagGroup({
     required this.id,
     required this.name,
     required this.colorValue,
+    this.isDeleted = false,
   });
 }
 
@@ -52,11 +56,26 @@ class TagGroupRepository {
     await _groups.delete(id);
   }
 
+  // Soft delete: isDeleted를 true로 설정
+  Future<void> softDeleteGroup(int id) async {
+    final group = _groups.get(id);
+    if (group != null) {
+      group.isDeleted = true;
+      await _groups.put(id, group);
+    }
+  }
+
   TagGroup? getGroup(int id) {
     return _groups.get(id);
   }
 
+  // 활성 카테고리만 반환 (isDeleted = false)
   List<TagGroup> getAllGroups() {
+    return _groups.values.where((group) => !group.isDeleted).toList();
+  }
+
+  // 모든 카테고리 반환 (삭제된 것 포함)
+  List<TagGroup> getAllGroupsIncludingDeleted() {
     return _groups.values.toList();
   }
 

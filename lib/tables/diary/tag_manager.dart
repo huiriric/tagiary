@@ -157,9 +157,25 @@ class TagManager {
     }
   }
 
-  // 카테고리 삭제
+  // 카테고리 삭제 (hard delete)
   Future<void> deleteCategory(int categoryId) async {
     await groupRepository.deleteGroup(categoryId);
+  }
+
+  // 카테고리 소프트 삭제 (isDeleted = true)
+  Future<void> softDeleteCategory(int categoryId) async {
+    await groupRepository.softDeleteGroup(categoryId);
+  }
+
+  // 삭제된 카테고리 포함 모든 카테고리 조회
+  List<CategoryInfo> getAllCategoriesIncludingDeleted() {
+    return groupRepository.getAllGroupsIncludingDeleted().map((group) {
+      return CategoryInfo(
+        id: group.id,
+        name: group.name,
+        color: Color(group.colorValue),
+      );
+    }).toList();
   }
 }
 

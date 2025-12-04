@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:mrplando/component/slide_up_container.dart';
 import 'package:mrplando/constants/colors.dart';
+import 'package:mrplando/diary/category_management_page.dart';
 import 'package:mrplando/diary/tag_selector.dart';
 import 'package:mrplando/tables/diary/diary_item.dart';
 import 'package:mrplando/tables/diary/tag.dart';
@@ -90,7 +91,9 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
+        backgroundColor: const Color(0xFFF7F6E9),
         appBar: AppBar(
+          backgroundColor: const Color(0xFFF7F6E9),
           title: Text(
             widget.diary == null ? '새 다이어리' : '다이어리',
             style: const TextStyle(
@@ -160,7 +163,14 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(50),
                               ),
-                              label: Text(_selectedCategoryId != null ? widget.tagManager.groupRepository.getGroup(_selectedCategoryId!)!.name : '카테고리'),
+                              label: ConstrainedBox(
+                                constraints: const BoxConstraints(maxWidth: 100),
+                                child: Text(
+                                  _selectedCategoryId != null ? widget.tagManager.groupRepository.getGroup(_selectedCategoryId!)!.name : '카테고리',
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                ),
+                              ),
                               labelStyle: TextStyle(color: _selectedCategoryId != null ? Colors.white : Colors.black),
                               onPressed: _buildCategorySelector,
                               backgroundColor: _selectedCategoryId != null
@@ -170,38 +180,58 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
                           ],
                         ),
                         const SizedBox(height: 16),
-                        // 내용 입력
                         Expanded(
-                          child: TextField(
-                            controller: _contentController,
-                            focusNode: _contentFocus,
-                            autofocus: widget.isEdit ? false : true,
-                            onChanged: (value) => setState(() {}),
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(borderSide: BorderSide.none, borderRadius: BorderRadius.all(Radius.circular(16))),
-                              enabledBorder: OutlineInputBorder(borderSide: BorderSide.none, borderRadius: BorderRadius.all(Radius.circular(16))),
-                              labelText: '기록',
-                              focusedBorder: OutlineInputBorder(borderSide: BorderSide.none, borderRadius: BorderRadius.all(Radius.circular(16))),
-                              hintText: '오늘의 기록을 남겨보세요',
-                              alignLabelWithHint: true,
-                              filled: true,
-                              fillColor: Color(0xFFF7F6E9),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF7F6E9),
+                              borderRadius: BorderRadius.circular(16),
                             ),
-                            style: const TextStyle(
-                              fontSize: 15,
+                            child: Column(
+                              children: [
+                                // 내용 입력
+                                Expanded(
+                                  child: TextField(
+                                    controller: _contentController,
+                                    focusNode: _contentFocus,
+                                    autofocus: widget.isEdit ? false : true,
+                                    onChanged: (value) => setState(() {}),
+                                    decoration: const InputDecoration(
+                                      border: OutlineInputBorder(borderSide: BorderSide.none, borderRadius: BorderRadius.all(Radius.circular(16))),
+                                      enabledBorder: OutlineInputBorder(borderSide: BorderSide.none, borderRadius: BorderRadius.all(Radius.circular(16))),
+                                      labelText: '기록',
+                                      focusedBorder: OutlineInputBorder(borderSide: BorderSide.none, borderRadius: BorderRadius.all(Radius.circular(16))),
+                                      hintText: '오늘의 기록을 남겨보세요',
+                                      alignLabelWithHint: true,
+                                      filled: true,
+                                      fillColor: Color(0xFFF7F6E9),
+                                    ),
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                    ),
+                                    maxLines: null,
+                                    minLines: null,
+                                    expands: true,
+                                    textAlignVertical: TextAlignVertical.top,
+                                  ),
+                                ),
+                                // const SizedBox(height: 16),
+                                // 태그 선택
+                                Divider(
+                                  color: Colors.grey[200],
+                                  height: 1.5,
+                                  thickness: 1.5,
+                                  indent: 10,
+                                  endIndent: 10,
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+                                  child: _buildTagSelector(),
+                                ),
+                              ],
                             ),
-                            maxLines: null,
-                            minLines: null,
-                            expands: true,
-                            textAlignVertical: TextAlignVertical.top,
                           ),
                         ),
-                        // const SizedBox(height: 16),
-                        // 태그 선택
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 12.0),
-                          child: _buildTagSelector(),
-                        ),
+                        const Padding(padding: EdgeInsets.only(bottom: 16)),
 
                         // Expanded(child: Container()),
                         // 저장 버튼
@@ -214,10 +244,11 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
                                 onPressed: _saveDiary,
                                 style: ElevatedButton.styleFrom(
                                   padding: const EdgeInsets.symmetric(vertical: 16),
+                                  backgroundColor: const Color(0xFFB09F86),
                                 ),
                                 child: Text(
-                                  widget.isEdit ? '수정하기' : '저장하기',
-                                  style: const TextStyle(fontSize: 16),
+                                  widget.isEdit ? '수정하기' : '기록하기',
+                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                                 ),
                               ),
                             ),
@@ -334,76 +365,92 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
     // 카테고리(태그 그룹) 목록
     final categoryInfos = widget.tagManager.getAllCategories();
 
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (context) => Dialog(
-        child: StatefulBuilder(
-          builder: (BuildContext context, dialogSetState) {
-            return SizedBox(
-              width: 350,
-              height: 400,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+      builder: (context) => StatefulBuilder(
+        builder: (BuildContext context, dialogSetState) {
+          return SlideUpContainer(
+            height: MediaQuery.of(context).size.height * 0.4,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
                         '카테고리',
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          ...categoryInfos.map((group) {
-                            final isSelected = _selectedCategoryId == group.id;
-                            return ChoiceChip(
-                              showCheckmark: false,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(50),
+                      IconButton(
+                        icon: const Icon(Icons.settings),
+                        onPressed: () async {
+                          Navigator.pop(context);
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => CategoryManagementPage(
+                                tagManager: widget.tagManager,
                               ),
-                              label: Text(
-                                group.name,
-                                style: TextStyle(
-                                  color: isSelected ? Colors.white : Colors.black,
-                                ),
-                              ),
-                              selected: isSelected,
-                              selectedColor: group.color,
-                              onSelected: (selected) async {
-                                dialogSetState(() {
-                                  _selectedCategoryId = selected ? group.id : null;
-                                });
-                                setState(() {});
-                                await Future.delayed(const Duration(milliseconds: 500));
-                                Navigator.pop(context);
-                              },
-                            );
-                          }),
-                          ActionChip(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(50),
                             ),
-                            label: const Text('+ 새 카테고리'),
-                            onPressed: () {
-                              Navigator.pop(context);
-                              _showAddCategoryDialog(() => dialogSetState(() {}));
-                            },
-                          ),
-                        ],
+                          );
+                          setState(() {});
+                        },
                       ),
                     ],
                   ),
-                ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      ...categoryInfos.map((group) {
+                        final isSelected = _selectedCategoryId == group.id;
+                        return ChoiceChip(
+                          showCheckmark: false,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(50),
+                          ),
+                          label: Text(
+                            group.name,
+                            style: TextStyle(
+                              color: isSelected ? Colors.white : Colors.black,
+                            ),
+                          ),
+                          selected: isSelected,
+                          selectedColor: group.color,
+                          backgroundColor: group.color.withAlpha(30),
+                          onSelected: (selected) async {
+                            dialogSetState(() {
+                              _selectedCategoryId = selected ? group.id : null;
+                            });
+                            setState(() {});
+                            await Future.delayed(const Duration(milliseconds: 500));
+                            Navigator.pop(context);
+                          },
+                        );
+                      }),
+                      ActionChip(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(50),
+                        ),
+                        label: const Text('+ 새 카테고리'),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _showAddCategoryDialog(() => dialogSetState(() {}));
+                        },
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            );
-          },
-        ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -414,10 +461,7 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
       children: [
         const Text(
           'tag',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400, color: Colors.black87),
         ),
         const SizedBox(height: 8),
 
@@ -574,104 +618,155 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
     final TextEditingController nameController = TextEditingController();
     Color selectedColor = scheduleColors.first;
 
-    showDialog(
+    showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       builder: (context) {
         return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: const Text('새 카테고리 추가'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: nameController,
-                    decoration: const InputDecoration(
-                      labelText: '카테고리 이름',
-                      hintText: '카테고리 이름을 입력하세요',
+          builder: (context, setModalState) {
+            return GestureDetector(
+              onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+              child: SlideUpContainer(
+                height: MediaQuery.of(context).size.height * 0.45,
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Stack(
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // 카테고리 이름 입력
+                            TextFormField(
+                              controller: nameController,
+                              autofocus: true,
+                              textInputAction: TextInputAction.done,
+                              onEditingComplete: () {
+                                FocusManager.instance.primaryFocus?.unfocus();
+                              },
+                              decoration: const InputDecoration(
+                                hintText: '카테고리 이름',
+                                border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                hintStyle: TextStyle(
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              style: const TextStyle(
+                                color: Colors.black87,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            Divider(
+                              height: 20,
+                              thickness: 1,
+                              color: Colors.grey.shade300,
+                            ),
+                            // 색상 선택
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 16.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    '색상',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Column(
+                                    children: [
+                                      // 첫 번째 줄 (색상 0-5)
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                        children: List.generate(6, (index) {
+                                          final color = scheduleColors[index];
+                                          return GestureDetector(
+                                            onTap: () {
+                                              setModalState(() {
+                                                selectedColor = color;
+                                              });
+                                            },
+                                            child: Container(
+                                              width: 35,
+                                              height: 35,
+                                              decoration: BoxDecoration(
+                                                color: color,
+                                                shape: BoxShape.circle,
+                                                border: selectedColor.value == color.value ? Border.all(color: Colors.black, width: 2) : null,
+                                              ),
+                                            ),
+                                          );
+                                        }),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      // 두 번째 줄 (색상 6-11)
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                        children: List.generate(6, (index) {
+                                          final color = scheduleColors[index + 6];
+                                          return GestureDetector(
+                                            onTap: () {
+                                              setModalState(() {
+                                                selectedColor = color;
+                                              });
+                                            },
+                                            child: Container(
+                                              width: 35,
+                                              height: 35,
+                                              decoration: BoxDecoration(
+                                                color: color,
+                                                shape: BoxShape.circle,
+                                                border: selectedColor.value == color.value ? Border.all(color: Colors.black, width: 2) : null,
+                                              ),
+                                            ),
+                                          );
+                                        }),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        // 우측 상단에 저장 버튼 (녹색 체크 아이콘)
+                        Positioned(
+                          top: 0,
+                          right: 0,
+                          child: IconButton(
+                            onPressed: () async {
+                              final name = nameController.text.trim();
+                              if (name.isNotEmpty) {
+                                // 새 카테고리 추가
+                                final groupId = await widget.tagManager.addCategory(name, selectedColor);
+                                Navigator.pop(context);
+
+                                // 메인 위젯 상태 업데이트
+                                setState(() {
+                                  _selectedCategoryId = groupId;
+                                });
+
+                                // 카테고리 선택 다이얼로그 새로 그리기
+                                callback();
+                              }
+                            },
+                            icon: const Icon(
+                              Icons.check,
+                              color: Colors.green,
+                              size: 32,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  const Text('색상 선택'),
-                  const SizedBox(height: 8),
-                  Column(
-                    children: [
-                      // 첫 번째 줄 (색상 0-5)
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: List.generate(6, (index) {
-                          final color = scheduleColors[index];
-                          return GestureDetector(
-                            onTap: () {
-                              setDialogState(() {
-                                selectedColor = color;
-                              });
-                            },
-                            child: Container(
-                              width: 30,
-                              height: 30,
-                              decoration: BoxDecoration(
-                                color: color,
-                                shape: BoxShape.circle,
-                                border: selectedColor == color ? Border.all(color: Colors.black, width: 2) : null,
-                              ),
-                            ),
-                          );
-                        }),
-                      ),
-                      const SizedBox(height: 12),
-                      // 두 번째 줄 (색상 6-11)
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: List.generate(6, (index) {
-                          final color = scheduleColors[index + 6];
-                          return GestureDetector(
-                            onTap: () {
-                              setDialogState(() {
-                                selectedColor = color;
-                              });
-                            },
-                            child: Container(
-                              width: 30,
-                              height: 30,
-                              decoration: BoxDecoration(
-                                color: color,
-                                shape: BoxShape.circle,
-                                border: selectedColor == color ? Border.all(color: Colors.black, width: 2) : null,
-                              ),
-                            ),
-                          );
-                        }),
-                      ),
-                    ],
-                  ),
-                ],
+                ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('취소'),
-                ),
-                TextButton(
-                  onPressed: () async {
-                    final name = nameController.text.trim();
-                    if (name.isNotEmpty) {
-                      // 새 카테고리 추가
-                      final groupId = await widget.tagManager.addCategory(name, selectedColor);
-                      Navigator.pop(context);
-
-                      // 메인 위젯 상태 업데이트
-                      setState(() {
-                        _selectedCategoryId = groupId;
-                      });
-
-                      // 카테고리 선택 다이얼로그 새로 그리기
-                      callback();
-                    }
-                  },
-                  child: const Text('추가'),
-                ),
-              ],
             );
           },
         );
