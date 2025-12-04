@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:mrplando/diary/category_management_page.dart';
 import 'package:mrplando/diary/diary_editor.dart';
 import 'package:mrplando/screens/diary_list_screen.dart';
 import 'package:mrplando/tables/diary/diary_item.dart';
@@ -284,13 +285,33 @@ class _DiaryScreenState extends State<DiaryScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '카테고리별 기록',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                '카테고리별 기록',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              // 카테고리 관리 버튼
+              IconButton(
+                icon: const Icon(Icons.settings, size: 18, color: Colors.black54),
+                onPressed: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CategoryManagementPage(
+                        tagManager: _tagManager,
+                      ),
+                    ),
+                  );
+                  setState(() {});
+                },
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           Container(
@@ -549,7 +570,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
                     },
                     child: Container(
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(11),
                         border: isToday ? Border.all(color: Theme.of(context).primaryColor, width: 2) : null,
                       ),
                       child: Stack(
