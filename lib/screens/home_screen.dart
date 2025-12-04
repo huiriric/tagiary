@@ -5,7 +5,7 @@ import 'package:mrplando/tables/schedule_routine/schedule_routine_item.dart';
 import 'package:mrplando/time_line/time_line.dart';
 import 'package:mrplando/time_line/add_schedule.dart';
 import 'package:mrplando/todo_widget/todo_widget.dart';
-import 'package:mrplando/todo_routine_widget/todo_routine_widget.dart';
+import 'package:mrplando/routine_widget/routine_widget.dart';
 import 'package:mrplando/diary/diary_widget.dart';
 import 'package:mrplando/settings/settings.dart';
 
