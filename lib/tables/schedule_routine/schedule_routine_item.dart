@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import 'package:tagiary/tables/data_models/event.dart';
-import 'package:tagiary/main.dart';
+import 'package:mrplando/tables/data_models/event.dart';
+import 'package:mrplando/main.dart';
 part 'schedule_routine_item.g.dart';
 
 @HiveType(typeId: 1)

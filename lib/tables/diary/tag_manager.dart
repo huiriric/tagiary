@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:tagiary/tables/diary/tag.dart';
-import 'package:tagiary/tables/diary/tag_group.dart';
+import 'package:mrplando/tables/diary/tag.dart';
+import 'package:mrplando/tables/diary/tag_group.dart';
 
 class TagManager {
   final TagRepository tagRepository;
@@ -19,7 +19,7 @@ class TagManager {
   }
 
   // === 태그 관련 메서드 ===
-  
+
   // 태그 정보 가져오기
   TagInfo? getTagInfo(int tagId) {
     final tag = tagRepository.getTag(tagId);

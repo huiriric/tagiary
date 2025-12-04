@@ -1,7 +1,7 @@
 // import 'package:home_widget/home_widget.dart';
-// import 'package:tagiary/tables/check_routine/check_routine_item.dart';
-// import 'package:tagiary/tables/schedule/schedule_item.dart';
-// import 'package:tagiary/tables/check/check_item.dart';
+// import 'package:mrplando/tables/check_routine/check_routine_item.dart';
+// import 'package:mrplando/tables/schedule/schedule_item.dart';
+// import 'package:mrplando/tables/check/check_item.dart';
 
 // class HomeWidgetProvider {
 //   // 위젯 업데이트를 위한 메서드들

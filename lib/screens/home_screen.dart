@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:tagiary/component/slide_up_container.dart';
-import 'package:tagiary/tables/schedule/schedule_item.dart';
-import 'package:tagiary/tables/schedule_routine/schedule_routine_item.dart';
-import 'package:tagiary/time_line/time_line.dart';
-import 'package:tagiary/time_line/add_schedule.dart';
-import 'package:tagiary/todo_widget/todo_widget.dart';
-import 'package:tagiary/todo_routine_widget/todo_routine_widget.dart';
-import 'package:tagiary/diary/diary_widget.dart';
-import 'package:tagiary/settings/settings.dart';
+import 'package:mrplando/component/slide_up_container.dart';
+import 'package:mrplando/tables/schedule/schedule_item.dart';
+import 'package:mrplando/tables/schedule_routine/schedule_routine_item.dart';
+import 'package:mrplando/time_line/time_line.dart';
+import 'package:mrplando/time_line/add_schedule.dart';
+import 'package:mrplando/todo_widget/todo_widget.dart';
+import 'package:mrplando/todo_routine_widget/todo_routine_widget.dart';
+import 'package:mrplando/diary/diary_widget.dart';
+import 'package:mrplando/settings/settings.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

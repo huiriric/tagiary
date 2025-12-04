@@ -2,18 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:tagiary/component/slide_up_container.dart';
-import 'package:tagiary/constants/colors.dart';
-import 'package:tagiary/tables/check_routine/check_routine_item.dart';
-import 'package:tagiary/tables/check_routine/routine_history.dart';
-import 'package:tagiary/todo_routine_widget/add_routine.dart';
-import 'package:tagiary/todo_routine_widget/routine_detail.dart';
-import 'package:tagiary/todo_routine_widget/routine_history_view.dart';
-import 'package:tagiary/widgets/home_widget_provider.dart';
+import 'package:mrplando/component/slide_up_container.dart';
+import 'package:mrplando/constants/colors.dart';
+import 'package:mrplando/tables/check_routine/check_routine_item.dart';
+import 'package:mrplando/tables/check_routine/routine_history.dart';
+import 'package:mrplando/todo_routine_widget/add_routine.dart';
+import 'package:mrplando/todo_routine_widget/routine_detail.dart';
+import 'package:mrplando/todo_routine_widget/routine_history_view.dart';
+import 'package:mrplando/widgets/home_widget_provider.dart';
 
 class TodoRoutineWidget extends StatefulWidget {
   final DateTime? date; // 표시할 날짜 (null이면 오늘 날짜)
-  final bool? fromMain; // 메인 화면에서 호출된 경우 true
+  final bool fromMain; // 메인 화면에서 호출된 경우 true
   final VoidCallback? onRoutineChanged; // 루틴 변경 시 호출되는 콜백
 
   const TodoRoutineWidget({
@@ -32,6 +32,7 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
   late RoutineHistoryRepository _historyRepository;
   late DateTime _displayDate; // 표시할 날짜
   bool _isToday = true; // 오늘 날짜인지 여부
+  bool _isRepositoryInitialized = false; // Repository 초기화 상태
 
   @override
   void initState() {
@@ -72,6 +73,10 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
     await _historyRepository.init();
     // 새로운 날짜가 시작될 때 루틴 초기화
     _repository.initializeRoutine();
+    // Repository 초기화 완료 플래그 설정
+    setState(() {
+      _isRepositoryInitialized = true;
+    });
   }
 
   @override
@@ -176,37 +181,40 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
                   ),
                   // // 중앙에 주간 달성률 표시 (오늘 날짜일 때만 표시)
                   // if (filteredRoutines.isNotEmpty)
-                  ValueListenableBuilder(
-                    valueListenable: Hive.box<RoutineHistory>('routineHistoryBox').listenable(),
-                    builder: (context, Box<RoutineHistory> historyBox, _) {
-                      return FutureBuilder<double>(
-                        future: _getWeeklyCompletionRate(allRoutines),
-                        builder: (context, snapshot) {
-                          if (snapshot.hasData) {
-                            final completionRate = snapshot.data!;
-                            return Padding(
-                              padding: EdgeInsets.symmetric(horizontal: widget.fromMain == false ? 8.0 : 0),
-                              child: Row(
-                                children: [
-                                  Text(
-                                    '주간 ${(completionRate * 100).toStringAsFixed(1)}%',
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.grey,
+                  if (_isRepositoryInitialized)
+                    ValueListenableBuilder(
+                      valueListenable: Hive.box<RoutineHistory>('routineHistoryBox').listenable(),
+                      builder: (context, Box<RoutineHistory> historyBox, _) {
+                        return FutureBuilder<double>(
+                          future: _getWeeklyCompletionRate(allRoutines),
+                          builder: (context, snapshot) {
+                            if (snapshot.hasData) {
+                              final completionRate = snapshot.data!;
+                              return Padding(
+                                padding: EdgeInsets.symmetric(horizontal: widget.fromMain == false ? 8.0 : 0),
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      '주간 ${(completionRate * 100).toStringAsFixed(1)}%',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.grey,
+                                      ),
                                     ),
-                                  ),
-                                  if (widget.fromMain == false) const SizedBox(width: 4),
-                                  if (widget.fromMain == false) _buildProgressIndicator(completionRate),
-                                ],
-                              ),
-                            );
-                          } else {
-                            return const SizedBox.shrink();
-                          }
-                        },
-                      );
-                    },
-                  ),
+                                    if (widget.fromMain == false) const SizedBox(width: 4),
+                                    if (widget.fromMain == false) _buildProgressIndicator(completionRate),
+                                  ],
+                                ),
+                              );
+                            } else {
+                              return const SizedBox.shrink();
+                            }
+                          },
+                        );
+                      },
+                    )
+                  else
+                    const SizedBox.shrink(),
                   GestureDetector(
                     onTap: () => _showAddRoutineDialog(context, onRoutineChanged: widget.onRoutineChanged),
                     child: const Icon(
@@ -282,7 +290,7 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
                   ),
                 ),
               ),
-              if (widget.fromMain == false)
+              if (widget.fromMain == false && _isRepositoryInitialized)
                 ValueListenableBuilder(
                   valueListenable: Hive.box<RoutineHistory>('routineHistoryBox').listenable(),
                   builder: (context, Box<RoutineHistory> historyBox, _) {
@@ -357,16 +365,16 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
                   },
                 ),
           // 삭제 버튼 (루틴 페이지일 때만 표시)
-          trailing: widget.fromMain == false
-              ? IconButton(
-                  icon: const Icon(Icons.delete_outline, size: 20),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  onPressed: () {
-                    _deleteRoutine(routine, onRoutineChanged: onRoutineChanged);
-                  },
-                )
-              : null,
+          // trailing: widget.fromMain == false
+          //     ? IconButton(
+          //         icon: const Icon(Icons.delete_outline, size: 20),
+          //         padding: EdgeInsets.zero,
+          //         constraints: const BoxConstraints(),
+          //         onPressed: () {
+          //           _deleteRoutine(routine, onRoutineChanged: onRoutineChanged);
+          //         },
+          //       )
+          //     : null,
           onTap: () async {
             await _showRoutineDetail(routine, onRoutineChanged);
           },
@@ -478,7 +486,7 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
       }
 
       // 이번 주의 일요일부터 토요일까지의 모든 날짜 확인
-      print(daysOfWeek);
+      // print(daysOfWeek);
       for (int i = 0; i < 7; i++) {
         final date = firstDayOfWeek.add(Duration(days: i));
         final dayOfWeek = date.weekday % 7; // 0(일)~6(토)
@@ -498,7 +506,7 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
       }
 
       totalScheduledDays += routineScheduledDays;
-      print(totalScheduledDays);
+      // print(totalScheduledDays);
       // 해당 루틴의 모든 완료 기록 가져오기
       final allHistory = _historyRepository.getHistoryForRoutine(routine.id);
 

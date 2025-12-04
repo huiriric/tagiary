@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
-import 'package:tagiary/component/slide_up_container.dart';
-import 'package:tagiary/provider.dart';
-import 'package:tagiary/time_line/time_line.dart';
-import 'package:tagiary/time_line/add_schedule.dart';
-import 'package:tagiary/screens/home_screen.dart';
-import 'package:tagiary/time_line/week_view.dart';
-import 'package:tagiary/time_line/month_view.dart';
+import 'package:mrplando/component/slide_up_container.dart';
+import 'package:mrplando/provider.dart';
+import 'package:mrplando/time_line/time_line.dart';
+import 'package:mrplando/time_line/add_schedule.dart';
+import 'package:mrplando/screens/home_screen.dart';
+import 'package:mrplando/time_line/week_view.dart';
+import 'package:mrplando/time_line/month_view.dart';
 
 class TimelineScreen extends StatefulWidget {
   const TimelineScreen({super.key});

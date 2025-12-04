@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:tagiary/component/slide_up_container.dart';
-import 'package:tagiary/tables/check/check_enum.dart';
-import 'package:tagiary/tables/check/check_item.dart';
-import 'package:tagiary/todo_widget/add_todo/add_todo.dart';
-import 'package:tagiary/todo_widget/todo_widget.dart';
+import 'package:mrplando/component/slide_up_container.dart';
+import 'package:mrplando/tables/check/check_enum.dart';
+import 'package:mrplando/tables/check/check_item.dart';
+import 'package:mrplando/todo_widget/add_todo/add_todo.dart';
+import 'package:mrplando/todo_widget/todo_widget.dart';
 
 class TodoScreen extends StatefulWidget {
   const TodoScreen({super.key});
@@ -27,6 +27,7 @@ class _TodoScreenState extends State<TodoScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text(
           '할 일',
@@ -270,9 +271,10 @@ class _TodoScreenState extends State<TodoScreen> {
                 child: Text(
                   todo.content,
                   style: TextStyle(
-                    color: todo.check == CheckEnum.done ? Colors.grey : Colors.black,
+                    color: todo.check == CheckEnum.done ? Colors.black45 : Colors.black87,
                     fontSize: 14,
                     overflow: TextOverflow.ellipsis,
+                    fontWeight: FontWeight.w700,
                   ),
                   textAlign: TextAlign.start,
                 ),
