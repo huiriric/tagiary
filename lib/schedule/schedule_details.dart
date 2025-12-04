@@ -12,7 +12,7 @@ import 'package:mrplando/tables/schedule_routine/schedule_routine_item.dart';
 import 'package:mrplando/tables/check/check_item.dart';
 import 'package:mrplando/tables/check_routine/check_routine_item.dart';
 import 'package:mrplando/tables/schedule_links/schedule_link_item.dart';
-import 'package:mrplando/time_line/add_schedule.dart';
+import 'package:mrplando/schedule/add_schedule.dart';
 import 'package:mrplando/widgets/home_widget_provider.dart';
 
 class ScheduleDetails extends StatefulWidget {
@@ -73,8 +73,8 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
   }
 
   void _initializeControllers() {
-    print(_startTime);
-    print(_endTime);
+    // print(_startTime);
+    // print(_endTime);
     _startHourController = FixedExtentScrollController(initialItem: _startTime != null ? _startTime!.hour : now.hour + 1);
     _startMinuteController = FixedExtentScrollController(initialItem: _startTime != null ? _startTime!.minute ~/ 5 : 0);
     _endHourController = FixedExtentScrollController(initialItem: _endTime != null ? _endTime!.hour : now.hour + 2);
@@ -82,16 +82,16 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
   }
 
   void _resetTimePickers() {
-    print(_startTime);
-    print(_endTime);
+    // print(_startTime);
+    // print(_endTime);
     // setState(() {
     //   _startTime = widget.event.startTime;
     //   _endTime = widget.event.endTime;
     // });
-    print((widget.event.startTime!.hour).toDouble());
-    print((widget.event.startTime!.minute ~/ 5).toDouble());
-    print((widget.event.endTime!.hour).toDouble());
-    print((widget.event.endTime!.minute ~/ 5).toDouble());
+    // print((widget.event.startTime!.hour).toDouble());
+    // print((widget.event.startTime!.minute ~/ 5).toDouble());
+    // print((widget.event.endTime!.hour).toDouble());
+    // print((widget.event.endTime!.minute ~/ 5).toDouble());
 
     // 스크롤 위치도 원래대로 되돌리기
     _startHourController.animateToItem(
@@ -212,8 +212,8 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
                               _isEditing = false;
                               _dayPickerKey = UniqueKey(); // DayPicker 새로고침
                               if (_hasTimeSet) {
-                                print(_startTime);
-                                print(_endTime);
+                                // print(_startTime);
+                                // print(_endTime);
                                 _startTime = widget.event.startTime ?? TimeOfDay(hour: now.hour + 1, minute: 0);
                                 _endTime = widget.event.endTime ?? TimeOfDay(hour: now.hour + 2, minute: 0);
                                 _resetTimePickers();
@@ -1078,7 +1078,7 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
     }
 
     // 새 일정 정보로 업데이트
-    print('새 일정 정보: ${_titleController.text}, $_endDate, $_startTime, $_endTime, $_selectedColor');
+    // print('새 일정 정보: ${_titleController.text}, $_endDate, $_startTime, $_endTime, $_selectedColor');
     final updatedItem = ScheduleItem(
       year: _date!.year,
       month: _date!.month,

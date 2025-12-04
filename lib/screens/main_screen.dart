@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mrplando/screens/timeline_screen.dart';
+import 'package:mrplando/screens/schedule_screen.dart';
 import 'package:mrplando/screens/todo_screen.dart';
 import 'package:mrplando/screens/home_screen.dart';
 import 'package:mrplando/screens/routine_screen.dart';

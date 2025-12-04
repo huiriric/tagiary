@@ -3,11 +3,11 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:mrplando/component/slide_up_container.dart';
 import 'package:mrplando/provider.dart';
-import 'package:mrplando/time_line/time_line.dart';
-import 'package:mrplando/time_line/add_schedule.dart';
+import 'package:mrplando/schedule/time_line.dart';
+import 'package:mrplando/schedule/add_schedule.dart';
 import 'package:mrplando/screens/home_screen.dart';
-import 'package:mrplando/time_line/week_view.dart';
-import 'package:mrplando/time_line/month_view.dart';
+import 'package:mrplando/schedule/week_view.dart';
+import 'package:mrplando/schedule/month_view.dart';
 
 class TimelineScreen extends StatefulWidget {
   const TimelineScreen({super.key});
@@ -107,6 +107,22 @@ class _TimelineScreenState extends State<TimelineScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
+          // 선택된 날짜가 오늘인 경우 비활성화
+          if (date.year != DateTime.now().year || date.month != DateTime.now().month || date.day != DateTime.now().day)
+            TextButton(
+                onPressed: () {
+                  // 오늘 날짜로 이동
+                  final today = DateTime.now();
+                  provider.updateDate(today);
+                  setState(() {
+                    date = provider.selectedDate;
+                    _timelineKey = UniqueKey(); // 날짜 변경 시에도 새로운 키 생성
+                  });
+                },
+                child: const Text(
+                  'today',
+                  style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: -1),
+                )),
           // 뷰 모드 전환 드롭다운 버튼
           PopupMenuButton<TimelineViewMode>(
             icon: Icon(
