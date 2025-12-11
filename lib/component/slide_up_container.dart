@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 
 class SlideUpContainer extends StatefulWidget {
-  double? height;
-  double? width;
-  Widget child;
-  SlideUpContainer({super.key, this.height, this.width, required this.child});
+  final double? width;
+  final Widget child;
+  const SlideUpContainer({super.key, this.width, required this.child});
 
   @override
   State<SlideUpContainer> createState() => _SlideContainerState();
@@ -13,18 +12,24 @@ class SlideUpContainer extends StatefulWidget {
 class _SlideContainerState extends State<SlideUpContainer> {
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: Container(
-        height: widget.height,
-        width: widget.width ?? double.infinity,
-        decoration: const BoxDecoration(
-          borderRadius: BorderRadius.only(
+    return SafeArea(
+      top: true,
+      bottom: false,
+      child: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: ClipRRect(
+          borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(20),
             topRight: Radius.circular(20),
           ),
+          child: Container(
+            width: widget.width ?? double.infinity,
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height - MediaQuery.of(context).viewInsets.bottom - 60,
+            ),
+            child: SingleChildScrollView(child: widget.child),
+          ),
         ),
-        child: widget.child,
       ),
     );
   }
