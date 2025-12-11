@@ -14,6 +14,9 @@ import 'package:mrplando/tables/schedule_routine/schedule_routine_item.dart';
 import 'package:mrplando/tables/diary/diary_item.dart';
 import 'package:mrplando/tables/diary/tag.dart';
 import 'package:mrplando/tables/diary/tag_group.dart';
+import 'package:mrplando/tables/diary/tag_group_adapter.dart';
+import 'package:mrplando/tables/color/color_item.dart';
+import 'package:mrplando/constants/colors.dart';
 import 'package:mrplando/screens/main_screen.dart';
 
 Future<void> main() async {
@@ -54,7 +57,8 @@ Future<void> main() async {
   Hive.registerAdapter(LinkItemTypeAdapter());
   Hive.registerAdapter(DiaryItemAdapter());
   Hive.registerAdapter(TagAdapter());
-  Hive.registerAdapter(TagGroupAdapter());
+  Hive.registerAdapter(TagGroupAdapterWithMigration());
+  Hive.registerAdapter(ColorItemAdapter());
 
   // 박스 열기
   await Hive.openBox<ScheduleItem>('scheduleBox');
@@ -67,6 +71,15 @@ Future<void> main() async {
   await Hive.openBox<DiaryItem>('diaryBox');
   await Hive.openBox<Tag>('tagBox');
   await Hive.openBox<TagGroup>('tagGroupBox');
+  await Hive.openBox<ColorItem>('colorBox');
+
+  // 색상 초기화
+  final colorRepo = ColorRepository();
+  await colorRepo.init();
+  await colorRepo.initializeDefaultColors();
+
+  // 색상 리스트 로드
+  await loadScheduleColors();
 
   // ScheduleRepository scheduleRepo = ScheduleRepository();
   // ScheduleRoutineRepository scheduleRRepo = ScheduleRoutineRepository();
