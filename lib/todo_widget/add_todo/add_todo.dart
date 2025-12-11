@@ -5,6 +5,7 @@ import 'package:mrplando/tables/check/check_enum.dart';
 import 'package:mrplando/tables/check/check_item.dart';
 import 'package:mrplando/tables/schedule/schedule_item.dart';
 import 'package:mrplando/tables/schedule_links/schedule_link_item.dart';
+import 'package:mrplando/screens/color_management_page.dart';
 
 class AddTodo extends StatefulWidget {
   final VoidCallback? onTodoAdded; // 할 일 추가 후 호출할 콜백 함수
@@ -29,6 +30,8 @@ class _AddTodoState extends State<AddTodo> {
   // 색상 선택
   late Color selectedColor;
   bool isLoading = false;
+  double colorPadding = 20;
+  double colorSize = 35;
 
   @override
   void initState() {
@@ -84,22 +87,12 @@ class _AddTodoState extends State<AddTodo> {
                       border: InputBorder.none,
                       enabledBorder: InputBorder.none,
                       focusedBorder: InputBorder.none,
-                      hintStyle: TextStyle(
-                        color: Colors.grey,
-                      ),
+                      hintStyle: TextStyle(color: Colors.grey),
                     ),
-                    style: const TextStyle(
-                      color: Colors.black87,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: const TextStyle(color: Colors.black87, fontSize: 20, fontWeight: FontWeight.w700),
                   ),
 
-                  Divider(
-                    height: 20,
-                    thickness: 1,
-                    color: Colors.grey.shade300,
-                  ),
+                  Divider(height: 20, thickness: 1, color: Colors.grey.shade300),
 
                   // 마감일 선택
                   Padding(
@@ -107,13 +100,7 @@ class _AddTodoState extends State<AddTodo> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          '마감일',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        const Text('마감일', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
                         Row(
                           children: [
@@ -144,16 +131,9 @@ class _AddTodoState extends State<AddTodo> {
                                     children: [
                                       Text(
                                         selectedDate != null ? '${selectedDate!.year}년 ${selectedDate!.month}월 ${selectedDate!.day}일' : '마감일 선택 (선택사항)',
-                                        style: TextStyle(
-                                          color: selectedDate != null ? Colors.black : Colors.grey,
-                                          fontSize: 14,
-                                        ),
+                                        style: TextStyle(color: selectedDate != null ? Colors.black : Colors.grey, fontSize: 14),
                                       ),
-                                      Icon(
-                                        Icons.calendar_today,
-                                        size: 16,
-                                        color: selectedDate != null ? Colors.black : Colors.grey,
-                                      ),
+                                      Icon(Icons.calendar_today, size: 16, color: selectedDate != null ? Colors.black : Colors.grey),
                                     ],
                                   ),
                                 ),
@@ -161,10 +141,7 @@ class _AddTodoState extends State<AddTodo> {
                             ),
                             if (selectedDate != null)
                               IconButton(
-                                icon: const Icon(
-                                  Icons.close,
-                                  size: 20,
-                                ),
+                                icon: const Icon(Icons.close, size: 20),
                                 onPressed: () {
                                   setState(() {
                                     selectedDate = null;
@@ -183,21 +160,15 @@ class _AddTodoState extends State<AddTodo> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          '색상',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        const Text('색상', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
-                        Column(
-                          children: [
-                            // 첫 번째 줄 (색상 0-5)
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: List.generate(6, (index) {
-                                final color = scheduleColors[index];
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: colorPadding),
+                          child: Wrap(
+                            spacing: (MediaQuery.of(context).size.width - (colorPadding * 4 + colorSize * 6)) / 5,
+                            runSpacing: 12,
+                            children: [
+                              ...scheduleColors.map((color) {
                                 return GestureDetector(
                                   onTap: () {
                                     setState(() {
@@ -215,32 +186,20 @@ class _AddTodoState extends State<AddTodo> {
                                   ),
                                 );
                               }),
-                            ),
-                            const SizedBox(height: 12),
-                            // 두 번째 줄 (색상 6-11)
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: List.generate(6, (index) {
-                                final color = scheduleColors[index + 6];
-                                return GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      selectedColor = color;
-                                    });
-                                  },
-                                  child: Container(
-                                    width: 35,
-                                    height: 35,
-                                    decoration: BoxDecoration(
-                                      color: color,
-                                      shape: BoxShape.circle,
-                                      border: selectedColor.value == color.value ? Border.all(color: Colors.black, width: 2) : null,
-                                    ),
-                                  ),
-                                );
-                              }),
-                            ),
-                          ],
+                              GestureDetector(
+                                onTap: () async {
+                                  await Navigator.push(context, MaterialPageRoute(builder: (context) => const ColorManagementPage()));
+                                  setState(() {});
+                                },
+                                child: Container(
+                                  width: 35,
+                                  height: 35,
+                                  decoration: BoxDecoration(color: Colors.grey.shade300, shape: BoxShape.circle),
+                                  child: const Icon(Icons.add, color: Colors.grey, size: 20),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -259,29 +218,18 @@ class _AddTodoState extends State<AddTodo> {
                       const SizedBox(
                         width: 24,
                         height: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
-                        ),
+                        child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.green)),
                       )
                     else
                       IconButton(
                         onPressed: _saveTodo,
-                        icon: const Icon(
-                          Icons.check,
-                          color: Colors.green,
-                          size: 32,
-                        ),
+                        icon: const Icon(Icons.check, color: Colors.green, size: 32),
                       ),
                     // 수정 모드일 때만 삭제 버튼 표시
                     if (widget.todoToEdit != null && !isLoading)
                       IconButton(
                         onPressed: () => _deleteTodo(widget.todoToEdit!),
-                        icon: const Icon(
-                          Icons.delete_outline,
-                          color: Colors.red,
-                          size: 28,
-                        ),
+                        icon: const Icon(Icons.delete_outline, color: Colors.red, size: 28),
                       ),
                   ],
                 ),
@@ -371,14 +319,8 @@ class _AddTodoState extends State<AddTodo> {
         title: const Text('일정에 추가'),
         content: const Text('이 할 일을 스케줄에도 추가하시겠습니까?'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('아니요'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('추가하기'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('아니요')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('추가하기')),
         ],
       ),
     );
@@ -410,12 +352,7 @@ class _AddTodoState extends State<AddTodo> {
     final linkRepo = ScheduleLinkRepository();
     await linkRepo.init();
 
-    final newLink = ScheduleLinkItem(
-      scheduleId: scheduleId,
-      isRoutine: false,
-      linkedItemId: todoId,
-      linkedItemType: LinkItemType.todo,
-    );
+    final newLink = ScheduleLinkItem(scheduleId: scheduleId, isRoutine: false, linkedItemId: todoId, linkedItemType: LinkItemType.todo);
 
     await linkRepo.addItem(newLink);
   }
@@ -438,10 +375,7 @@ class _AddTodoState extends State<AddTodo> {
         title: const Text('할 일 삭제'),
         content: const Text('이 할 일을 삭제하시겠습니까?'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('취소'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('취소')),
           TextButton(
             onPressed: () async {
               final repository = CheckRepository();

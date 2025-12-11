@@ -7,6 +7,7 @@ import 'package:mrplando/constants/colors.dart';
 import 'package:mrplando/screens/home_screen.dart';
 import 'package:mrplando/tables/check_routine/check_routine_item.dart';
 import 'package:mrplando/schedule/add_schedule.dart';
+import 'package:mrplando/screens/color_management_page.dart';
 
 class AddRoutine extends StatefulWidget {
   final VoidCallback? onRoutineAdded; // 루틴 추가 후 호출할 콜백 함수
@@ -51,6 +52,8 @@ class _AddRoutineState extends State<AddRoutine> {
   // 색상 선택
   late Color selectedColor;
   bool isLoading = false;
+  double colorPadding = 20;
+  double colorSize = 35;
 
   @override
   void initState() {
@@ -267,13 +270,13 @@ class _AddRoutineState extends State<AddRoutine> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      Column(
-                        children: [
-                          // 첫 번째 줄 (색상 0-5)
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: List.generate(6, (index) {
-                              final color = scheduleColors[index];
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: colorPadding),
+                        child: Wrap(
+                          spacing: (MediaQuery.of(context).size.width - (colorPadding * 4 + colorSize * 6)) / 5,
+                          runSpacing: 12,
+                          children: [
+                            ...scheduleColors.map((color) {
                               return GestureDetector(
                                 onTap: () {
                                   setState(() {
@@ -291,32 +294,32 @@ class _AddRoutineState extends State<AddRoutine> {
                                 ),
                               );
                             }),
-                          ),
-                          const SizedBox(height: 12),
-                          // 두 번째 줄 (색상 6-11)
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: List.generate(6, (index) {
-                              final color = scheduleColors[index + 6];
-                              return GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    selectedColor = color;
-                                  });
-                                },
-                                child: Container(
-                                  width: 35,
-                                  height: 35,
-                                  decoration: BoxDecoration(
-                                    color: color,
-                                    shape: BoxShape.circle,
-                                    border: selectedColor == color ? Border.all(color: Colors.black, width: 2) : null,
+                            GestureDetector(
+                              onTap: () async {
+                                await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const ColorManagementPage(),
                                   ),
+                                );
+                                setState(() {});
+                              },
+                              child: Container(
+                                width: 35,
+                                height: 35,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade300,
+                                  shape: BoxShape.circle,
                                 ),
-                              );
-                            }),
-                          ),
-                        ],
+                                child: const Icon(
+                                  Icons.add,
+                                  color: Colors.grey,
+                                  size: 20,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),

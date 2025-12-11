@@ -8,6 +8,7 @@ import 'package:mrplando/screens/home_screen.dart';
 import 'package:mrplando/tables/check_routine/check_routine_item.dart';
 import 'package:mrplando/tables/check_routine/routine_history.dart';
 import 'package:mrplando/schedule/add_schedule.dart';
+import 'package:mrplando/screens/color_management_page.dart';
 
 class RoutineDetail extends StatefulWidget {
   CheckRoutineItem item;
@@ -322,56 +323,70 @@ class _RoutineDetailState extends State<RoutineDetail> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      Column(
-                        children: [
-                          // 첫 번째 줄 (색상 0-5)
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: List.generate(6, (index) {
-                              final color = scheduleColors[index];
-                              return GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    _colorValue = color.value;
-                                  });
-                                },
-                                child: Container(
-                                  width: 35,
-                                  height: 35,
-                                  decoration: BoxDecoration(
-                                    color: color,
-                                    shape: BoxShape.circle,
-                                    border: _colorValue == color.value ? Border.all(color: Colors.black, width: 2) : null,
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final totalItems = scheduleColors.length + 1;
+                          final rows = (totalItems / 6).ceil();
+                          final height = rows * (35 + 12.0) - 12;
+
+                          return SizedBox(
+                            height: height,
+                            child: GridView.builder(
+                              physics: const NeverScrollableScrollPhysics(),
+                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 6,
+                                crossAxisSpacing: 12,
+                                mainAxisSpacing: 12,
+                                childAspectRatio: 1,
+                              ),
+                              itemCount: totalItems,
+                              itemBuilder: (context, index) {
+                                if (index == scheduleColors.length) {
+                                  return GestureDetector(
+                                    onTap: () async {
+                                      await Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => const ColorManagementPage(),
+                                        ),
+                                      );
+                                      setState(() {});
+                                    },
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey.shade300,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.add,
+                                        color: Colors.grey,
+                                        size: 20,
+                                      ),
+                                    ),
+                                  );
+                                }
+
+                                final color = scheduleColors[index];
+                                return GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      _colorValue = color.value;
+                                    });
+                                  },
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: color,
+                                      shape: BoxShape.circle,
+                                      border: _colorValue == color.value
+                                          ? Border.all(color: Colors.black, width: 2)
+                                          : null,
+                                    ),
                                   ),
-                                ),
-                              );
-                            }),
-                          ),
-                          const SizedBox(height: 12),
-                          // 두 번째 줄 (색상 6-11)
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: List.generate(6, (index) {
-                              final color = scheduleColors[index + 6];
-                              return GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    _colorValue = color.value;
-                                  });
-                                },
-                                child: Container(
-                                  width: 35,
-                                  height: 35,
-                                  decoration: BoxDecoration(
-                                    color: color,
-                                    shape: BoxShape.circle,
-                                    border: _colorValue == color.value ? Border.all(color: Colors.black, width: 2) : null,
-                                  ),
-                                ),
-                              );
-                            }),
-                          ),
-                        ],
+                                );
+                              },
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),

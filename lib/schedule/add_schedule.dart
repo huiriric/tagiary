@@ -14,14 +14,15 @@ import 'package:mrplando/tables/schedule/schedule_item.dart';
 import 'package:mrplando/tables/schedule_routine/schedule_routine_item.dart';
 import 'package:mrplando/tables/schedule_links/schedule_link_item.dart';
 import 'package:mrplando/widgets/home_widget_provider.dart';
+import 'package:mrplando/screens/color_management_page.dart';
 
 class AddSchedule extends StatefulWidget {
-  DateTime date;
-  TimeOfDay start;
-  TimeOfDay end;
+  final DateTime date;
+  final TimeOfDay start;
+  final TimeOfDay end;
   final VoidCallback? onScheduleAdded; // 일정 추가 후 호출할 콜백 함수
 
-  AddSchedule({super.key, required this.date, required this.start, required this.end, this.onScheduleAdded});
+  const AddSchedule({super.key, required this.date, required this.start, required this.end, this.onScheduleAdded});
 
   @override
   State<AddSchedule> createState() => _AddScheduleState();
@@ -64,6 +65,8 @@ class _AddScheduleState extends State<AddSchedule> {
 
   late Color selectedColor;
   bool isLoading = false;
+  double colorPadding = 20;
+  double colorSize = 35;
 
   // 충돌 감지를 위한 변수
   Event? _conflictEvent;
@@ -123,15 +126,9 @@ class _AddScheduleState extends State<AddSchedule> {
                     enabledBorder: InputBorder.none,
                     focusedBorder: InputBorder.none,
                     // 힌트 스타일 커스터마이징
-                    hintStyle: TextStyle(
-                      color: Colors.grey,
-                    ),
+                    hintStyle: TextStyle(color: Colors.grey),
                   ),
-                  style: const TextStyle(
-                    color: Colors.black87,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: const TextStyle(color: Colors.black87, fontSize: 20, fontWeight: FontWeight.w700),
                 ),
                 TextFormField(
                   onChanged: (value) {
@@ -155,21 +152,11 @@ class _AddScheduleState extends State<AddSchedule> {
                     enabledBorder: InputBorder.none,
                     focusedBorder: InputBorder.none,
                     // 힌트 스타일 커스터마이징
-                    hintStyle: TextStyle(
-                      color: Colors.grey,
-                    ),
+                    hintStyle: TextStyle(color: Colors.grey),
                   ),
-                  style: const TextStyle(
-                    color: Colors.black,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                  ),
+                  style: const TextStyle(color: Colors.black, fontSize: 14, fontWeight: FontWeight.w400),
                 ),
-                Divider(
-                  height: 5,
-                  thickness: 1,
-                  color: Colors.grey.shade300,
-                ),
+                Divider(height: 5, thickness: 1, color: Colors.grey.shade300),
 
                 // 옵션 섹션
                 Row(
@@ -177,11 +164,7 @@ class _AddScheduleState extends State<AddSchedule> {
                     // 반복 옵션
                     const Text(
                       '반복',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                      ),
+                      style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w400),
                     ),
                     Checkbox(
                       value: isRoutine,
@@ -198,11 +181,7 @@ class _AddScheduleState extends State<AddSchedule> {
                     // 시간 설정 옵션
                     const Text(
                       '시간 설정',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                      ),
+                      style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w400),
                     ),
                     Checkbox(
                       value: hasTimeSet,
@@ -223,10 +202,7 @@ class _AddScheduleState extends State<AddSchedule> {
                         children: [
                           TextButton(
                             onPressed: () async {
-                              final selectedDate = await showBlackWhiteDatePicker(
-                                context: context,
-                                initialDate: date,
-                              );
+                              final selectedDate = await showBlackWhiteDatePicker(context: context, initialDate: date);
                               if (selectedDate != null) {
                                 setState(() {
                                   date = selectedDate;
@@ -235,20 +211,12 @@ class _AddScheduleState extends State<AddSchedule> {
                             },
                             child: Text(
                               '${endDate != null ? '시작 ' : ''}${formatDate(date)}',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: endDate != null ? 15 : 16,
-                                color: const Color(0xFF40608A),
-                              ),
+                              style: TextStyle(fontWeight: FontWeight.w600, fontSize: endDate != null ? 15 : 16, color: const Color(0xFF40608A)),
                             ),
                           ),
-                          const SizedBox(
-                            width: 15,
-                          ),
+                          const SizedBox(width: 15),
                           TextButton(
-                            style: TextButton.styleFrom(
-                              backgroundColor: endDate != null ? const Color(0x00000000) : const Color(0x1140608A),
-                            ),
+                            style: TextButton.styleFrom(backgroundColor: endDate != null ? const Color(0x00000000) : const Color(0x1140608A)),
                             onPressed: () async {
                               final selectedDate = await showBlackWhiteDatePicker(
                                 context: context,
@@ -262,24 +230,18 @@ class _AddScheduleState extends State<AddSchedule> {
                             },
                             child: Text(
                               endDate != null ? '종료 ${formatDate(endDate!)}' : '종료일 선택',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: endDate != null ? 15 : 16,
-                                color: const Color(0xFF40608A),
-                              ),
+                              style: TextStyle(fontWeight: FontWeight.w600, fontSize: endDate != null ? 15 : 16, color: const Color(0xFF40608A)),
                             ),
                           ),
                           if (endDate != null)
                             IconButton(
-                                onPressed: () {
-                                  setState(() {
-                                    endDate = null; // 종료일 초기화
-                                  });
-                                },
-                                icon: const Icon(
-                                  Icons.cancel_rounded,
-                                  color: Color(0x2240608A),
-                                ))
+                              onPressed: () {
+                                setState(() {
+                                  endDate = null; // 종료일 초기화
+                                });
+                              },
+                              icon: const Icon(Icons.cancel_rounded, color: Color(0x2240608A)),
+                            ),
                         ],
                       )
                     : DayPicker(
@@ -298,21 +260,15 @@ class _AddScheduleState extends State<AddSchedule> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        '색상',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      const Text('색상', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 8),
-                      Column(
-                        children: [
-                          // 첫 번째 줄 (색상 0-5)
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: List.generate(6, (index) {
-                              final color = scheduleColors[index];
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: colorPadding),
+                        child: Wrap(
+                          spacing: (MediaQuery.of(context).size.width - (colorPadding * 4 + colorSize * 6)) / 5,
+                          runSpacing: 12,
+                          children: [
+                            ...scheduleColors.map((color) {
                               return GestureDetector(
                                 onTap: () {
                                   setState(() {
@@ -330,32 +286,20 @@ class _AddScheduleState extends State<AddSchedule> {
                                 ),
                               );
                             }),
-                          ),
-                          const SizedBox(height: 12),
-                          // 두 번째 줄 (색상 6-11)
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: List.generate(6, (index) {
-                              final color = scheduleColors[index + 6];
-                              return GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    selectedColor = color;
-                                  });
-                                },
-                                child: Container(
-                                  width: 35,
-                                  height: 35,
-                                  decoration: BoxDecoration(
-                                    color: color,
-                                    shape: BoxShape.circle,
-                                    border: selectedColor == color ? Border.all(color: Colors.black, width: 2) : null,
-                                  ),
-                                ),
-                              );
-                            }),
-                          ),
-                        ],
+                            GestureDetector(
+                              onTap: () async {
+                                await Navigator.push(context, MaterialPageRoute(builder: (context) => const ColorManagementPage()));
+                                setState(() {});
+                              },
+                              child: Container(
+                                width: 35,
+                                height: 35,
+                                decoration: BoxDecoration(color: Colors.grey.shade300, shape: BoxShape.circle),
+                                child: const Icon(Icons.add, color: Colors.grey, size: 20),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -368,21 +312,10 @@ class _AddScheduleState extends State<AddSchedule> {
           top: 15,
           right: 20,
           child: isLoading
-              ? const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
-                  ),
-                )
+              ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.green)))
               : IconButton(
                   onPressed: _saveSchedule,
-                  icon: const Icon(
-                    Icons.check,
-                    color: Colors.green,
-                    size: 32,
-                  ),
+                  icon: const Icon(Icons.check, color: Colors.green, size: 32),
                 ),
         ),
       ],
@@ -474,14 +407,8 @@ class _AddScheduleState extends State<AddSchedule> {
         title: const Text('할 일 추가'),
         content: const Text('이 일정을 할 일에도 추가하시겠습니까?'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('아니요'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('추가하기'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('아니요')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('추가하기')),
         ],
       ),
     );
@@ -496,14 +423,8 @@ class _AddScheduleState extends State<AddSchedule> {
         title: const Text('루틴 추가'),
         content: const Text('이 일정을 루틴에도 추가하시겠습니까?'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('아니요'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('추가하기'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('아니요')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('추가하기')),
         ],
       ),
     );
@@ -518,14 +439,8 @@ class _AddScheduleState extends State<AddSchedule> {
         title: const Text('루틴으로 분류'),
         content: const Text('시간이 설정되지 않은 요일 기반 일정은 루틴으로 분류됩니다. 루틴에 추가하시겠습니까?'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('추가하기'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('취소')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('추가하기')),
         ],
       ),
     );
@@ -588,12 +503,7 @@ class _AddScheduleState extends State<AddSchedule> {
       final linkRepo = ScheduleLinkRepository();
       await linkRepo.init();
 
-      final newLink = ScheduleLinkItem(
-        scheduleId: latestSchedule.id,
-        isRoutine: false,
-        linkedItemId: todoId,
-        linkedItemType: LinkItemType.todo,
-      );
+      final newLink = ScheduleLinkItem(scheduleId: latestSchedule.id, isRoutine: false, linkedItemId: todoId, linkedItemType: LinkItemType.todo);
 
       await linkRepo.addItem(newLink);
     }
@@ -646,7 +556,8 @@ class _AddScheduleState extends State<AddSchedule> {
         // 충돌하는 이벤트 정보를 포함한 에러 메시지
         String conflictType = _conflictEvent!.isRoutine ? "루틴" : "일정";
         throw Exception(
-            '${formatTime(_conflictEvent!.startTime!)}~${formatTime(_conflictEvent!.endTime!)}에 "${_conflictEvent!.title}" $conflictType과(와) 시간이 중복됩니다');
+          '${formatTime(_conflictEvent!.startTime!)}~${formatTime(_conflictEvent!.endTime!)}에 "${_conflictEvent!.title}" $conflictType과(와) 시간이 중복됩니다',
+        );
       } else {
         throw Exception('해당 시간에 이미 일정이 있습니다');
       }
@@ -683,7 +594,8 @@ class _AddScheduleState extends State<AddSchedule> {
         // 충돌하는 이벤트 정보를 포함한 에러 메시지
         String conflictType = _conflictEvent!.isRoutine ? "루틴" : "일정";
         throw Exception(
-            '선택한 요일 중 "${_conflictEvent!.title}" $conflictType과(와) 시간이 중복됩니다 (${formatTime(_conflictEvent!.startTime!)}~${formatTime(_conflictEvent!.endTime!)})');
+          '선택한 요일 중 "${_conflictEvent!.title}" $conflictType과(와) 시간이 중복됩니다 (${formatTime(_conflictEvent!.startTime!)}~${formatTime(_conflictEvent!.endTime!)})',
+        );
       } else {
         throw Exception('선택한 요일 중 하나 이상에서 이미 같은 시간에 일정이 있습니다');
       }
@@ -816,22 +728,13 @@ class _AddScheduleState extends State<AddSchedule> {
     );
   }
 
-  Widget TimePicker({
-    required TimeOfDay startTime,
-    required TimeOfDay endTime,
-  }) {
+  Widget TimePicker({required TimeOfDay startTime, required TimeOfDay endTime}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '시간',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          const Text('시간', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.start,
@@ -852,20 +755,13 @@ class _AddScheduleState extends State<AddSchedule> {
                     (int i) => Center(
                       child: Text(
                         formatEachTime(i),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                          color: Color(0xFF40608A),
-                        ),
+                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: Color(0xFF40608A)),
                       ),
                     ),
                   ),
                 ),
               ),
-              const Text(
-                ':',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
-              ),
+              const Text(':', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
               // start minute
               SizedBox(
                 width: 50,
@@ -881,11 +777,7 @@ class _AddScheduleState extends State<AddSchedule> {
                     (int i) => Center(
                       child: Text(
                         formatEachTime(i * 5),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                          color: Color(0xFF40608A),
-                        ),
+                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: Color(0xFF40608A)),
                       ),
                     ),
                   ),
@@ -893,11 +785,7 @@ class _AddScheduleState extends State<AddSchedule> {
               ),
               const Text(
                 ' ~ ',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
-                  color: Color(0xFF40608A),
-                ),
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: Color(0xFF40608A)),
               ),
               // end hour
               SizedBox(
@@ -914,20 +802,13 @@ class _AddScheduleState extends State<AddSchedule> {
                     (int i) => Center(
                       child: Text(
                         formatEachTime(i),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                          color: Color(0xFF40608A),
-                        ),
+                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: Color(0xFF40608A)),
                       ),
                     ),
                   ),
                 ),
               ),
-              const Text(
-                ':',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
-              ),
+              const Text(':', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
               // end minute
               SizedBox(
                 width: 50,
@@ -943,11 +824,7 @@ class _AddScheduleState extends State<AddSchedule> {
                     (int i) => Center(
                       child: Text(
                         formatEachTime(i * 5),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                          color: Color(0xFF40608A),
-                        ),
+                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: Color(0xFF40608A)),
                       ),
                     ),
                   ),
