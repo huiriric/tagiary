@@ -427,7 +427,7 @@ class _MonthViewState extends State<MonthView> {
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
           return SlideUpContainer(
-            height: MediaQuery.of(context).size.height * 0.6,
+            // height: MediaQuery.of(context).size.height * 0.6,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

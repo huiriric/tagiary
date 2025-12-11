@@ -7,6 +7,7 @@ import 'package:mrplando/diary/tag_selector.dart';
 import 'package:mrplando/tables/diary/diary_item.dart';
 import 'package:mrplando/tables/diary/tag.dart';
 import 'package:mrplando/tables/diary/tag_manager.dart';
+import 'package:mrplando/screens/color_management_page.dart';
 
 class DiaryEditorPage extends StatefulWidget {
   final DiaryItem? diary;
@@ -43,6 +44,8 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
   List<String> tags = [];
   bool _isLoading = false;
   late DateTime _selectedDate;
+  double colorPadding = 20;
+  double colorSize = 35;
 
   // 태그 검색 관련 상태
   List<TagInfo> _searchResults = [];
@@ -370,7 +373,7 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
       builder: (context) => StatefulBuilder(
         builder: (BuildContext context, dialogSetState) {
           return SlideUpContainer(
-            height: MediaQuery.of(context).size.height * 0.4,
+            // height: MediaQuery.of(context).size.height * 0.4,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
               child: Column(
@@ -624,145 +627,149 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
-            return GestureDetector(
-              onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-              child: SlideUpContainer(
-                height: MediaQuery.of(context).size.height * 0.45,
-                child: SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Stack(
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // 카테고리 이름 입력
-                            TextFormField(
-                              controller: nameController,
-                              autofocus: true,
-                              textInputAction: TextInputAction.done,
-                              onEditingComplete: () {
-                                FocusManager.instance.primaryFocus?.unfocus();
-                              },
-                              decoration: const InputDecoration(
-                                hintText: '카테고리 이름',
-                                border: InputBorder.none,
-                                enabledBorder: InputBorder.none,
-                                focusedBorder: InputBorder.none,
-                                hintStyle: TextStyle(
-                                  color: Colors.grey,
+            return AnimatedPadding(
+              padding: MediaQuery.of(context).viewInsets,
+              duration: const Duration(milliseconds: 100),
+              child: GestureDetector(
+                onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+                child: SlideUpContainer(
+                  // height: MediaQuery.of(context).size.height * 0.45,
+                  child: SingleChildScrollView(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Stack(
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // 카테고리 이름 입력
+                              TextFormField(
+                                controller: nameController,
+                                autofocus: true,
+                                textInputAction: TextInputAction.done,
+                                onEditingComplete: () {
+                                  FocusManager.instance.primaryFocus?.unfocus();
+                                },
+                                decoration: const InputDecoration(
+                                  hintText: '카테고리 이름',
+                                  border: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
+                                  hintStyle: TextStyle(
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                style: const TextStyle(
+                                  color: Colors.black87,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
-                              style: const TextStyle(
-                                color: Colors.black87,
-                                fontSize: 20,
-                                fontWeight: FontWeight.w700,
+                              Divider(
+                                height: 20,
+                                thickness: 1,
+                                color: Colors.grey.shade300,
                               ),
-                            ),
-                            Divider(
-                              height: 20,
-                              thickness: 1,
-                              color: Colors.grey.shade300,
-                            ),
-                            // 색상 선택
-                            Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 16.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    '색상',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
+                              // 색상 선택
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      '색상',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Column(
-                                    children: [
-                                      // 첫 번째 줄 (색상 0-5)
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                        children: List.generate(6, (index) {
-                                          final color = scheduleColors[index];
-                                          return GestureDetector(
-                                            onTap: () {
-                                              setModalState(() {
-                                                selectedColor = color;
-                                              });
+                                    const SizedBox(height: 8),
+                                    Padding(
+                                      padding: EdgeInsets.symmetric(horizontal: colorPadding),
+                                      child: Wrap(
+                                        spacing: (MediaQuery.of(context).size.width - (colorPadding * 4 + colorSize * 6)) / 5,
+                                        runSpacing: 12,
+                                        children: [
+                                          ...scheduleColors.map((color) {
+                                            return GestureDetector(
+                                              onTap: () {
+                                                setModalState(() {
+                                                  selectedColor = color;
+                                                });
+                                              },
+                                              child: Container(
+                                                width: 35,
+                                                height: 35,
+                                                decoration: BoxDecoration(
+                                                  color: color,
+                                                  shape: BoxShape.circle,
+                                                  border: selectedColor.value == color.value ? Border.all(color: Colors.black, width: 2) : null,
+                                                ),
+                                              ),
+                                            );
+                                          }),
+                                          GestureDetector(
+                                            onTap: () async {
+                                              await Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) => const ColorManagementPage(),
+                                                ),
+                                              );
+                                              setModalState(() {});
                                             },
                                             child: Container(
                                               width: 35,
                                               height: 35,
                                               decoration: BoxDecoration(
-                                                color: color,
+                                                color: Colors.grey.shade300,
                                                 shape: BoxShape.circle,
-                                                border: selectedColor.value == color.value ? Border.all(color: Colors.black, width: 2) : null,
+                                              ),
+                                              child: const Icon(
+                                                Icons.add,
+                                                color: Colors.grey,
+                                                size: 20,
                                               ),
                                             ),
-                                          );
-                                        }),
+                                          ),
+                                        ],
                                       ),
-                                      const SizedBox(height: 12),
-                                      // 두 번째 줄 (색상 6-11)
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                        children: List.generate(6, (index) {
-                                          final color = scheduleColors[index + 6];
-                                          return GestureDetector(
-                                            onTap: () {
-                                              setModalState(() {
-                                                selectedColor = color;
-                                              });
-                                            },
-                                            child: Container(
-                                              width: 35,
-                                              height: 35,
-                                              decoration: BoxDecoration(
-                                                color: color,
-                                                shape: BoxShape.circle,
-                                                border: selectedColor.value == color.value ? Border.all(color: Colors.black, width: 2) : null,
-                                              ),
-                                            ),
-                                          );
-                                        }),
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                        // 우측 상단에 저장 버튼 (녹색 체크 아이콘)
-                        Positioned(
-                          top: 0,
-                          right: 0,
-                          child: IconButton(
-                            onPressed: () async {
-                              final name = nameController.text.trim();
-                              if (name.isNotEmpty) {
-                                // 새 카테고리 추가
-                                final groupId = await widget.tagManager.addCategory(name, selectedColor);
-                                Navigator.pop(context);
+                            ],
+                          ),
+                          // 우측 상단에 저장 버튼 (녹색 체크 아이콘)
+                          Positioned(
+                            top: 0,
+                            right: 0,
+                            child: IconButton(
+                              onPressed: () async {
+                                final name = nameController.text.trim();
+                                if (name.isNotEmpty) {
+                                  // 새 카테고리 추가
+                                  final groupId = await widget.tagManager.addCategory(name, selectedColor);
+                                  Navigator.pop(context);
 
-                                // 메인 위젯 상태 업데이트
-                                setState(() {
-                                  _selectedCategoryId = groupId;
-                                });
+                                  // 메인 위젯 상태 업데이트
+                                  setState(() {
+                                    _selectedCategoryId = groupId;
+                                  });
 
-                                // 카테고리 선택 다이얼로그 새로 그리기
-                                callback();
-                              }
-                            },
-                            icon: const Icon(
-                              Icons.check,
-                              color: Colors.green,
-                              size: 32,
+                                  // 카테고리 선택 다이얼로그 새로 그리기
+                                  callback();
+                                }
+                              },
+                              icon: const Icon(
+                                Icons.check,
+                                color: Colors.green,
+                                size: 32,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
