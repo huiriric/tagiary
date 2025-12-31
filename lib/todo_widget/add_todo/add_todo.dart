@@ -61,181 +61,179 @@ class _AddTodoState extends State<AddTodo> {
     return GestureDetector(
       // 빈 영역 터치 시 키보드 숨기기
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Stack(
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  // 할 일 제목 입력
-                  TextFormField(
-                    onChanged: (value) {
-                      content = value;
-                    },
-                    controller: contentCont,
-                    focusNode: contentFocus,
-                    autofocus: true,
-                    textInputAction: TextInputAction.done,
-                    onEditingComplete: () {
-                      FocusManager.instance.primaryFocus?.unfocus();
-                    },
-                    decoration: const InputDecoration(
-                      hintText: '할 일',
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      hintStyle: TextStyle(color: Colors.grey),
-                    ),
-                    style: const TextStyle(color: Colors.black87, fontSize: 20, fontWeight: FontWeight.w700),
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Stack(
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                // 할 일 제목 입력
+                TextFormField(
+                  onChanged: (value) {
+                    content = value;
+                  },
+                  controller: contentCont,
+                  focusNode: contentFocus,
+                  autofocus: true,
+                  textInputAction: TextInputAction.done,
+                  onEditingComplete: () {
+                    FocusManager.instance.primaryFocus?.unfocus();
+                  },
+                  decoration: const InputDecoration(
+                    hintText: '할 일',
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    hintStyle: TextStyle(color: Colors.grey),
                   ),
+                  style: const TextStyle(color: Colors.black87, fontSize: 20, fontWeight: FontWeight.w700),
+                ),
 
-                  Divider(height: 20, thickness: 1, color: Colors.grey.shade300),
+                Divider(height: 20, thickness: 1, color: Colors.grey.shade300),
 
-                  // 마감일 선택
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 10.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('마감일', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () async {
-                                  final date = await showDatePicker(
-                                    context: context,
-                                    initialDate: selectedDate ?? DateTime.now(),
-                                    firstDate: DateTime.now().subtract(const Duration(days: 365)),
-                                    lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
-                                  );
+                // 마감일 선택
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('마감일', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () async {
+                                final date = await showDatePicker(
+                                  context: context,
+                                  initialDate: selectedDate ?? DateTime.now(),
+                                  firstDate: DateTime.now().subtract(const Duration(days: 365)),
+                                  lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+                                );
 
-                                  if (date != null) {
-                                    setState(() {
-                                      selectedDate = date;
-                                    });
-                                  }
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    border: Border.all(color: Colors.grey.shade300),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        selectedDate != null ? '${selectedDate!.year}년 ${selectedDate!.month}월 ${selectedDate!.day}일' : '마감일 선택 (선택사항)',
-                                        style: TextStyle(color: selectedDate != null ? Colors.black : Colors.grey, fontSize: 14),
-                                      ),
-                                      Icon(Icons.calendar_today, size: 16, color: selectedDate != null ? Colors.black : Colors.grey),
-                                    ],
-                                  ),
+                                if (date != null) {
+                                  setState(() {
+                                    selectedDate = date;
+                                  });
+                                }
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey.shade300),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      selectedDate != null ? '${selectedDate!.year}년 ${selectedDate!.month}월 ${selectedDate!.day}일' : '마감일 선택 (선택사항)',
+                                      style: TextStyle(color: selectedDate != null ? Colors.black : Colors.grey, fontSize: 14),
+                                    ),
+                                    Icon(Icons.calendar_today, size: 16, color: selectedDate != null ? Colors.black : Colors.grey),
+                                  ],
                                 ),
                               ),
                             ),
-                            if (selectedDate != null)
-                              IconButton(
-                                icon: const Icon(Icons.close, size: 20),
-                                onPressed: () {
-                                  setState(() {
-                                    selectedDate = null;
-                                  });
-                                },
-                              ),
-                          ],
-                        ),
-                      ],
-                    ),
+                          ),
+                          if (selectedDate != null)
+                            IconButton(
+                              icon: const Icon(Icons.close, size: 20),
+                              onPressed: () {
+                                setState(() {
+                                  selectedDate = null;
+                                });
+                              },
+                            ),
+                        ],
+                      ),
+                    ],
                   ),
+                ),
 
-                  // 색상 선택
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('색상', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 8),
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: colorPadding),
-                          child: Wrap(
-                            spacing: (MediaQuery.of(context).size.width - (colorPadding * 4 + colorSize * 6)) / 5,
-                            runSpacing: 12,
-                            children: [
-                              ...scheduleColors.map((color) {
-                                return GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      selectedColor = color;
-                                    });
-                                  },
-                                  child: Container(
-                                    width: 35,
-                                    height: 35,
-                                    decoration: BoxDecoration(
-                                      color: color,
-                                      shape: BoxShape.circle,
-                                      border: selectedColor.value == color.value ? Border.all(color: Colors.black, width: 2) : null,
-                                    ),
-                                  ),
-                                );
-                              }),
-                              GestureDetector(
-                                onTap: () async {
-                                  await Navigator.push(context, MaterialPageRoute(builder: (context) => const ColorManagementPage()));
-                                  setState(() {});
+                // 색상 선택
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('색상', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 8),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: colorPadding),
+                        child: Wrap(
+                          spacing: (MediaQuery.of(context).size.width - (colorPadding * 4 + colorSize * 6)) / 5,
+                          runSpacing: 12,
+                          children: [
+                            ...scheduleColors.map((color) {
+                              return GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    selectedColor = color;
+                                  });
                                 },
                                 child: Container(
                                   width: 35,
                                   height: 35,
-                                  decoration: BoxDecoration(color: Colors.grey.shade300, shape: BoxShape.circle),
-                                  child: const Icon(Icons.add, color: Colors.grey, size: 20),
+                                  decoration: BoxDecoration(
+                                    color: color,
+                                    shape: BoxShape.circle,
+                                    border: selectedColor.value == color.value ? Border.all(color: Colors.black, width: 2) : null,
+                                  ),
                                 ),
+                              );
+                            }),
+                            GestureDetector(
+                              onTap: () async {
+                                await Navigator.push(context, MaterialPageRoute(builder: (context) => const ColorManagementPage()));
+                                setState(() {});
+                              },
+                              child: Container(
+                                width: 35,
+                                height: 35,
+                                decoration: BoxDecoration(color: Colors.grey.shade300, shape: BoxShape.circle),
+                                child: const Icon(Icons.add, color: Colors.grey, size: 20),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
+                ),
+              ],
+            ),
+
+            // 우측 상단에 저장 버튼 (초록색 체크 아이콘)
+            Positioned(
+              top: 0,
+              right: 0,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (isLoading)
+                    const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.green)),
+                    )
+                  else
+                    IconButton(
+                      onPressed: _saveTodo,
+                      icon: const Icon(Icons.check, color: Colors.green, size: 32),
+                    ),
+                  // 수정 모드일 때만 삭제 버튼 표시
+                  if (widget.todoToEdit != null && !isLoading)
+                    IconButton(
+                      onPressed: () => _deleteTodo(widget.todoToEdit!),
+                      icon: const Icon(Icons.delete_outline, color: Colors.red, size: 28),
+                    ),
                 ],
               ),
-
-              // 우측 상단에 저장 버튼 (초록색 체크 아이콘)
-              Positioned(
-                top: 0,
-                right: 0,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (isLoading)
-                      const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.green)),
-                      )
-                    else
-                      IconButton(
-                        onPressed: _saveTodo,
-                        icon: const Icon(Icons.check, color: Colors.green, size: 32),
-                      ),
-                    // 수정 모드일 때만 삭제 버튼 표시
-                    if (widget.todoToEdit != null && !isLoading)
-                      IconButton(
-                        onPressed: () => _deleteTodo(widget.todoToEdit!),
-                        icon: const Icon(Icons.delete_outline, color: Colors.red, size: 28),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
