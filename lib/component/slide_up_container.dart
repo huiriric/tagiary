@@ -24,9 +24,7 @@ class _SlideContainerState extends State<SlideUpContainer> {
           ),
           child: Container(
             width: widget.width ?? double.infinity,
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height - MediaQuery.of(context).viewInsets.bottom - 60,
-            ),
+            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height - MediaQuery.of(context).viewInsets.bottom - 60),
             child: SingleChildScrollView(child: widget.child),
           ),
         ),
