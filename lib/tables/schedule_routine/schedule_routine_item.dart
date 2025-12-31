@@ -63,8 +63,8 @@ class ScheduleRoutineItem extends HiveObject {
         title: title,
         description: description,
         daysOfWeek: daysOfWeek,
-        date: hasTimeInfo ? startDate : null, // 날짜 정보는 없으므로 null
-        endDate: hasTimeInfo ? endDate : null,
+        date: startDate, // 시작일 (루틴 날짜 범위용)
+        endDate: endDate, // 종료일 (루틴 날짜 범위용)
         startTime: hasTimeInfo ? TimeOfDay(hour: startHour!, minute: startMinute!) : null,
         endTime: hasTimeInfo ? TimeOfDay(hour: endHour!, minute: endMinute!) : null,
         color: Color(colorValue),

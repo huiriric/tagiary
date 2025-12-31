@@ -63,8 +63,11 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
     _descriptionController = TextEditingController(text: widget.event.description);
     _titleFocusNode = FocusNode();
     _descriptionFocusNode = FocusNode();
+
+    // 날짜 초기화 (루틴의 경우 startDate가 null이면 null로 유지)
     _date = widget.event.date;
-    _endDate = widget.event.endDate; // 멀티데이 이벤트를 위한 종료 날짜
+    _endDate = widget.event.endDate;
+
     _startTime = widget.event.startTime;
     _endTime = widget.event.endTime;
     _selectedColor = widget.event.color;
@@ -85,38 +88,29 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
   }
 
   void _resetTimePickers() {
-    // print(_startTime);
-    // print(_endTime);
-    // setState(() {
-    //   _startTime = widget.event.startTime;
-    //   _endTime = widget.event.endTime;
-    // });
-    // print((widget.event.startTime!.hour).toDouble());
-    // print((widget.event.startTime!.minute ~/ 5).toDouble());
-    // print((widget.event.endTime!.hour).toDouble());
-    // print((widget.event.endTime!.minute ~/ 5).toDouble());
-
-    // 스크롤 위치도 원래대로 되돌리기
-    _startHourController.animateToItem(
-      widget.event.startTime!.hour,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
-    _startMinuteController.animateToItem(
-      widget.event.startTime!.minute ~/ 5,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
-    _endHourController.animateToItem(
-      widget.event.endTime!.hour,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
-    _endMinuteController.animateToItem(
-      widget.event.endTime!.minute ~/ 5,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
+    // 시간이 설정되어 있는 경우에만 스크롤 위치 리셋
+    if (widget.event.startTime != null && widget.event.endTime != null) {
+      _startHourController.animateToItem(
+        widget.event.startTime!.hour,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+      _startMinuteController.animateToItem(
+        widget.event.startTime!.minute ~/ 5,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+      _endHourController.animateToItem(
+        widget.event.endTime!.hour,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+      _endMinuteController.animateToItem(
+        widget.event.endTime!.minute ~/ 5,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
   }
 
   @override
@@ -210,6 +204,8 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
                               _date = widget.event.date;
                               _endDate = widget.event.endDate; // 멀티데이 이벤트를 위한 종료 날짜
                               _hasTimeSet = widget.event.hasTimeSet;
+                              _startTime = widget.event.startTime;
+                              _endTime = widget.event.endTime;
                               _isRoutine = widget.event.isRoutine;
                               _selectedColor = widget.event.color;
                               _isEditing = false;
@@ -295,40 +291,38 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
               ),
               Row(
                 children: [
-                  const Text(
-                    '날짜',
-                    style: TextStyle(
+                  Text(
+                    _isRoutine ? '반복 기간' : '날짜',
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const Spacer(),
-                  // 시간 설정 옵션
-                  if (!_isRoutine)
-                    const Text(
-                      '시간 설정',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                      ),
+                  // 시간 설정 옵션 (일반 일정과 루틴 모두 표시)
+                  const Text(
+                    '시간 설정',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
                     ),
-                  if (!_isRoutine)
-                    Checkbox(
-                      value: _hasTimeSet,
-                      activeColor: Colors.indigo,
-                      shape: const CircleBorder(),
-                      onChanged: (value) {
-                        setState(() {
-                          _hasTimeSet = value!;
-                          // if (_hasTimeSet) {
+                  ),
+                  Checkbox(
+                    value: _hasTimeSet,
+                    activeColor: Colors.indigo,
+                    shape: const CircleBorder(),
+                    onChanged: (value) {
+                      setState(() {
+                        _hasTimeSet = value!;
+                        if (_hasTimeSet) {
+                          // 시간 설정 활성화 시 기본값 설정
                           _startTime = _startTime ?? (widget.event.startTime ?? TimeOfDay(hour: now.hour + 1, minute: 0));
-
                           _endTime = _endTime ?? (widget.event.endTime ?? TimeOfDay(hour: now.hour + 2, minute: 0));
-                          // }
-                        });
-                      },
-                    ),
+                        }
+                      });
+                    },
+                  ),
                 ],
               ),
               Row(
@@ -346,7 +340,7 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
                       }
                     },
                     child: Text(
-                      '${_endDate != null ? '시작 ' : ''}${formatDate(_date!)}',
+                      _date != null ? (_isRoutine ? formatDate(_date!) : formatDate(_date!)) : '시작일 선택',
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: _endDate != null ? 15 : 16,
@@ -370,7 +364,7 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
                       }
                     },
                     child: Text(
-                      _endDate != null ? '종료 ${formatDate(_endDate!)}' : '종료일 선택',
+                      _endDate != null ? formatDate(_endDate!) : '종료일 선택',
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: _endDate != null ? 15 : 16,
@@ -401,17 +395,8 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
                     });
                   },
                 ),
-              _isRoutine
-                  ? _hasTimeSet
-                      ? GestureDetector(
-                          onTap: () => _showToast('반복 일정은 시간을 수정할 수 없습니다.'),
-                          // TimePicker 위젯을 클릭할 수 없도록 하기
-                          child: AbsorbPointer(child: timePicker()),
-                        )
-                      : const SizedBox.shrink()
-                  : _hasTimeSet
-                      ? timePicker()
-                      : const SizedBox.shrink(),
+              // 시간 설정이 활성화된 경우 시간 피커 표시 (일반 일정과 루틴 동일)
+              if (_hasTimeSet) timePicker(),
               // 색상 선택
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -504,25 +489,12 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Text(
-                '시간',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(width: 8),
-              if (_isRoutine)
-                const Text(
-                  '반복 일정은 시간을 수정할 수 없습니다',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.normal,
-                  ),
-                ),
-            ],
+          const Text(
+            '시간',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 8),
           Row(
@@ -1108,14 +1080,14 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
     final updatedItem = ScheduleRoutineItem(
       title: _titleController.text,
       description: _descriptionController.text,
-      daysOfWeek: selectedDays!, // 요일은 변경하지 않음
+      daysOfWeek: selectedDays!,
       startHour: _hasTimeSet ? _startTime!.hour : null,
       startMinute: _hasTimeSet ? _startTime!.minute : null,
       endHour: _hasTimeSet ? _endTime!.hour : null,
       endMinute: _hasTimeSet ? _endTime!.minute : null,
       colorValue: _selectedColor.value,
-      startDate: item.startDate, // 기존 시작일 유지
-      endDate: item.endDate, // 기존 종료일 유지
+      startDate: _date, // UI에서 선택한 시작일
+      endDate: _endDate, // UI에서 선택한 종료일
     );
 
     // ID 설정 (Hive에서 필요)
