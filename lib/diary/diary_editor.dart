@@ -91,176 +91,186 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF7F6E9),
-        appBar: AppBar(
+    return WillPopScope(
+      onWillPop: () async {
+        // 편집 모드이고 변경사항이 있는 경우 확인 다이얼로그 표시
+        if (widget.isEdit && !noChanged()) {
+          final shouldPop = await _showExitConfirmDialog();
+          return shouldPop ?? false;
+        }
+        return true;
+      },
+      child: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Scaffold(
           backgroundColor: const Color(0xFFF7F6E9),
-          title: Text(
-            widget.diary == null ? '새 다이어리' : '다이어리',
-            style: const TextStyle(
-              color: Colors.black,
-              fontWeight: FontWeight.bold,
+          appBar: AppBar(
+            backgroundColor: const Color(0xFFF7F6E9),
+            title: Text(
+              widget.diary == null ? '새 다이어리' : '다이어리',
+              style: const TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+              ),
             ),
+            actions: [
+              if (widget.isEdit)
+                IconButton(
+                  onPressed: () => deleteDialog(widget.diary!.id),
+                  icon: const Icon(Icons.delete_outline),
+                  color: Colors.red,
+                )
+            ],
           ),
-          actions: [
-            if (widget.isEdit)
-              IconButton(
-                onPressed: () => deleteDialog(widget.diary!.id),
-                icon: const Icon(Icons.delete_outline),
-                color: Colors.red,
-              )
-          ],
-        ),
-        body: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : SafeArea(
-                bottom: false,
-                child: GestureDetector(
-                  onTap: () {
-                    FocusScope.of(context).unfocus();
-                    setState(() {
-                      _showSearchResults = false;
-                    });
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // 날짜 선택 카드
-                        Row(
-                          children: [
-                            Expanded(
-                              child: InkWell(
-                                onTap: _selectDate,
-                                child: Card(
-                                  elevation: 0,
-                                  color: const Color(0xFFB09F86),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(16.0),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            const Icon(Icons.calendar_today, size: 20, color: Colors.white),
-                                            const SizedBox(width: 8),
-                                            Text(
-                                              '${_selectedDate.year}년 ${_selectedDate.month}월 ${_selectedDate.day}일',
-                                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
-                                            ),
-                                          ],
-                                        ),
-                                        const Icon(Icons.arrow_drop_down, color: Colors.grey),
-                                      ],
+          body: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : SafeArea(
+                  bottom: false,
+                  child: GestureDetector(
+                    onTap: () {
+                      FocusScope.of(context).unfocus();
+                      setState(() {
+                        _showSearchResults = false;
+                      });
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // 날짜 선택 카드
+                          Row(
+                            children: [
+                              Expanded(
+                                child: InkWell(
+                                  onTap: _selectDate,
+                                  child: Card(
+                                    elevation: 0,
+                                    color: const Color(0xFFB09F86),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16.0),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              const Icon(Icons.calendar_today, size: 20, color: Colors.white),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                '${_selectedDate.year}년 ${_selectedDate.month}월 ${_selectedDate.day}일',
+                                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
+                                              ),
+                                            ],
+                                          ),
+                                          const Icon(Icons.arrow_drop_down, color: Colors.grey),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 12),
-                            ActionChip(
-                              side: BorderSide.none,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(50),
-                              ),
-                              label: ConstrainedBox(
-                                constraints: const BoxConstraints(maxWidth: 100),
-                                child: Text(
-                                  _selectedCategoryId != null ? widget.tagManager.groupRepository.getGroup(_selectedCategoryId!)!.name : '카테고리',
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
+                              const SizedBox(width: 12),
+                              ActionChip(
+                                side: BorderSide.none,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(50),
                                 ),
-                              ),
-                              labelStyle: TextStyle(color: _selectedCategoryId != null ? Colors.white : Colors.black),
-                              onPressed: _buildCategorySelector,
-                              backgroundColor: _selectedCategoryId != null
-                                  ? Color(widget.tagManager.groupRepository.getGroup(_selectedCategoryId!)!.colorValue)
-                                  : Colors.grey[300],
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        Expanded(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF7F6E9),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Column(
-                              children: [
-                                // 내용 입력
-                                Expanded(
-                                  child: TextField(
-                                    controller: _contentController,
-                                    focusNode: _contentFocus,
-                                    autofocus: widget.isEdit ? false : true,
-                                    onChanged: (value) => setState(() {}),
-                                    decoration: const InputDecoration(
-                                      border: OutlineInputBorder(borderSide: BorderSide.none, borderRadius: BorderRadius.all(Radius.circular(16))),
-                                      enabledBorder: OutlineInputBorder(borderSide: BorderSide.none, borderRadius: BorderRadius.all(Radius.circular(16))),
-                                      labelText: '기록',
-                                      focusedBorder: OutlineInputBorder(borderSide: BorderSide.none, borderRadius: BorderRadius.all(Radius.circular(16))),
-                                      hintText: '오늘의 기록을 남겨보세요',
-                                      alignLabelWithHint: true,
-                                      filled: true,
-                                      fillColor: Color(0xFFF7F6E9),
-                                    ),
-                                    style: const TextStyle(
-                                      fontSize: 15,
-                                    ),
-                                    maxLines: null,
-                                    minLines: null,
-                                    expands: true,
-                                    textAlignVertical: TextAlignVertical.top,
+                                label: ConstrainedBox(
+                                  constraints: const BoxConstraints(maxWidth: 100),
+                                  child: Text(
+                                    _selectedCategoryId != null ? widget.tagManager.groupRepository.getGroup(_selectedCategoryId!)!.name : '카테고리',
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
                                   ),
                                 ),
-                                // const SizedBox(height: 16),
-                                // 태그 선택
-                                Divider(
-                                  color: Colors.grey[200],
-                                  height: 1.5,
-                                  thickness: 1.5,
-                                  indent: 10,
-                                  endIndent: 10,
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
-                                  child: _buildTagSelector(),
-                                ),
-                              ],
+                                labelStyle: TextStyle(color: _selectedCategoryId != null ? Colors.white : Colors.black),
+                                onPressed: _buildCategorySelector,
+                                backgroundColor: _selectedCategoryId != null
+                                    ? Color(widget.tagManager.groupRepository.getGroup(_selectedCategoryId!)!.colorValue)
+                                    : Colors.grey[300],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Expanded(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF7F6E9),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Column(
+                                children: [
+                                  // 내용 입력
+                                  Expanded(
+                                    child: TextField(
+                                      controller: _contentController,
+                                      focusNode: _contentFocus,
+                                      autofocus: widget.isEdit ? false : true,
+                                      onChanged: (value) => setState(() {}),
+                                      decoration: const InputDecoration(
+                                        border: OutlineInputBorder(borderSide: BorderSide.none, borderRadius: BorderRadius.all(Radius.circular(16))),
+                                        enabledBorder: OutlineInputBorder(borderSide: BorderSide.none, borderRadius: BorderRadius.all(Radius.circular(16))),
+                                        labelText: '기록',
+                                        focusedBorder: OutlineInputBorder(borderSide: BorderSide.none, borderRadius: BorderRadius.all(Radius.circular(16))),
+                                        hintText: '오늘의 기록을 남겨보세요',
+                                        alignLabelWithHint: true,
+                                        filled: true,
+                                        fillColor: Color(0xFFF7F6E9),
+                                      ),
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                      ),
+                                      maxLines: null,
+                                      minLines: null,
+                                      expands: true,
+                                      textAlignVertical: TextAlignVertical.top,
+                                    ),
+                                  ),
+                                  // const SizedBox(height: 16),
+                                  // 태그 선택
+                                  Divider(
+                                    color: Colors.grey[200],
+                                    height: 1.5,
+                                    thickness: 1.5,
+                                    indent: 10,
+                                    endIndent: 10,
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+                                    child: _buildTagSelector(),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                        const Padding(padding: EdgeInsets.only(bottom: 16)),
+                          const Padding(padding: EdgeInsets.only(bottom: 16)),
 
-                        // Expanded(child: Container()),
-                        // 저장 버튼
-                        if (!widget.isEdit || !noChanged())
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                onPressed: _saveDiary,
-                                style: ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
-                                  backgroundColor: const Color(0xFFB09F86),
-                                ),
-                                child: Text(
-                                  widget.isEdit ? '수정하기' : '기록하기',
-                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                          // Expanded(child: Container()),
+                          // 저장 버튼
+                          if (!widget.isEdit || !noChanged())
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                  onPressed: _saveDiary,
+                                  style: ElevatedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                    backgroundColor: const Color(0xFFB09F86),
+                                  ),
+                                  child: Text(
+                                    widget.isEdit ? '수정하기' : '기록하기',
+                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
+        ),
       ),
     );
   }
@@ -869,6 +879,34 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
       timeInSecForIosWeb: 3, // iOS와 웹에서 3초 동안 표시
       backgroundColor: Colors.black87,
       textColor: Colors.white,
+    );
+  }
+
+  // 나가기 확인 다이얼로그
+  Future<bool?> _showExitConfirmDialog() {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('저장하지 않고 나가시겠습니까?'),
+        titleTextStyle: const TextStyle(
+          fontSize: 17,
+          color: Colors.black87,
+        ),
+        content: const Text('변경된 내용이 저장되지 않습니다.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            child: const Text('나가기'),
+          ),
+        ],
+      ),
     );
   }
 
