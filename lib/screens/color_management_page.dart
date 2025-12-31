@@ -20,20 +20,49 @@ class _ColorManagementPageState extends State<ColorManagementPage> {
   bool _isEditing = false;
   double colorPadding = 20;
   double colorSize = 35;
+  late Future<void> _initFuture;
 
   @override
   void initState() {
     super.initState();
-    _initRepository();
+    _initFuture = _initRepository();
   }
 
   Future<void> _initRepository() async {
     await _colorRepo.init();
-    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
+    return FutureBuilder<void>(
+      future: _initFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            backgroundColor: Colors.white,
+            body: Center(
+              child: CircularProgressIndicator(
+                color: Color(0xFF40608A),
+              ),
+            ),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return Scaffold(
+            backgroundColor: Colors.white,
+            body: Center(
+              child: Text('오류가 발생했습니다: ${snapshot.error}'),
+            ),
+          );
+        }
+
+        return _buildMainContent();
+      },
+    );
+  }
+
+  Widget _buildMainContent() {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
