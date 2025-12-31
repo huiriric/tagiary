@@ -20,49 +20,20 @@ class _ColorManagementPageState extends State<ColorManagementPage> {
   bool _isEditing = false;
   double colorPadding = 20;
   double colorSize = 35;
-  late Future<void> _initFuture;
 
   @override
   void initState() {
     super.initState();
-    _initFuture = _initRepository();
+    _initRepository();
   }
 
   Future<void> _initRepository() async {
     await _colorRepo.init();
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<void>(
-      future: _initFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            backgroundColor: Colors.white,
-            body: Center(
-              child: CircularProgressIndicator(
-                color: Color(0xFF40608A),
-              ),
-            ),
-          );
-        }
-
-        if (snapshot.hasError) {
-          return Scaffold(
-            backgroundColor: Colors.white,
-            body: Center(
-              child: Text('오류가 발생했습니다: ${snapshot.error}'),
-            ),
-          );
-        }
-
-        return _buildMainContent();
-      },
-    );
-  }
-
-  Widget _buildMainContent() {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -395,9 +366,25 @@ class _ColorManagementPageState extends State<ColorManagementPage> {
       id: 0,
       colorValue: const Color(0xFF9E9E9E).value, // 기본 회색
     );
-    await _colorRepo.addItem(newColor);
+    final newId = await _colorRepo.addItem(newColor);
     await refreshScheduleColors();
-    setState(() {});
+
+    // 새로 추가된 색상을 찾아서 선택
+    final addedColorItem = _colorRepo.getItem(newId);
+    if (addedColorItem != null) {
+      final color = Color(addedColorItem.colorValue);
+      final hsv = HSVColor.fromColor(color);
+
+      setState(() {
+        _selectedColorItem = addedColorItem;
+        _editingColor = color;
+        _hue = hsv.hue;
+        _saturation = hsv.saturation;
+        _value = hsv.value;
+        _isEditing = false; // 아직 수정하지 않은 상태
+      });
+    }
+
     _showToast('색상이 추가되었습니다');
   }
 
