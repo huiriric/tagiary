@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 import 'package:mrplando/component/slide_up_container.dart';
 import 'package:mrplando/constants/colors.dart';
 import 'package:mrplando/diary/diary_editor.dart';
-import 'package:mrplando/diary/diary_detail.dart';
 import 'package:mrplando/tables/diary/diary_item.dart';
 import 'package:mrplando/tables/diary/tag.dart';
 import 'package:mrplando/tables/diary/tag_group.dart';
