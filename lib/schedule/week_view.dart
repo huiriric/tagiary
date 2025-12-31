@@ -125,19 +125,45 @@ class _WeekViewState extends State<WeekView> {
       // 해당 날짜의 일반 일정
       List<Event> dateEvents = sRepo.getDateItems(currentDate).toList();
 
-      // 해당 요일의 루틴 일정 (createdAt 필터링 적용)
+      // 해당 요일의 루틴 일정 (날짜 범위 필터링 적용)
       // ScheduleRoutineRepository.getItemsByDay는 dayIndex: 0(일요일) ~ 6(토요일) 순서 사용
+      final dateKey = DateTime(currentDate.year, currentDate.month, currentDate.day);
+
       List<Event> routineEvents = srRepo.getItemsByDayWithTime(dayOfWeek).where((event) {
-        // createdAt이 null이거나 해당 날짜 이전에 생성된 루틴만 표시
         final routineItem = srRepo.getItem(event.id);
-        if (routineItem?.createdAt == null) return true;
-        return !routineItem!.createdAt.isAfter(currentDate);
+        if (routineItem == null) return false;
+
+        // startDate 체크 (startDate가 있으면 해당 날짜 이후만 표시)
+        if (routineItem.startDate != null) {
+          final startDateOnly = DateTime(routineItem.startDate!.year, routineItem.startDate!.month, routineItem.startDate!.day);
+          if (dateKey.isBefore(startDateOnly)) return false;
+        }
+
+        // endDate 체크 (endDate가 있으면 해당 날짜 이전만 표시)
+        if (routineItem.endDate != null) {
+          final endDateOnly = DateTime(routineItem.endDate!.year, routineItem.endDate!.month, routineItem.endDate!.day);
+          if (dateKey.isAfter(endDateOnly)) return false;
+        }
+
+        return true;
       }).toList();
       List<Event> noTimeRoutineEvents = srRepo.getItemsByDayWithoutTime(dayOfWeek).where((event) {
-        // createdAt이 null이거나 해당 날짜 이전에 생성된 루틴만 표시
         final routineItem = srRepo.getItem(event.id);
-        if (routineItem?.createdAt == null) return true;
-        return !routineItem!.createdAt.isAfter(currentDate);
+        if (routineItem == null) return false;
+
+        // startDate 체크 (startDate가 있으면 해당 날짜 이후만 표시)
+        if (routineItem.startDate != null) {
+          final startDateOnly = DateTime(routineItem.startDate!.year, routineItem.startDate!.month, routineItem.startDate!.day);
+          if (dateKey.isBefore(startDateOnly)) return false;
+        }
+
+        // endDate 체크 (endDate가 있으면 해당 날짜 이전만 표시)
+        if (routineItem.endDate != null) {
+          final endDateOnly = DateTime(routineItem.endDate!.year, routineItem.endDate!.month, routineItem.endDate!.day);
+          if (dateKey.isAfter(endDateOnly)) return false;
+        }
+
+        return true;
       }).toList();
 
       // 시간 있는 일정과 없는 일정 모두 포함

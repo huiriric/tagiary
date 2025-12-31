@@ -46,6 +46,8 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
   late bool _isRoutine;
   late bool _hasTimeSet; // 시간 설정 여부
   late Key _dayPickerKey;
+  double colorPadding = 20;
+  double colorSize = 35;
 
   late FixedExtentScrollController _startHourController;
   late FixedExtentScrollController _startMinuteController;
@@ -329,77 +331,76 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
                     ),
                 ],
               ),
-
-              !_isRoutine
-                  ? Row(
-                      children: [
-                        TextButton(
-                          onPressed: () async {
-                            final selectedDate = await showBlackWhiteDatePicker(
-                              context: context,
-                              initialDate: _date,
-                            );
-                            if (selectedDate != null) {
-                              setState(() {
-                                _date = selectedDate;
-                              });
-                            }
-                          },
-                          child: Text(
-                            '${_endDate != null ? '시작 ' : ''}${formatDate(_date!)}',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: _endDate != null ? 15 : 16,
-                              color: const Color(0xFF40608A),
-                            ),
-                          ),
-                        ),
-                        TextButton(
-                          style: TextButton.styleFrom(
-                            backgroundColor: _endDate != null ? const Color(0x00000000) : const Color(0x1140608A),
-                          ),
-                          onPressed: () async {
-                            final selectedDate = await showBlackWhiteDatePicker(
-                              context: context,
-                              initialDate: _endDate,
-                            );
-                            if (selectedDate != null) {
-                              setState(() {
-                                _endDate = selectedDate;
-                              });
-                            }
-                          },
-                          child: Text(
-                            _endDate != null ? '종료 ${formatDate(_endDate!)}' : '종료일 선택',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: _endDate != null ? 15 : 16,
-                              color: const Color(0xFF40608A),
-                            ),
-                          ),
-                        ),
-                        if (_endDate != null)
-                          IconButton(
-                              onPressed: () {
-                                setState(() {
-                                  _endDate = null; // 종료일 초기화
-                                });
-                              },
-                              icon: const Icon(
-                                Icons.cancel_rounded,
-                                color: Color(0x2240608A),
-                              ))
-                      ],
-                    )
-                  : DayPicker(
-                      key: _dayPickerKey,
-                      selectedDays: selectedDays!,
-                      onDaysChanged: (days) {
+              Row(
+                children: [
+                  TextButton(
+                    onPressed: () async {
+                      final selectedDate = await showBlackWhiteDatePicker(
+                        context: context,
+                        initialDate: _date,
+                      );
+                      if (selectedDate != null) {
                         setState(() {
-                          selectedDays = days;
+                          _date = selectedDate;
                         });
-                      },
+                      }
+                    },
+                    child: Text(
+                      '${_endDate != null ? '시작 ' : ''}${formatDate(_date!)}',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: _endDate != null ? 15 : 16,
+                        color: const Color(0xFF40608A),
+                      ),
                     ),
+                  ),
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      backgroundColor: _endDate != null ? const Color(0x00000000) : const Color(0x1140608A),
+                    ),
+                    onPressed: () async {
+                      final selectedDate = await showBlackWhiteDatePicker(
+                        context: context,
+                        initialDate: _endDate,
+                      );
+                      if (selectedDate != null) {
+                        setState(() {
+                          _endDate = selectedDate;
+                        });
+                      }
+                    },
+                    child: Text(
+                      _endDate != null ? '종료 ${formatDate(_endDate!)}' : '종료일 선택',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: _endDate != null ? 15 : 16,
+                        color: const Color(0xFF40608A),
+                      ),
+                    ),
+                  ),
+                  if (_endDate != null)
+                    IconButton(
+                        onPressed: () {
+                          setState(() {
+                            _endDate = null; // 종료일 초기화
+                          });
+                        },
+                        icon: const Icon(
+                          Icons.cancel_rounded,
+                          color: Color(0x2240608A),
+                        ))
+                ],
+              ),
+              if (_isRoutine)
+                DayPicker(
+                  key: _dayPickerKey,
+                  selectedDays: selectedDays!,
+                  onDaysChanged: (days) {
+                    setState(() {
+                      selectedDays = days;
+                    });
+                  },
+                ),
               _isRoutine
                   ? _hasTimeSet
                       ? GestureDetector(
@@ -417,80 +418,46 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      '색상',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    const Text('색상', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        final totalItems = scheduleColors.length + 1; // +1 for add button
-                        final rows = (totalItems / 6).ceil();
-                        final height = rows * (35 + 12.0) - 12; // (item height + spacing) * rows - last spacing
-
-                        return SizedBox(
-                          height: height,
-                          child: GridView.builder(
-                            physics: const NeverScrollableScrollPhysics(),
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 6,
-                              crossAxisSpacing: 12,
-                              mainAxisSpacing: 12,
-                              childAspectRatio: 1,
-                            ),
-                            itemCount: totalItems,
-                            itemBuilder: (context, index) {
-                              // 마지막 아이템은 색상 관리 버튼
-                              if (index == scheduleColors.length) {
-                                return GestureDetector(
-                                  onTap: () async {
-                                    await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => const ColorManagementPage(),
-                                      ),
-                                    );
-                                    setState(() {});
-                                  },
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey.shade300,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(
-                                      Icons.add,
-                                      color: Colors.grey,
-                                      size: 20,
-                                    ),
-                                  ),
-                                );
-                              }
-
-                              // 색상 아이템
-                              final color = scheduleColors[index];
-                              return GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    _selectedColor = color;
-                                  });
-                                },
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: color,
-                                    shape: BoxShape.circle,
-                                    border: _selectedColor == color
-                                        ? Border.all(color: Colors.black, width: 2)
-                                        : null,
-                                  ),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: colorPadding),
+                      child: Wrap(
+                        spacing: (MediaQuery.of(context).size.width - (colorPadding * 4 + colorSize * 6)) / 5,
+                        runSpacing: 12,
+                        children: [
+                          ...scheduleColors.map((color) {
+                            return GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _selectedColor = color;
+                                });
+                              },
+                              child: Container(
+                                width: 35,
+                                height: 35,
+                                decoration: BoxDecoration(
+                                  color: color,
+                                  shape: BoxShape.circle,
+                                  border: _selectedColor == color ? Border.all(color: Colors.black, width: 2) : null,
                                 ),
-                              );
+                              ),
+                            );
+                          }),
+                          GestureDetector(
+                            onTap: () async {
+                              await Navigator.push(context, MaterialPageRoute(builder: (context) => const ColorManagementPage()));
+                              setState(() {});
                             },
+                            child: Container(
+                              width: 35,
+                              height: 35,
+                              decoration: BoxDecoration(color: Colors.grey.shade300, shape: BoxShape.circle),
+                              child: const Icon(Icons.add, color: Colors.grey, size: 20),
+                            ),
                           ),
-                        );
-                      },
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -1008,71 +975,71 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
   // }
 
   // 일반 일정 중복 확인
-  Future<bool> _checkNormalScheduleConflict(int eventId, DateTime date) async {
-    final scheduleRepo = ScheduleRepository();
-    await scheduleRepo.init();
+  // Future<bool> _checkNormalScheduleConflict(int eventId, DateTime date) async {
+  //   final scheduleRepo = ScheduleRepository();
+  //   await scheduleRepo.init();
 
-    final routineRepo = ScheduleRoutineRepository();
-    await routineRepo.init();
+  //   final routineRepo = ScheduleRoutineRepository();
+  //   await routineRepo.init();
 
-    // 1. 해당 날짜의 모든 일정 가져오기 (현재 수정 중인 일정 제외)
-    final allDateEvents = scheduleRepo.getDateItems(date);
-    final dateEvents = allDateEvents.where((e) => e.id != eventId && e.hasTimeSet);
-    // 시간 충돌 확인
-    if (_hasTimeConflict(dateEvents)) {
-      return true;
-    }
+  //   // 1. 해당 날짜의 모든 일정 가져오기 (현재 수정 중인 일정 제외)
+  //   final allDateEvents = scheduleRepo.getDateItems(date);
+  //   final dateEvents = allDateEvents.where((e) => e.id != eventId && e.hasTimeSet);
+  //   // 시간 충돌 확인
+  //   if (_hasTimeConflict(dateEvents)) {
+  //     return true;
+  //   }
 
-    // 2. 해당 날짜의 요일에 해당하는 루틴 일정 확인
-    final dayOfWeek = date.weekday % 7; // 0(일)~6(토) 범위로 변환
-    final routineEvents = routineRepo.getItemsByDayWithTime(dayOfWeek);
+  //   // 2. 해당 날짜의 요일에 해당하는 루틴 일정 확인
+  //   final dayOfWeek = date.weekday % 7; // 0(일)~6(토) 범위로 변환
+  //   final routineEvents = routineRepo.getItemsByDayWithTime(dayOfWeek);
 
-    // 루틴 일정과의 시간 충돌 확인
-    return _hasTimeConflict(routineEvents);
-  }
+  //   // 루틴 일정과의 시간 충돌 확인
+  //   return _hasTimeConflict(routineEvents);
+  // }
 
   // 루틴 일정 중복 확인
-  Future<bool> _checkRoutineScheduleConflict(int eventId, List<bool> daysOfWeek) async {
-    final routineRepo = ScheduleRoutineRepository();
-    await routineRepo.init();
+  // Future<bool> _checkRoutineScheduleConflict(int eventId, List<bool> daysOfWeek) async {
+  //   final routineRepo = ScheduleRoutineRepository();
+  //   await routineRepo.init();
 
-    final scheduleRepo = ScheduleRepository();
-    await scheduleRepo.init();
+  //   final scheduleRepo = ScheduleRepository();
+  //   await scheduleRepo.init();
 
-    // 선택된 각 요일별로 확인
-    for (int i = 0; i < daysOfWeek.length; i++) {
-      if (!daysOfWeek[i]) continue; // 선택되지 않은 요일은 건너뛰기
+  //   // 선택된 각 요일별로 확인
+  //   for (int i = 0; i < daysOfWeek.length; i++) {
+  //     if (!daysOfWeek[i]) continue; // 선택되지 않은 요일은 건너뛰기
 
-      // 1. 해당 요일의 모든 루틴 가져오기 (현재 수정 중인 루틴 제외)
-      final allRoutineEvents = routineRepo.getItemsByDayWithTime(i);
-      final routineEvents = allRoutineEvents.where((e) => e.id != eventId && e.hasTimeSet);
+  //     // 1. 해당 요일의 모든 루틴 가져오기 (현재 수정 중인 루틴 제외)
+  //     final allRoutineEvents = routineRepo.getItemsByDayWithTime(i);
+  //     final routineEvents = allRoutineEvents.where((e) => e.id != eventId && e.hasTimeSet);
 
-      // 시간 충돌 확인
-      if (_hasTimeConflict(routineEvents)) {
-        return true;
-      }
+  //     // 시간 충돌 확인
+  //     if (_hasTimeConflict(routineEvents)) {
+  //       return true;
+  //     }
 
-      // 2. 해당 요일에 해당하는 일반 일정 확인 (3개월 범위로 검색)
-      final today = DateTime.now();
-      final threeMonthsLater = today.add(const Duration(days: 90));
+  //     // 2. 해당 요일에 해당하는 일반 일정 확인 (3개월 범위로 검색)
+  //     final today = DateTime.now();
+  //     final threeMonthsLater = today.add(const Duration(days: 90));
 
-      // 오늘부터 3개월 동안의 날짜 중 선택한 요일에 해당하는 날짜들 찾기
-      for (DateTime date = today; date.isBefore(threeMonthsLater); date = date.add(const Duration(days: 1))) {
-        // 날짜의 요일이 현재 확인 중인 요일과 일치하는지 확인
-        if (date.weekday % 7 == i) {
-          // 해당 날짜의 일반 일정 가져오기
-          final scheduleEvents = scheduleRepo.getTimeItems(date);
+  //     // 오늘부터 3개월 동안의 날짜 중 선택한 요일에 해당하는 날짜들 찾기
+  //     for (DateTime date = today; date.isBefore(threeMonthsLater); date = date.add(const Duration(days: 1))) {
+  //       // 날짜의 요일이 현재 확인 중인 요일과 일치하는지 확인
+  //       if (date.weekday % 7 == i) {
+  //         // 해당 날짜의 일반 일정 가져오기
+  //         final scheduleEvents = scheduleRepo.getTimeItems(date);
 
-          // 시간 충돌 확인
-          if (_hasTimeConflict(scheduleEvents)) {
-            return true;
-          }
-        }
-      }
-    }
+  //         // 시간 충돌 확인
+  //         if (_hasTimeConflict(scheduleEvents)) {
+  //           return true;
+  //         }
+  //       }
+  //     }
+  //   }
 
-    return false;
-  }
+  //   return false;
+  // }
 
   // 일반 일정 업데이트
   Future<void> _updateNormalSchedule() async {
@@ -1087,12 +1054,12 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
     }
 
     // 일정 날짜 가져오기
-    final date = DateTime(_date!.year, _date!.month, _date!.day);
+    // final date = DateTime(_date!.year, _date!.month, _date!.day);
 
     // 시간 설정이 있는 경우에만 중복 체크
-    if (_hasTimeSet && await _checkNormalScheduleConflict(widget.event.id, date)) {
-      throw Exception('해당 시간에 중복되는 일정이 있습니다');
-    }
+    // if (_hasTimeSet && await _checkNormalScheduleConflict(widget.event.id, date)) {
+    //   throw Exception('해당 시간에 중복되는 일정이 있습니다');
+    // }
 
     // 새 일정 정보로 업데이트
     // print('새 일정 정보: ${_titleController.text}, $_endDate, $_startTime, $_endTime, $_selectedColor');
@@ -1133,9 +1100,9 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
     }
 
     // 중복 체크
-    if (_hasTimeSet && await _checkRoutineScheduleConflict(widget.event.id, selectedDays!)) {
-      throw Exception('선택한 요일에 중복되는 일정이 있습니다');
-    }
+    // if (_hasTimeSet && await _checkRoutineScheduleConflict(widget.event.id, selectedDays!)) {
+    //   throw Exception('선택한 요일에 중복되는 일정이 있습니다');
+    // }
 
     // 새 루틴 정보로 업데이트
     final updatedItem = ScheduleRoutineItem(
@@ -1147,6 +1114,8 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
       endHour: _hasTimeSet ? _endTime!.hour : null,
       endMinute: _hasTimeSet ? _endTime!.minute : null,
       colorValue: _selectedColor.value,
+      startDate: item.startDate, // 기존 시작일 유지
+      endDate: item.endDate, // 기존 종료일 유지
     );
 
     // ID 설정 (Hive에서 필요)
@@ -1157,30 +1126,30 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
   }
 
   // 일정 충돌 확인 로직
-  bool _hasTimeConflict(Iterable<Event> events) {
-    // 시작/종료 시간을 분 단위로 변환
-    final newStartMinutes = _startTime!.hour * 60 + _startTime!.minute;
-    final newEndMinutes = _endTime!.hour * 60 + _endTime!.minute;
+  // bool _hasTimeConflict(Iterable<Event> events) {
+  //   // 시작/종료 시간을 분 단위로 변환
+  //   final newStartMinutes = _startTime!.hour * 60 + _startTime!.minute;
+  //   final newEndMinutes = _endTime!.hour * 60 + _endTime!.minute;
 
-    // 모든 이벤트와 시간 충돌 확인
-    for (var event in events) {
-      if (!event.hasTimeSet) continue;
-      final eventStartMinutes = event.startTime!.hour * 60 + event.startTime!.minute;
-      final eventEndMinutes = event.endTime!.hour * 60 + event.endTime!.minute;
+  //   // 모든 이벤트와 시간 충돌 확인
+  //   for (var event in events) {
+  //     if (!event.hasTimeSet) continue;
+  //     final eventStartMinutes = event.startTime!.hour * 60 + event.startTime!.minute;
+  //     final eventEndMinutes = event.endTime!.hour * 60 + event.endTime!.minute;
 
-      // 충돌 조건:
-      // 1. 새 이벤트의 시작이 기존 이벤트 기간 내에 있거나
-      // 2. 새 이벤트의 종료가 기존 이벤트 기간 내에 있거나
-      // 3. 새 이벤트가 기존 이벤트를 완전히 포함하는 경우
-      if ((newStartMinutes >= eventStartMinutes && newStartMinutes < eventEndMinutes) ||
-          (newEndMinutes > eventStartMinutes && newEndMinutes <= eventEndMinutes) ||
-          (newStartMinutes <= eventStartMinutes && newEndMinutes >= eventEndMinutes)) {
-        return true;
-      }
-    }
+  //     // 충돌 조건:
+  //     // 1. 새 이벤트의 시작이 기존 이벤트 기간 내에 있거나
+  //     // 2. 새 이벤트의 종료가 기존 이벤트 기간 내에 있거나
+  //     // 3. 새 이벤트가 기존 이벤트를 완전히 포함하는 경우
+  //     if ((newStartMinutes >= eventStartMinutes && newStartMinutes < eventEndMinutes) ||
+  //         (newEndMinutes > eventStartMinutes && newEndMinutes <= eventEndMinutes) ||
+  //         (newStartMinutes <= eventStartMinutes && newEndMinutes >= eventEndMinutes)) {
+  //       return true;
+  //     }
+  //   }
 
-    return false;
-  }
+  //   return false;
+  // }
 
   // 확인 다이얼로그 표시
   Future<bool> _showConfirmDialog(String message) async {

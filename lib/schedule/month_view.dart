@@ -136,6 +136,8 @@ class _MonthViewState extends State<MonthView> {
                     ? const SizedBox()
                     : Stack(
                         children: [
+                          // 기간 일정 오버레이 레이어
+                          ..._buildMultiDayEventBars(),
                           // 기본 달력 그리드 (날짜 + 단일 이벤트)
                           GridView.builder(
                             physics: const NeverScrollableScrollPhysics(), // 스크롤 비활성화
@@ -242,8 +244,6 @@ class _MonthViewState extends State<MonthView> {
                               );
                             },
                           ),
-                          // 기간 일정 오버레이 레이어
-                          ..._buildMultiDayEventBars(),
                         ],
                       );
               },
@@ -314,16 +314,40 @@ class _MonthViewState extends State<MonthView> {
       routineIndex = day.weekday % 7;
 
       List<Event> routineEvents = srRepo.getItemsByDayWithTime(routineIndex).where((event) {
-        // createdAt이 null이거나 해당 날짜 이전에 생성된 루틴만 표시
         final routineItem = srRepo.getItem(event.id);
-        if (routineItem?.createdAt == null) return true;
-        return !routineItem!.createdAt.isAfter(dateKey);
+        if (routineItem == null) return false;
+
+        // startDate 체크 (startDate가 있으면 해당 날짜 이후만 표시)
+        if (routineItem.startDate != null) {
+          final startDateOnly = DateTime(routineItem.startDate!.year, routineItem.startDate!.month, routineItem.startDate!.day);
+          if (dateKey.isBefore(startDateOnly)) return false;
+        }
+
+        // endDate 체크 (endDate가 있으면 해당 날짜 이전만 표시)
+        if (routineItem.endDate != null) {
+          final endDateOnly = DateTime(routineItem.endDate!.year, routineItem.endDate!.month, routineItem.endDate!.day);
+          if (dateKey.isAfter(endDateOnly)) return false;
+        }
+
+        return true;
       }).toList();
       List<Event> routineNoTimeEvents = srRepo.getItemsByDayWithoutTime(routineIndex).where((event) {
-        // createdAt이 null이거나 해당 날짜 이전에 생성된 루틴만 표시
         final routineItem = srRepo.getItem(event.id);
-        if (routineItem?.createdAt == null) return true;
-        return !routineItem!.createdAt.isAfter(dateKey);
+        if (routineItem == null) return false;
+
+        // startDate 체크 (startDate가 있으면 해당 날짜 이후만 표시)
+        if (routineItem.startDate != null) {
+          final startDateOnly = DateTime(routineItem.startDate!.year, routineItem.startDate!.month, routineItem.startDate!.day);
+          if (dateKey.isBefore(startDateOnly)) return false;
+        }
+
+        // endDate 체크 (endDate가 있으면 해당 날짜 이전만 표시)
+        if (routineItem.endDate != null) {
+          final endDateOnly = DateTime(routineItem.endDate!.year, routineItem.endDate!.month, routineItem.endDate!.day);
+          if (dateKey.isAfter(endDateOnly)) return false;
+        }
+
+        return true;
       }).toList();
 
       // 모든 일정 합치기 (시간 있는/없는 일정 모두 포함)
@@ -427,7 +451,6 @@ class _MonthViewState extends State<MonthView> {
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
           return SlideUpContainer(
-            // height: MediaQuery.of(context).size.height * 0.6,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -462,7 +485,8 @@ class _MonthViewState extends State<MonthView> {
                 const Divider(height: 1),
 
                 // 일정 목록
-                Expanded(
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.5,
                   child: ListView.builder(
                     itemCount: events.length,
                     itemBuilder: (context, index) {
@@ -663,40 +687,37 @@ class _MonthViewState extends State<MonthView> {
                 top: segment.y,
                 width: segment.width,
                 height: segmentHeight, // 단일 이벤트 높이
-                child: GestureDetector(
-                  onTap: () => _showEvent(context, event),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: event.color.withOpacity(0.8),
-                      borderRadius: BorderRadius.horizontal(
-                        left: segment.isStart ? const Radius.circular(4) : Radius.zero,
-                        right: segment.isEnd ? const Radius.circular(4) : Radius.zero,
-                      ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: event.color.withOpacity(0.8),
+                    borderRadius: BorderRadius.horizontal(
+                      left: segment.isStart ? const Radius.circular(4) : Radius.zero,
+                      right: segment.isEnd ? const Radius.circular(4) : Radius.zero,
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              event.title,
-                              style: const TextStyle(
-                                fontSize: 10,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              overflow: TextOverflow.clip,
-                              maxLines: 1,
-                            ),
-                          ),
-                          if (event.isRoutine)
-                            const Icon(
-                              Icons.repeat,
-                              size: 7,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            event.title,
+                            style: const TextStyle(
+                              fontSize: 10,
                               color: Colors.white,
+                              fontWeight: FontWeight.bold,
                             ),
-                        ],
-                      ),
+                            overflow: TextOverflow.clip,
+                            maxLines: 1,
+                          ),
+                        ),
+                        if (event.isRoutine)
+                          const Icon(
+                            Icons.repeat,
+                            size: 7,
+                            color: Colors.white,
+                          ),
+                      ],
                     ),
                   ),
                 ),
@@ -823,16 +844,41 @@ class _MonthViewState extends State<MonthView> {
       if (day.month == widget.selectedDate.month) {
         int routineIndex = day.weekday % 7;
         List<Event> routineEvents = srRepo.getItemsByDayWithTime(routineIndex).where((event) {
-          // createdAt이 null이거나 해당 날짜 이전에 생성된 루틴만 표시
           final routineItem = srRepo.getItem(event.id);
-          if (routineItem?.createdAt == null) return true;
-          return !routineItem!.createdAt.isAfter(day);
+          if (routineItem == null) return false;
+
+          // startDate 체크 (startDate가 있으면 해당 날짜 이후만 표시)
+          if (routineItem.startDate != null) {
+            final startDateOnly = DateTime(routineItem.startDate!.year, routineItem.startDate!.month, routineItem.startDate!.day);
+            if (day.isBefore(startDateOnly)) return false;
+          }
+
+          // endDate 체크 (endDate가 있으면 해당 날짜 이전만 표시)
+          if (routineItem.endDate != null) {
+            final endDateOnly = DateTime(routineItem.endDate!.year, routineItem.endDate!.month, routineItem.endDate!.day);
+            if (day.isAfter(endDateOnly)) return false;
+          }
+
+          return true;
         }).toList();
+
         List<Event> routineNoTimeEvents = srRepo.getItemsByDayWithoutTime(routineIndex).where((event) {
-          // createdAt이 null이거나 해당 날짜 이전에 생성된 루틴만 표시
           final routineItem = srRepo.getItem(event.id);
-          if (routineItem?.createdAt == null) return true;
-          return !routineItem!.createdAt.isAfter(day);
+          if (routineItem == null) return false;
+
+          // startDate 체크 (startDate가 있으면 해당 날짜 이후만 표시)
+          if (routineItem.startDate != null) {
+            final startDateOnly = DateTime(routineItem.startDate!.year, routineItem.startDate!.month, routineItem.startDate!.day);
+            if (day.isBefore(startDateOnly)) return false;
+          }
+
+          // endDate 체크 (endDate가 있으면 해당 날짜 이전만 표시)
+          if (routineItem.endDate != null) {
+            final endDateOnly = DateTime(routineItem.endDate!.year, routineItem.endDate!.month, routineItem.endDate!.day);
+            if (day.isAfter(endDateOnly)) return false;
+          }
+
+          return true;
         }).toList();
 
         // 루틴 일정들을 해당 날짜로 설정

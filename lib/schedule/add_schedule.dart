@@ -195,63 +195,65 @@ class _AddScheduleState extends State<AddSchedule> {
                     ),
                   ],
                 ),
-                // 날짜 선택 (isRoutine이 false일 때) 또는 요일 선택 (isRoutine이 true일 때)
-                !isRoutine
-                    ? Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          TextButton(
-                            onPressed: () async {
-                              final selectedDate = await showBlackWhiteDatePicker(context: context, initialDate: date);
-                              if (selectedDate != null) {
-                                setState(() {
-                                  date = selectedDate;
-                                });
-                              }
-                            },
-                            child: Text(
-                              '${endDate != null ? '시작 ' : ''}${formatDate(date)}',
-                              style: TextStyle(fontWeight: FontWeight.w600, fontSize: endDate != null ? 15 : 16, color: const Color(0xFF40608A)),
-                            ),
-                          ),
-                          const SizedBox(width: 15),
-                          TextButton(
-                            style: TextButton.styleFrom(backgroundColor: endDate != null ? const Color(0x00000000) : const Color(0x1140608A)),
-                            onPressed: () async {
-                              final selectedDate = await showBlackWhiteDatePicker(
-                                context: context,
-                                initialDate: endDate, // 종료일 선택 시 기본값은 시작일 다음 날
-                              );
-                              if (selectedDate != null) {
-                                setState(() {
-                                  endDate = selectedDate;
-                                });
-                              }
-                            },
-                            child: Text(
-                              endDate != null ? '종료 ${formatDate(endDate!)}' : '종료일 선택',
-                              style: TextStyle(fontWeight: FontWeight.w600, fontSize: endDate != null ? 15 : 16, color: const Color(0xFF40608A)),
-                            ),
-                          ),
-                          if (endDate != null)
-                            IconButton(
-                              onPressed: () {
-                                setState(() {
-                                  endDate = null; // 종료일 초기화
-                                });
-                              },
-                              icon: const Icon(Icons.cancel_rounded, color: Color(0x2240608A)),
-                            ),
-                        ],
-                      )
-                    : DayPicker(
-                        selectedDays: selectedDays,
-                        onDaysChanged: (days) {
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    TextButton(
+                      onPressed: () async {
+                        final selectedDate = await showBlackWhiteDatePicker(context: context, initialDate: date);
+                        if (selectedDate != null) {
                           setState(() {
-                            selectedDays = days;
+                            date = selectedDate;
+                          });
+                        }
+                      },
+                      child: Text(
+                        formatDate(date),
+                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: endDate != null ? 15 : 16, color: const Color(0xFF40608A)),
+                      ),
+                    ),
+                    const SizedBox(width: 15),
+                    TextButton(
+                      style: TextButton.styleFrom(backgroundColor: endDate != null ? const Color(0x00000000) : const Color(0x1140608A)),
+                      onPressed: () async {
+                        final selectedDate = await showBlackWhiteDatePicker(
+                          context: context,
+                          initialDate: date, // 기본값을 시작일로 설정
+                        );
+                        if (selectedDate != null) {
+                          setState(() {
+                            endDate = selectedDate;
+                          });
+                        }
+                      },
+                      child: Text(
+                        endDate != null ? formatDate(endDate!) : '종료일 선택',
+                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: endDate != null ? 15 : 16, color: const Color(0xFF40608A)),
+                      ),
+                    ),
+                    if (endDate != null)
+                      IconButton(
+                        onPressed: () {
+                          setState(() {
+                            endDate = null; // 종료일 초기화
                           });
                         },
+                        icon: const Icon(Icons.cancel_rounded, color: Color(0x2240608A)),
                       ),
+                  ],
+                ),
+                if (isRoutine)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16.0),
+                    child: DayPicker(
+                      selectedDays: selectedDays,
+                      onDaysChanged: (days) {
+                        setState(() {
+                          selectedDays = days;
+                        });
+                      },
+                    ),
+                  ),
                 // 시간 설정이 체크된 경우에만 시간 선택 위젯 표시
                 if (hasTimeSet) TimePicker(startTime: start, endTime: end),
                 // 색상 선택
@@ -549,19 +551,19 @@ class _AddScheduleState extends State<AddSchedule> {
 
   Future<void> _saveNormalSchedule() async {
     // 일정 중복 체크
-    _conflictEvent = null; // 충돌 정보 초기화
+    // _conflictEvent = null; // 충돌 정보 초기화
 
-    if (hasTimeSet && await _checkNormalScheduleConflict()) {
-      if (_conflictEvent != null) {
-        // 충돌하는 이벤트 정보를 포함한 에러 메시지
-        String conflictType = _conflictEvent!.isRoutine ? "루틴" : "일정";
-        throw Exception(
-          '${formatTime(_conflictEvent!.startTime!)}~${formatTime(_conflictEvent!.endTime!)}에 "${_conflictEvent!.title}" $conflictType과(와) 시간이 중복됩니다',
-        );
-      } else {
-        throw Exception('해당 시간에 이미 일정이 있습니다');
-      }
-    }
+    // if (hasTimeSet && await _checkNormalScheduleConflict()) {
+    //   if (_conflictEvent != null) {
+    //     // 충돌하는 이벤트 정보를 포함한 에러 메시지
+    //     String conflictType = _conflictEvent!.isRoutine ? "루틴" : "일정";
+    //     throw Exception(
+    //       '${formatTime(_conflictEvent!.startTime!)}~${formatTime(_conflictEvent!.endTime!)}에 "${_conflictEvent!.title}" $conflictType과(와) 시간이 중복됩니다',
+    //     );
+    //   } else {
+    //     throw Exception('해당 시간에 이미 일정이 있습니다');
+    //   }
+    // }
 
     final scheduleRepository = ScheduleRepository();
     await scheduleRepository.init();
@@ -587,22 +589,23 @@ class _AddScheduleState extends State<AddSchedule> {
 
   Future<void> _saveRoutineSchedule() async {
     // 루틴 일정 중복 체크
-    _conflictEvent = null; // 충돌 정보 초기화
+    // _conflictEvent = null; // 충돌 정보 초기화
 
-    if (hasTimeSet && await _checkRoutineScheduleConflict()) {
-      if (_conflictEvent != null) {
-        // 충돌하는 이벤트 정보를 포함한 에러 메시지
-        String conflictType = _conflictEvent!.isRoutine ? "루틴" : "일정";
-        throw Exception(
-          '선택한 요일 중 "${_conflictEvent!.title}" $conflictType과(와) 시간이 중복됩니다 (${formatTime(_conflictEvent!.startTime!)}~${formatTime(_conflictEvent!.endTime!)})',
-        );
-      } else {
-        throw Exception('선택한 요일 중 하나 이상에서 이미 같은 시간에 일정이 있습니다');
-      }
-    }
+    // if (hasTimeSet /* && await _checkRoutineScheduleConflict()*/) {
+    //   if (_conflictEvent != null) {
+    //     // 충돌하는 이벤트 정보를 포함한 에러 메시지
+    //     String conflictType = _conflictEvent!.isRoutine ? "루틴" : "일정";
+    //     throw Exception(
+    //       '선택한 요일 중 "${_conflictEvent!.title}" $conflictType과(와) 시간이 중복됩니다 (${formatTime(_conflictEvent!.startTime!)}~${formatTime(_conflictEvent!.endTime!)})',
+    //     );
+    //   } else {
+    //     throw Exception('선택한 요일 중 하나 이상에서 이미 같은 시간에 일정이 있습니다');
+    //   }
+    // }
 
     final routineRepository = ScheduleRoutineRepository();
     await routineRepository.init();
+    print('date: $date, endDate: $endDate');
 
     final newRoutine = ScheduleRoutineItem(
       title: title,
@@ -613,103 +616,105 @@ class _AddScheduleState extends State<AddSchedule> {
       endHour: hasTimeSet ? end.hour : null,
       endMinute: hasTimeSet ? end.minute : null,
       colorValue: selectedColor.value,
+      startDate: date,
+      endDate: endDate,
     );
 
     await routineRepository.addItem(newRoutine);
   }
 
-  Future<bool> _checkNormalScheduleConflict() async {
-    // 일정 중복 확인 로직
-    final scheduleRepository = ScheduleRepository();
-    await scheduleRepository.init();
+  // Future<bool> _checkNormalScheduleConflict() async {
+  //   // 일정 중복 확인 로직
+  //   final scheduleRepository = ScheduleRepository();
+  //   await scheduleRepository.init();
 
-    final routineRepository = ScheduleRoutineRepository();
-    await routineRepository.init();
+  //   final routineRepository = ScheduleRoutineRepository();
+  //   await routineRepository.init();
 
-    // 1. 해당 날짜의 모든 일반 일정 가져오기
-    final dateEvents = scheduleRepository.getDateItems(date);
+  //   // 1. 해당 날짜의 모든 일반 일정 가져오기
+  //   final dateEvents = scheduleRepository.getDateItems(date);
 
-    // 시간 충돌 확인
-    if (_hasTimeConflict(dateEvents)) {
-      return true;
-    }
+  //   // 시간 충돌 확인
+  //   if (_hasTimeConflict(dateEvents)) {
+  //     return true;
+  //   }
 
-    // 2. 해당 날짜의 요일에 해당하는 루틴 일정 확인
-    final dayOfWeek = date.weekday % 7; // 0(일)~6(토) 범위로 변환
-    final routineEvents = routineRepository.getItemsByDayWithTime(dayOfWeek);
+  //   // 2. 해당 날짜의 요일에 해당하는 루틴 일정 확인
+  //   final dayOfWeek = date.weekday % 7; // 0(일)~6(토) 범위로 변환
+  //   final routineEvents = routineRepository.getItemsByDayWithTime(dayOfWeek);
 
-    // 루틴 일정과의 시간 충돌 확인
-    return _hasTimeConflict(routineEvents);
-  }
+  //   // 루틴 일정과의 시간 충돌 확인
+  //   return _hasTimeConflict(routineEvents);
+  // }
 
-  Future<bool> _checkRoutineScheduleConflict() async {
-    // 루틴 중복 확인 로직
-    final routineRepository = ScheduleRoutineRepository();
-    await routineRepository.init();
+  // Future<bool> _checkRoutineScheduleConflict() async {
+  //   // 루틴 중복 확인 로직
+  //   final routineRepository = ScheduleRoutineRepository();
+  //   await routineRepository.init();
 
-    final scheduleRepository = ScheduleRepository();
-    await scheduleRepository.init();
+  //   final scheduleRepository = ScheduleRepository();
+  //   await scheduleRepository.init();
 
-    // 선택된 각 요일별로 확인
-    for (int i = 0; i < selectedDays.length; i++) {
-      if (!selectedDays[i]) continue; // 선택되지 않은 요일은 건너뛰기
+  //   // 선택된 각 요일별로 확인
+  //   for (int i = 0; i < selectedDays.length; i++) {
+  //     if (!selectedDays[i]) continue; // 선택되지 않은 요일은 건너뛰기
 
-      // 1. 해당 요일의 모든 루틴 가져오기
-      final routineEvents = routineRepository.getItemsByDayWithTime(i);
+  //     // 1. 해당 요일의 모든 루틴 가져오기
+  //     final routineEvents = routineRepository.getItemsByDayWithTime(i);
 
-      // 시간 충돌 확인
-      if (_hasTimeConflict(routineEvents)) {
-        return true;
-      }
+  //     // 시간 충돌 확인
+  //     if (_hasTimeConflict(routineEvents)) {
+  //       return true;
+  //     }
 
-      // 2. 해당 요일에 해당하는 일반 일정 확인 (6개월 범위로 검색)
-      final today = DateTime.now();
-      final sixMonthsLater = today.add(const Duration(days: 180));
+  //     // 2. 해당 요일에 해당하는 일반 일정 확인 (6개월 범위로 검색)
+  //     final today = DateTime.now();
+  //     final sixMonthsLater = today.add(const Duration(days: 180));
 
-      // 오늘부터 6개월 동안의 날짜 중 선택한 요일에 해당하는 날짜들 찾기
-      for (DateTime date = today; date.isBefore(sixMonthsLater); date = date.add(const Duration(days: 1))) {
-        // 날짜의 요일이 현재 확인 중인 요일과 일치하는지 확인
-        if (date.weekday % 7 == i) {
-          // 해당 날짜의 일반 일정 가져오기
-          final scheduleEvents = scheduleRepository.getTimeItems(date);
+  //     // 오늘부터 6개월 동안의 날짜 중 선택한 요일에 해당하는 날짜들 찾기
+  //     for (DateTime date = today; date.isBefore(sixMonthsLater); date = date.add(const Duration(days: 1))) {
+  //       // 날짜의 요일이 현재 확인 중인 요일과 일치하는지 확인
+  //       if (date.weekday % 7 == i) {
+  //         // 해당 날짜의 일반 일정 가져오기
+  //         final scheduleEvents = scheduleRepository.getTimeItems(date);
 
-          // 시간 충돌 확인
-          if (_hasTimeConflict(scheduleEvents)) {
-            return true;
-          }
-        }
-      }
-    }
+  //         // 시간 충돌 확인
+  //         if (_hasTimeConflict(scheduleEvents)) {
+  //           return true;
+  //         }
+  //       }
+  //     }
+  //   }
 
-    return false;
-  }
+  //   return false;
+  // }
 
-  bool _hasTimeConflict(Iterable<Event> events) {
-    // 시작/종료 시간을 분 단위로 변환
-    final newStartMinutes = start.hour * 60 + start.minute;
-    final newEndMinutes = end.hour * 60 + end.minute;
+  // bool _hasTimeConflict(Iterable<Event> events) {
+  //   // 시작/종료 시간을 분 단위로 변환
+  //   final newStartMinutes = start.hour * 60 + start.minute;
+  //   final newEndMinutes = end.hour * 60 + end.minute;
 
-    // 모든 이벤트와 시간 충돌 확인
-    for (var event in events) {
-      if (!event.hasTimeSet) continue;
-      final eventStartMinutes = event.startTime!.hour * 60 + event.startTime!.minute;
-      final eventEndMinutes = event.endTime!.hour * 60 + event.endTime!.minute;
+  //   // 모든 이벤트와 시간 충돌 확인
+  //   for (var event in events) {
+  //     if (!event.hasTimeSet) continue;
+  //     final eventStartMinutes = event.startTime!.hour * 60 + event.startTime!.minute;
+  //     final eventEndMinutes = event.endTime!.hour * 60 + event.endTime!.minute;
 
-      // 충돌 조건:
-      // 1. 새 이벤트의 시작이 기존 이벤트 기간 내에 있거나
-      // 2. 새 이벤트의 종료가 기존 이벤트 기간 내에 있거나
-      // 3. 새 이벤트가 기존 이벤트를 완전히 포함하는 경우
-      // 충돌이 있는 경우 이벤트 정보를 저장
-      if ((newStartMinutes >= eventStartMinutes && newStartMinutes < eventEndMinutes) ||
-          (newEndMinutes > eventStartMinutes && newEndMinutes <= eventEndMinutes) ||
-          (newStartMinutes <= eventStartMinutes && newEndMinutes >= eventEndMinutes)) {
-        _conflictEvent = event; // 충돌하는 이벤트 저장
-        return true;
-      }
-    }
+  //     // 충돌 조건:
+  //     // 1. 새 이벤트의 시작이 기존 이벤트 기간 내에 있거나
+  //     // 2. 새 이벤트의 종료가 기존 이벤트 기간 내에 있거나
+  //     // 3. 새 이벤트가 기존 이벤트를 완전히 포함하는 경우
+  //     // 충돌이 있는 경우 이벤트 정보를 저장
+  //     if ((newStartMinutes >= eventStartMinutes && newStartMinutes < eventEndMinutes) ||
+  //         (newEndMinutes > eventStartMinutes && newEndMinutes <= eventEndMinutes) ||
+  //         (newStartMinutes <= eventStartMinutes && newEndMinutes >= eventEndMinutes)) {
+  //       _conflictEvent = event; // 충돌하는 이벤트 저장
+  //       return true;
+  //     }
+  //   }
 
-    return false;
-  }
+  //   return false;
+  // }
 
   void _showToast(String message) {
     // Exception 텍스트가 포함되어 있으면 제거
@@ -841,7 +846,7 @@ class _AddScheduleState extends State<AddSchedule> {
 String formatDate(DateTime date) {
   final DateTime now = DateTime.now();
   List<String> week = ['일', '월', '화', '수', '목', '금', '토'];
-  return '${now.year == date.year ? '' : '${date.year}년 '}${date.month}월 ${date.day}일 (${week[date.weekday % 7]})';
+  return '${date.month}월 ${date.day}일 (${week[date.weekday % 7]})';
 }
 
 String formatTime(TimeOfDay time) {

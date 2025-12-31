@@ -119,18 +119,44 @@ class _TimeLineState extends State<TimeLine> {
 
       // 선택된 날짜의 모든 일정 이벤트 가져오기
       final allScheduleEvents = sRepo.getDateItems(widget.date).toList();
-      // 선택된 요일의 루틴 이벤트 가져오기 (createdAt 필터링 적용)
+      // 선택된 요일의 루틴 이벤트 가져오기 (날짜 범위 필터링 적용)
+      final dateKey = DateTime(widget.date.year, widget.date.month, widget.date.day);
+
       final timeRoutineEvents = srRepo.getItemsByDayWithTime(dayOfWeek).where((event) {
-        // createdAt이 null이거나 해당 날짜 이전에 생성된 루틴만 표시
         final routineItem = srRepo.getItem(event.id);
-        if (routineItem?.createdAt == null) return true;
-        return !routineItem!.createdAt.isAfter(widget.date);
+        if (routineItem == null) return false;
+
+        // startDate 체크 (startDate가 있으면 해당 날짜 이후만 표시)
+        if (routineItem.startDate != null) {
+          final startDateOnly = DateTime(routineItem.startDate!.year, routineItem.startDate!.month, routineItem.startDate!.day);
+          if (dateKey.isBefore(startDateOnly)) return false;
+        }
+
+        // endDate 체크 (endDate가 있으면 해당 날짜 이전만 표시)
+        if (routineItem.endDate != null) {
+          final endDateOnly = DateTime(routineItem.endDate!.year, routineItem.endDate!.month, routineItem.endDate!.day);
+          if (dateKey.isAfter(endDateOnly)) return false;
+        }
+
+        return true;
       }).toList();
       final noTimeRoutineEvents = srRepo.getItemsByDayWithoutTime(dayOfWeek).where((event) {
-        // createdAt이 null이거나 해당 날짜 이전에 생성된 루틴만 표시
         final routineItem = srRepo.getItem(event.id);
-        if (routineItem?.createdAt == null) return true;
-        return !routineItem!.createdAt.isAfter(widget.date);
+        if (routineItem == null) return false;
+
+        // startDate 체크 (startDate가 있으면 해당 날짜 이후만 표시)
+        if (routineItem.startDate != null) {
+          final startDateOnly = DateTime(routineItem.startDate!.year, routineItem.startDate!.month, routineItem.startDate!.day);
+          if (dateKey.isBefore(startDateOnly)) return false;
+        }
+
+        // endDate 체크 (endDate가 있으면 해당 날짜 이전만 표시)
+        if (routineItem.endDate != null) {
+          final endDateOnly = DateTime(routineItem.endDate!.year, routineItem.endDate!.month, routineItem.endDate!.day);
+          if (dateKey.isAfter(endDateOnly)) return false;
+        }
+
+        return true;
       }).toList();
 
       // 시간 있는 이벤트와 없는 이벤트 구분
@@ -404,15 +430,15 @@ class _TimeLineState extends State<TimeLine> {
                       onTap: () => _showEvent(context, event),
                       onLongPressStart: (details) {
                         // 루틴은 드래그 불가
-                        if (event.isRoutine) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('루틴은 드래그할 수 없습니다'),
-                              duration: Duration(seconds: 1),
-                            ),
-                          );
-                          return;
-                        }
+                        // if (event.isRoutine) {
+                        //   ScaffoldMessenger.of(context).showSnackBar(
+                        //     const SnackBar(
+                        //       content: Text('루틴은 드래그할 수 없습니다'),
+                        //       duration: Duration(seconds: 1),
+                        //     ),
+                        //   );
+                        //   return;
+                        // }
 
                         setState(() {
                           _draggingEvent = event;
@@ -468,7 +494,7 @@ class _TimeLineState extends State<TimeLine> {
                         );
 
                         // 충돌 감지
-                        _checkConflictForDrag(event, newStartTime, newEndTime);
+                        // _checkConflictForDrag(event, newStartTime, newEndTime);
 
                         // 화면 업데이트 (드래그 중인 이벤트 위치 변경)
                         setState(() {});
@@ -519,20 +545,20 @@ class _TimeLineState extends State<TimeLine> {
                         );
 
                         // 충돌 확인
-                        if (_hasConflict) {
-                          // 충돌이 있으면 원래 시간으로 복원
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(_conflictEvent != null
-                                  ? '${_formatTime(_conflictEvent!.startTime!)}~${_formatTime(_conflictEvent!.endTime!)}의 "${_conflictEvent!.title}" 일정과 충돌합니다'
-                                  : '다른 일정과 시간이 중복됩니다'),
-                              backgroundColor: Colors.red,
-                              duration: const Duration(seconds: 2),
-                            ),
-                          );
-                          _resetDragState();
-                          return;
-                        }
+                        // if (_hasConflict) {
+                        //   // 충돌이 있으면 원래 시간으로 복원
+                        //   ScaffoldMessenger.of(context).showSnackBar(
+                        //     SnackBar(
+                        //       content: Text(_conflictEvent != null
+                        //           ? '${_formatTime(_conflictEvent!.startTime!)}~${_formatTime(_conflictEvent!.endTime!)}의 "${_conflictEvent!.title}" 일정과 충돌합니다'
+                        //           : '다른 일정과 시간이 중복됩니다'),
+                        //       backgroundColor: Colors.red,
+                        //       duration: const Duration(seconds: 2),
+                        //     ),
+                        //   );
+                        //   _resetDragState();
+                        //   return;
+                        // }
 
                         // 이벤트 시간 업데이트
                         _updateEventTime(event, newStartTime, newEndTime);
@@ -630,41 +656,67 @@ class _TimeLineState extends State<TimeLine> {
   // 일정 시간 업데이트 메서드
   Future<void> _updateEventTime(Event event, TimeOfDay newStartTime, TimeOfDay newEndTime) async {
     if (event.isRoutine) {
-      // 루틴은 수정하지 않음
-      return;
+      // 루틴 일정 업데이트
+      final scheduleRoutineRepo = ScheduleRoutineRepository();
+      await scheduleRoutineRepo.init();
+
+      final item = scheduleRoutineRepo.getItem(event.id);
+      if (item == null) {
+        return;
+      }
+
+      // 새 ScheduleRoutineItem 생성 (기존 정보 유지, 시간만 변경)
+      final updatedItem = ScheduleRoutineItem(
+        startDate: item.startDate,
+        endDate: item.endDate,
+        startHour: newStartTime.hour,
+        startMinute: newStartTime.minute,
+        endHour: newEndTime.hour,
+        endMinute: newEndTime.minute,
+        title: item.title,
+        description: item.description,
+        colorValue: item.colorValue,
+        daysOfWeek: [...item.daysOfWeek],
+      );
+
+      // ID 설정
+      updatedItem.id = item.id;
+
+      // 업데이트 실행
+      await scheduleRoutineRepo.updateItem(updatedItem);
+    } else {
+      // 일반 일정 업데이트
+      final scheduleRepo = ScheduleRepository();
+      await scheduleRepo.init();
+
+      final item = scheduleRepo.getItem(event.id);
+      if (item == null) {
+        return;
+      }
+
+      // 새 ScheduleItem 생성 (기존 정보 유지, 시간만 변경)
+      final updatedItem = ScheduleItem(
+        year: item.year,
+        month: item.month,
+        date: item.date,
+        endYear: item.endYear,
+        endMonth: item.endMonth,
+        endDate: item.endDate,
+        title: item.title,
+        description: item.description,
+        startHour: newStartTime.hour,
+        startMinute: newStartTime.minute,
+        endHour: newEndTime.hour,
+        endMinute: newEndTime.minute,
+        colorValue: item.colorValue,
+      );
+
+      // ID 설정
+      updatedItem.id = item.id;
+
+      // 업데이트 실행
+      await scheduleRepo.updateItem(updatedItem);
     }
-
-    // 일반 일정 업데이트
-    final scheduleRepo = ScheduleRepository();
-    await scheduleRepo.init();
-
-    final item = scheduleRepo.getItem(event.id);
-    if (item == null) {
-      return;
-    }
-
-    // 새 ScheduleItem 생성 (기존 정보 유지, 시간만 변경)
-    final updatedItem = ScheduleItem(
-      year: item.year,
-      month: item.month,
-      date: item.date,
-      endYear: item.endYear,
-      endMonth: item.endMonth,
-      endDate: item.endDate,
-      title: item.title,
-      description: item.description,
-      startHour: newStartTime.hour,
-      startMinute: newStartTime.minute,
-      endHour: newEndTime.hour,
-      endMinute: newEndTime.minute,
-      colorValue: item.colorValue,
-    );
-
-    // ID 설정
-    updatedItem.id = item.id;
-
-    // 업데이트 실행
-    await scheduleRepo.updateItem(updatedItem);
 
     // 이벤트 목록 새로고침
     loadEventsForDate();

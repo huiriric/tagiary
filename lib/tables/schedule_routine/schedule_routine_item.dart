@@ -36,6 +36,12 @@ class ScheduleRoutineItem extends HiveObject {
   @HiveField(9)
   final int colorValue;
 
+  @HiveField(10)
+  final DateTime? startDate;
+
+  @HiveField(11)
+  final DateTime? endDate;
+
   bool get hasTimeInfo => startHour != null && startMinute != null && endHour != null && endMinute != null;
 
   ScheduleRoutineItem({
@@ -47,6 +53,8 @@ class ScheduleRoutineItem extends HiveObject {
     this.endMinute,
     required this.colorValue,
     required this.daysOfWeek,
+    this.startDate,
+    this.endDate,
   });
 
   Event toEvent() {
@@ -55,7 +63,8 @@ class ScheduleRoutineItem extends HiveObject {
         title: title,
         description: description,
         daysOfWeek: daysOfWeek,
-        date: null, // 날짜 정보는 없으므로 null
+        date: hasTimeInfo ? startDate : null, // 날짜 정보는 없으므로 null
+        endDate: hasTimeInfo ? endDate : null,
         startTime: hasTimeInfo ? TimeOfDay(hour: startHour!, minute: startMinute!) : null,
         endTime: hasTimeInfo ? TimeOfDay(hour: endHour!, minute: endMinute!) : null,
         color: Color(colorValue),
