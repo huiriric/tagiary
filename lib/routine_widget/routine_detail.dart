@@ -31,6 +31,9 @@ class _RoutineDetailState extends State<RoutineDetail> {
   late FocusNode _contentFocusNode;
   Key _dayPickerKey = UniqueKey(); // DayPicker의 상태를 유지하기 위한 키
 
+  double colorPadding = 20;
+  double colorSize = 35;
+
   @override
   void initState() {
     super.initState();
@@ -315,78 +318,46 @@ class _RoutineDetailState extends State<RoutineDetail> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        '색상',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      const Text('색상', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 8),
-                      LayoutBuilder(
-                        builder: (context, constraints) {
-                          final totalItems = scheduleColors.length + 1;
-                          final rows = (totalItems / 6).ceil();
-                          final height = rows * (35 + 12.0) - 12;
-
-                          return SizedBox(
-                            height: height,
-                            child: GridView.builder(
-                              physics: const NeverScrollableScrollPhysics(),
-                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 6,
-                                crossAxisSpacing: 12,
-                                mainAxisSpacing: 12,
-                                childAspectRatio: 1,
-                              ),
-                              itemCount: totalItems,
-                              itemBuilder: (context, index) {
-                                if (index == scheduleColors.length) {
-                                  return GestureDetector(
-                                    onTap: () async {
-                                      await Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => const ColorManagementPage(),
-                                        ),
-                                      );
-                                      setState(() {});
-                                    },
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.grey.shade300,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(
-                                        Icons.add,
-                                        color: Colors.grey,
-                                        size: 20,
-                                      ),
-                                    ),
-                                  );
-                                }
-
-                                final color = scheduleColors[index];
-                                return GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      _colorValue = color.value;
-                                    });
-                                  },
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: color,
-                                      shape: BoxShape.circle,
-                                      border: _colorValue == color.value
-                                          ? Border.all(color: Colors.black, width: 2)
-                                          : null,
-                                    ),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: colorPadding),
+                        child: Wrap(
+                          spacing: (MediaQuery.of(context).size.width - (colorPadding * 4 + colorSize * 6)) / 5,
+                          runSpacing: 12,
+                          children: [
+                            ...scheduleColors.map((color) {
+                              return GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _colorValue = color.value;
+                                  });
+                                },
+                                child: Container(
+                                  width: 35,
+                                  height: 35,
+                                  decoration: BoxDecoration(
+                                    color: color,
+                                    shape: BoxShape.circle,
+                                    border: _colorValue == color ? Border.all(color: Colors.black, width: 2) : null,
                                   ),
-                                );
+                                ),
+                              );
+                            }),
+                            GestureDetector(
+                              onTap: () async {
+                                await Navigator.push(context, MaterialPageRoute(builder: (context) => const ColorManagementPage()));
+                                setState(() {});
                               },
+                              child: Container(
+                                width: 35,
+                                height: 35,
+                                decoration: BoxDecoration(color: Colors.grey.shade300, shape: BoxShape.circle),
+                                child: const Icon(Icons.add, color: Colors.grey, size: 20),
+                              ),
                             ),
-                          );
-                        },
+                          ],
+                        ),
                       ),
                     ],
                   ),
