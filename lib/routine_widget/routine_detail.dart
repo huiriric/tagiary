@@ -23,7 +23,7 @@ class _RoutineDetailState extends State<RoutineDetail> {
   bool _isEditing = false;
   bool _isLoading = false;
   late String _content;
-  late int _colorValue;
+  late Color _color;
   late List<bool> _daysOfWeek;
   late DateTime _startDate;
   DateTime? _endDate;
@@ -38,7 +38,7 @@ class _RoutineDetailState extends State<RoutineDetail> {
   void initState() {
     super.initState();
     _content = widget.item.content;
-    _colorValue = widget.item.colorValue;
+    _color = Color(widget.item.colorValue);
     _daysOfWeek = widget.item.daysOfWeek;
     _startDate = widget.item.startDate;
     _endDate = widget.item.endDate;
@@ -122,7 +122,7 @@ class _RoutineDetailState extends State<RoutineDetail> {
                               setState(() {
                                 _contentFocusNode.unfocus(); // 포커스 해제
                                 _content = _contentController.text = widget.item.content; // 원래 내용으로 되돌리기
-                                _colorValue = widget.item.colorValue; // 원래 색상으로 되돌리기
+                                _color = Color(widget.item.colorValue); // 원래 색상으로 되돌리기
                                 _daysOfWeek = widget.item.daysOfWeek; // 원래 요일로 되돌리기
                                 _startDate = widget.item.startDate; // 원래 시작일로 되돌리기
                                 _endDate = widget.item.endDate; // 원래 종료일로 되돌리기
@@ -330,7 +330,7 @@ class _RoutineDetailState extends State<RoutineDetail> {
                               return GestureDetector(
                                 onTap: () {
                                   setState(() {
-                                    _colorValue = color.value;
+                                    _color = color;
                                   });
                                 },
                                 child: Container(
@@ -339,7 +339,7 @@ class _RoutineDetailState extends State<RoutineDetail> {
                                   decoration: BoxDecoration(
                                     color: color,
                                     shape: BoxShape.circle,
-                                    border: _colorValue == color ? Border.all(color: Colors.black, width: 2) : null,
+                                    border: _color == color ? Border.all(color: Colors.black, width: 2) : null,
                                   ),
                                 ),
                               );
@@ -395,7 +395,7 @@ class _RoutineDetailState extends State<RoutineDetail> {
 
   bool detectDiff() {
     final isContentChanged = _content != widget.item.content;
-    final isColorChanged = _colorValue != widget.item.colorValue;
+    final isColorChanged = _color != Color(widget.item.colorValue);
     final isDaysOfWeekChanged = _daysOfWeek != widget.item.daysOfWeek;
     final isStartDateChanged = _startDate != widget.item.startDate;
     final isEndDateChanged = _endDate != widget.item.endDate;
@@ -429,7 +429,7 @@ class _RoutineDetailState extends State<RoutineDetail> {
         id: widget.item.id,
         content: _content,
         startDate: _startDate,
-        colorValue: _colorValue,
+        colorValue: _color.value,
         check: widget.item.check,
         updated: widget.item.updated,
         daysOfWeek: _daysOfWeek,
