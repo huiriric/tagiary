@@ -99,29 +99,56 @@ class _TodoScreenState extends State<TodoScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (pendingTodos.isNotEmpty) ...[
-                  const Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: Text(
-                      '할 일',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 4,
+                          height: 20,
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade400,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '할 일',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.grey.shade800,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade50,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '${pendingTodos.length}',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.blue.shade700,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  // const SizedBox(height: 8),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: GridView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: ListView.separated(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 3,
-                        crossAxisSpacing: 4,
-                        mainAxisSpacing: 4,
-                        childAspectRatio: 1.2,
-                      ),
                       itemCount: pendingTodos.length,
+                      separatorBuilder: (context, index) => const SizedBox(height: 8),
                       itemBuilder: (context, index) => _buildTodoItem(pendingTodos[index]),
                     ),
                   ),
@@ -141,28 +168,56 @@ class _TodoScreenState extends State<TodoScreen> {
                 //     ),
                 //   ),
                 if (inProgressTodos.isNotEmpty) ...[
-                  const Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: Text(
-                      '진행 중',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 4,
+                          height: 20,
+                          decoration: BoxDecoration(
+                            color: Colors.orange.shade400,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '진행 중',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.grey.shade800,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.shade50,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '${inProgressTodos.length}',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.orange.shade700,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: GridView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: ListView.separated(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 3,
-                        crossAxisSpacing: 4,
-                        mainAxisSpacing: 4,
-                        childAspectRatio: 1.2,
-                      ),
                       itemCount: inProgressTodos.length,
+                      separatorBuilder: (context, index) => const SizedBox(height: 8),
                       itemBuilder: (context, index) => _buildTodoItem(inProgressTodos[index]),
                     ),
                   ),
@@ -182,31 +237,60 @@ class _TodoScreenState extends State<TodoScreen> {
                 //     ),
                 //   ),
                 if (doneTodos.isNotEmpty) ...[
-                  const Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: Text(
-                      '완료',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 4,
+                          height: 20,
+                          decoration: BoxDecoration(
+                            color: Colors.green.shade400,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '완료',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.grey.shade800,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.green.shade50,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '${doneTodos.length}',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.green.shade700,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: GridView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: ListView.separated(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 3,
-                        crossAxisSpacing: 4,
-                        mainAxisSpacing: 4,
-                        childAspectRatio: 1.2,
-                      ),
                       itemCount: doneTodos.length,
+                      separatorBuilder: (context, index) => const SizedBox(height: 8),
                       itemBuilder: (context, index) => _buildTodoItem(doneTodos[index]),
                     ),
                   ),
+                  const SizedBox(height: 24),
                 ],
               ],
             ),
@@ -228,58 +312,116 @@ class _TodoScreenState extends State<TodoScreen> {
   }
 
   Widget _buildTodoItem(CheckItem todo) {
-    return Card(
-      elevation: 2,
-      shape: const RoundedRectangleBorder(
-        borderRadius:
-            BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(12), bottomRight: Radius.circular(24), bottomLeft: Radius.circular(12)),
+    final Color itemColor = Color(todo.colorValue);
+    final bool isDone = todo.check == CheckEnum.done;
+    final bool isInProgress = todo.check == CheckEnum.inProgress;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDone ? Colors.grey.shade200 : itemColor.withOpacity(0.3),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDone ? Colors.black.withOpacity(0.03) : itemColor.withOpacity(0.15),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: InkWell(
-        onTap: () => _showEditTodoDialog(context, todo),
-        borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(24), topRight: Radius.circular(12), bottomRight: Radius.circular(24), bottomLeft: Radius.circular(12)),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 2.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Checkbox(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _showEditTodoDialog(context, todo),
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Row(
+              children: [
+                // 좌측 색상 바
+                Container(
+                  width: 4,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: isDone ? Colors.grey.shade300 : itemColor,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // 체크박스
+                Transform.scale(
+                  scale: 1.1,
+                  child: Checkbox(
                     tristate: true,
                     value: getCheckboxValue(todo.check),
                     onChanged: (value) {
                       _updateTodoCheckEnum(todo, _getNextStatus(todo.check));
                     },
                     shape: const CircleBorder(),
-                    activeColor: Color(todo.colorValue),
+                    activeColor: itemColor,
                     side: BorderSide(
-                      color: todo.check != CheckEnum.pending ? Colors.transparent : Color(todo.colorValue),
-                      width: 2,
+                      color: todo.check != CheckEnum.pending ? Colors.transparent : itemColor,
+                      width: 2.5,
                     ),
                   ),
-                  if (todo.dueDate != null)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 4.0, top: 4.0),
-                      child: _buildDDay(todo.dueDate!),
-                    ),
-                ],
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: Text(
-                  todo.content,
-                  style: TextStyle(
-                    color: todo.check == CheckEnum.done ? Colors.black45 : Colors.black87,
-                    fontSize: 14,
-                    overflow: TextOverflow.ellipsis,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  textAlign: TextAlign.start,
                 ),
-              ),
-            ],
+                const SizedBox(width: 12),
+                // 할 일 내용
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        todo.content,
+                        style: TextStyle(
+                          color: isDone ? Colors.grey.shade500 : Colors.black87,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          decoration: isDone ? TextDecoration.lineThrough : null,
+                          decorationColor: Colors.grey.shade400,
+                          decorationThickness: 2,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      // 진행 중 표시
+                      //   if (isInProgress) ...[
+                      //     const SizedBox(height: 6),
+                      //     Row(
+                      //       children: [
+                      //         Container(
+                      //           width: 6,
+                      //           height: 6,
+                      //           decoration: BoxDecoration(
+                      //             color: itemColor,
+                      //             shape: BoxShape.circle,
+                      //           ),
+                      //         ),
+                      //         const SizedBox(width: 6),
+                      //         Text(
+                      //           '진행중',
+                      //           style: TextStyle(
+                      //             color: itemColor,
+                      //             fontSize: 13,
+                      //             fontWeight: FontWeight.w600,
+                      //           ),
+                      //         ),
+                      //       ],
+                      //     ),
+                      //   ],
+                    ],
+                  ),
+                ),
+                // D-Day 배지
+                if (todo.dueDate != null) ...[
+                  const SizedBox(width: 12),
+                  _buildDDay(todo.dueDate!),
+                ],
+              ],
+            ),
           ),
         ),
       ),
@@ -292,32 +434,65 @@ class _TodoScreenState extends State<TodoScreen> {
     final difference = endDate.difference(today).inDays;
 
     String text;
-    Color color;
+    Color bgColor;
+    Color textColor;
+    IconData? icon;
 
     if (difference < 0) {
-      text = 'D+${-difference}';
-      color = Colors.red;
+      text = '${-difference}일 지남';
+      bgColor = Colors.red.shade50;
+      textColor = Colors.red.shade700;
+      icon = Icons.warning_rounded;
     } else if (difference == 0) {
       text = 'D-Day';
-      color = Colors.red;
+      bgColor = Colors.red.shade100;
+      textColor = Colors.red.shade900;
+      icon = Icons.notifications_active_rounded;
+    } else if (difference <= 3) {
+      text = 'D-$difference';
+      bgColor = Colors.orange.shade50;
+      textColor = Colors.orange.shade700;
+      icon = Icons.access_time_rounded;
+    } else if (difference <= 7) {
+      text = 'D-$difference';
+      bgColor = Colors.blue.shade50;
+      textColor = Colors.blue.shade700;
     } else {
       text = 'D-$difference';
-      color = difference <= 3 ? Colors.red : Colors.blue;
+      bgColor = Colors.grey.shade100;
+      textColor = Colors.grey.shade700;
     }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: color,
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
+        color: bgColor,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: textColor.withOpacity(0.2),
+          width: 1,
         ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(
+              icon,
+              size: 12,
+              color: textColor,
+            ),
+            const SizedBox(width: 4),
+          ],
+          Text(
+            text,
+            style: TextStyle(
+              color: textColor,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
       ),
     );
   }
