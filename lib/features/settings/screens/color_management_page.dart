@@ -96,7 +96,9 @@ class _ColorManagementPageState extends State<ColorManagementPage> {
                 },
                 blendMode: BlendMode.dstIn,
                 child: SingleChildScrollView(
-                  child: Padding(
+                  child: AnimatedPadding(
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeInOut,
                     padding: EdgeInsets.symmetric(horizontal: colorPadding, vertical: 5),
                     child: Wrap(
                       spacing: (MediaQuery.of(context).size.width - (colorPadding * 4 + colorSize * 6)) / 5,
@@ -119,13 +121,22 @@ class _ColorManagementPageState extends State<ColorManagementPage> {
                           onLongPress: () {
                             _showDeleteDialog(colorItem);
                           },
-                          child: Container(
-                            width: 35,
-                            height: 35,
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            curve: Curves.easeInOut,
+                            width: colorSize,
+                            height: colorSize,
                             decoration: BoxDecoration(
                               color: color,
                               shape: BoxShape.circle,
                               border: _selectedColorItem?.id == colorItem.id ? Border.all(color: Colors.black, width: 2.5) : null,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: color.withAlpha((255 * 0.3).toInt()),
+                                  blurRadius: _selectedColorItem?.id == colorItem.id ? 8 : 6,
+                                  offset: Offset(0, _selectedColorItem?.id == colorItem.id ? 3 : 2),
+                                ),
+                              ],
                             ),
                           ),
                         );

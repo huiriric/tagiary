@@ -2,7 +2,8 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:mrplando/shared/widgets/day_picker/day_picker.dart';
+import 'package:mrplando/shared/widgets/color_picker.dart';
+import 'package:mrplando/shared/widgets/day_picker.dart';
 import 'package:mrplando/core/constants/colors.dart';
 import 'package:mrplando/features/home/screens/home_screen.dart';
 import 'package:mrplando/features/routine/models/check_routine_item.dart';
@@ -23,7 +24,7 @@ class _RoutineDetailState extends State<RoutineDetail> {
   bool _isEditing = false;
   bool _isLoading = false;
   late String _content;
-  late Color _color;
+  late Color _selectedColor;
   late List<bool> _daysOfWeek;
   late DateTime _startDate;
   DateTime? _endDate;
@@ -38,7 +39,7 @@ class _RoutineDetailState extends State<RoutineDetail> {
   void initState() {
     super.initState();
     _content = widget.item.content;
-    _color = Color(widget.item.colorValue);
+    _selectedColor = Color(widget.item.colorValue);
     _daysOfWeek = widget.item.daysOfWeek;
     _startDate = widget.item.startDate;
     _endDate = widget.item.endDate;
@@ -122,7 +123,7 @@ class _RoutineDetailState extends State<RoutineDetail> {
                               setState(() {
                                 _contentFocusNode.unfocus(); // 포커스 해제
                                 _content = _contentController.text = widget.item.content; // 원래 내용으로 되돌리기
-                                _color = Color(widget.item.colorValue); // 원래 색상으로 되돌리기
+                                _selectedColor = Color(widget.item.colorValue); // 원래 색상으로 되돌리기
                                 _daysOfWeek = widget.item.daysOfWeek; // 원래 요일로 되돌리기
                                 _startDate = widget.item.startDate; // 원래 시작일로 되돌리기
                                 _endDate = widget.item.endDate; // 원래 종료일로 되돌리기
@@ -315,51 +316,15 @@ class _RoutineDetailState extends State<RoutineDetail> {
                 // 색상 선택
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('색상', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 8),
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: colorPadding),
-                        child: Wrap(
-                          spacing: (MediaQuery.of(context).size.width - (colorPadding * 4 + colorSize * 6)) / 5,
-                          runSpacing: 12,
-                          children: [
-                            ...scheduleColors.map((color) {
-                              return GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    _color = color;
-                                  });
-                                },
-                                child: Container(
-                                  width: 35,
-                                  height: 35,
-                                  decoration: BoxDecoration(
-                                    color: color,
-                                    shape: BoxShape.circle,
-                                    border: _color == color ? Border.all(color: Colors.black, width: 2) : null,
-                                  ),
-                                ),
-                              );
-                            }),
-                            GestureDetector(
-                              onTap: () async {
-                                await Navigator.push(context, MaterialPageRoute(builder: (context) => const ColorManagementPage()));
-                                setState(() {});
-                              },
-                              child: Container(
-                                width: 35,
-                                height: 35,
-                                decoration: BoxDecoration(color: Colors.grey.shade300, shape: BoxShape.circle),
-                                child: const Icon(Icons.add, color: Colors.grey, size: 20),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                  child: ColorPicker(
+                    selectedColor: _selectedColor,
+                    onColorChanged: (color) {
+                      setState(() {
+                        _selectedColor = color;
+                      });
+                    },
+                    padding: colorPadding,
+                    colorSize: colorSize,
                   ),
                 ),
               ],
@@ -395,7 +360,7 @@ class _RoutineDetailState extends State<RoutineDetail> {
 
   bool detectDiff() {
     final isContentChanged = _content != widget.item.content;
-    final isColorChanged = _color != Color(widget.item.colorValue);
+    final isColorChanged = _selectedColor != Color(widget.item.colorValue);
     final isDaysOfWeekChanged = _daysOfWeek != widget.item.daysOfWeek;
     final isStartDateChanged = _startDate != widget.item.startDate;
     final isEndDateChanged = _endDate != widget.item.endDate;
@@ -423,13 +388,13 @@ class _RoutineDetailState extends State<RoutineDetail> {
     try {
       // 데이터베이스 업데이트 로직
       // widget.item.content = _content;
-      // widget.item.colorValue = _colorValue;
+      // widget.item.colorValue = _selectedColorValue;
       // widget.item.daysOfWeek = _daysOfWeek;
       CheckRoutineItem itemToUpdate = CheckRoutineItem(
         id: widget.item.id,
         content: _content,
         startDate: _startDate,
-        colorValue: _color.value,
+        colorValue: _selectedColor.value,
         check: widget.item.check,
         updated: widget.item.updated,
         daysOfWeek: _daysOfWeek,

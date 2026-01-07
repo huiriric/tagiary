@@ -6,6 +6,7 @@ import 'package:mrplando/features/todo/models/check_item.dart';
 import 'package:mrplando/features/schedule/models/schedule_item.dart';
 import 'package:mrplando/features/schedule/models/schedule_link_item.dart';
 import 'package:mrplando/features/settings/screens/color_management_page.dart';
+import 'package:mrplando/shared/widgets/color_picker.dart';
 
 class AddTodo extends StatefulWidget {
   final VoidCallback? onTodoAdded; // 할 일 추가 후 호출할 콜백 함수
@@ -156,51 +157,15 @@ class _AddTodoState extends State<AddTodo> {
                 // 색상 선택
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('색상', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 8),
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: colorPadding),
-                        child: Wrap(
-                          spacing: (MediaQuery.of(context).size.width - (colorPadding * 4 + colorSize * 6)) / 5,
-                          runSpacing: 12,
-                          children: [
-                            ...scheduleColors.map((color) {
-                              return GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    selectedColor = color;
-                                  });
-                                },
-                                child: Container(
-                                  width: 35,
-                                  height: 35,
-                                  decoration: BoxDecoration(
-                                    color: color,
-                                    shape: BoxShape.circle,
-                                    border: selectedColor.value == color.value ? Border.all(color: Colors.black, width: 2) : null,
-                                  ),
-                                ),
-                              );
-                            }),
-                            GestureDetector(
-                              onTap: () async {
-                                await Navigator.push(context, MaterialPageRoute(builder: (context) => const ColorManagementPage()));
-                                setState(() {});
-                              },
-                              child: Container(
-                                width: 35,
-                                height: 35,
-                                decoration: BoxDecoration(color: Colors.grey.shade300, shape: BoxShape.circle),
-                                child: const Icon(Icons.add, color: Colors.grey, size: 20),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                  child: ColorPicker(
+                    selectedColor: selectedColor,
+                    onColorChanged: (color) {
+                      setState(() {
+                        selectedColor = color;
+                      });
+                    },
+                    padding: colorPadding,
+                    colorSize: colorSize,
                   ),
                 ),
               ],
