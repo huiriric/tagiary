@@ -104,47 +104,6 @@ class _RoutineScreenState extends State<RoutineScreen> {
       body: !_isRepositoryInitialized
           ? const Center(child: CircularProgressIndicator()) // 로딩 표시
           : Column(children: [
-              // 요일 선택 버튼 row
-              // Padding(
-              //   padding: const EdgeInsets.all(16.0),
-              //   child: Row(
-              //     mainAxisAlignment: MainAxisAlignment.spaceAround,
-              //     children: List.generate(7, (index) {
-              //       bool isSelected = index == _selectedDayIndex;
-              //       return GestureDetector(
-              //         onTap: () {
-              //           setState(() {
-              //             _selectedDayIndex = index;
-              //             _updateSelectedDate(); // 날짜 업데이트 (달력도 함께 업데이트됨)
-              //           });
-              //         },
-              //         child: Container(
-              //           width: 36,
-              //           height: 36,
-              //           decoration: BoxDecoration(
-              //             color: isSelected ? Colors.black : Colors.transparent,
-              //             borderRadius: BorderRadius.circular(18),
-              //             border: Border.all(
-              //               color: isSelected ? Colors.black : Colors.grey,
-              //               width: 1,
-              //             ),
-              //           ),
-              //           child: Center(
-              //             child: Text(
-              //               dayLabels[index],
-              //               style: TextStyle(
-              //                 color: isSelected ? Colors.white : Colors.black,
-              //                 fontWeight: FontWeight.bold,
-              //                 fontSize: 14,
-              //               ),
-              //             ),
-              //           ),
-              //         ),
-              //       );
-              //     }),
-              //   ),
-              // ),
-
               // 선택된 날짜 표시
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -173,10 +132,16 @@ class _RoutineScreenState extends State<RoutineScreen> {
                     ),
 
                     // 다음 월 버튼
-                    IconButton(
-                      icon: const Icon(Icons.chevron_right),
-                      onPressed: _goToNextMonth,
-                    ),
+                    // 선택된 년월이 현재이면 이후 월로 이동 불가
+                    selectedDate.year == DateTime.now().year && selectedDate.month == DateTime.now().month
+                        ? const IconButton(
+                            icon: Icon(Icons.chevron_right, color: Colors.grey),
+                            onPressed: null,
+                          )
+                        : IconButton(
+                            icon: const Icon(Icons.chevron_right),
+                            onPressed: _goToNextMonth,
+                          ),
                     // 달력/주간 뷰 전환 버튼
                     // Row(
                     //   children: [
