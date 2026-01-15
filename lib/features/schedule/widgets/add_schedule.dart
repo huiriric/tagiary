@@ -1,29 +1,35 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:hive/hive.dart';
+import 'package:mrplando/features/schedule/models/schedule_category.dart';
+import 'package:mrplando/features/schedule/models/schedule_category_manager.dart';
+import 'package:mrplando/shared/widgets/category_management_page.dart';
 import 'package:mrplando/shared/widgets/color_picker.dart';
 import 'package:mrplando/shared/widgets/day_picker.dart';
+import 'package:mrplando/shared/models/category_manager_interface.dart';
 import 'package:mrplando/core/constants/colors.dart';
-import 'package:mrplando/main.dart';
 import 'package:mrplando/features/home/screens/home_screen.dart';
 import 'package:mrplando/shared/models/check_enum.dart';
 import 'package:mrplando/features/todo/models/check_item.dart';
-import 'package:mrplando/features/routine/models/check_routine_item.dart';
 import 'package:mrplando/shared/models/event.dart';
 import 'package:mrplando/features/schedule/models/schedule_item.dart';
 import 'package:mrplando/features/schedule/models/schedule_routine_item.dart';
 import 'package:mrplando/features/schedule/models/schedule_link_item.dart';
-import 'package:mrplando/features/home/widgets/home_widget_provider.dart';
-import 'package:mrplando/features/settings/screens/color_management_page.dart';
 
 class AddSchedule extends StatefulWidget {
   final DateTime date;
   final TimeOfDay start;
   final TimeOfDay end;
   final VoidCallback? onScheduleAdded; // 일정 추가 후 호출할 콜백 함수
+  final List<CategoryInfo> categories; // 카테고리 목록
 
-  const AddSchedule({super.key, required this.date, required this.start, required this.end, this.onScheduleAdded});
+  const AddSchedule(
+      {super.key,
+      required this.date,
+      required this.start,
+      required this.end,
+      this.onScheduleAdded,
+      this.categories = const []});
 
   @override
   State<AddSchedule> createState() => _AddScheduleState();
@@ -69,6 +75,9 @@ class _AddScheduleState extends State<AddSchedule> {
   double colorPadding = 20;
   double colorSize = 35;
 
+  // 카테고리 선택
+  CategoryInfo? selectedCategory;
+
   // 충돌 감지를 위한 변수
   Event? _conflictEvent;
 
@@ -81,6 +90,11 @@ class _AddScheduleState extends State<AddSchedule> {
     start = widget.start;
     end = widget.end;
     selectedColor = scheduleColors[0];
+
+    // 첫 번째 카테고리를 기본값으로 설정
+    if (widget.categories.isNotEmpty) {
+      selectedCategory = widget.categories.first;
+    }
   }
 
   @override
@@ -210,12 +224,16 @@ class _AddScheduleState extends State<AddSchedule> {
                       },
                       child: Text(
                         formatDate(date),
-                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: endDate != null ? 15 : 16, color: const Color(0xFF40608A)),
+                        style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: endDate != null ? 15 : 16,
+                            color: const Color(0xFF40608A)),
                       ),
                     ),
                     const SizedBox(width: 15),
                     TextButton(
-                      style: TextButton.styleFrom(backgroundColor: endDate != null ? const Color(0x00000000) : const Color(0x1140608A)),
+                      style: TextButton.styleFrom(
+                          backgroundColor: endDate != null ? const Color(0x00000000) : const Color(0x1140608A)),
                       onPressed: () async {
                         final selectedDate = await showBlackWhiteDatePicker(
                           context: context,
@@ -229,7 +247,10 @@ class _AddScheduleState extends State<AddSchedule> {
                       },
                       child: Text(
                         endDate != null ? formatDate(endDate!) : '종료일 선택',
-                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: endDate != null ? 15 : 16, color: const Color(0xFF40608A)),
+                        style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: endDate != null ? 15 : 16,
+                            color: const Color(0xFF40608A)),
                       ),
                     ),
                     if (endDate != null)
@@ -243,6 +264,85 @@ class _AddScheduleState extends State<AddSchedule> {
                       ),
                   ],
                 ),
+                // 카테고리 선택
+                if (widget.categories.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('카테고리', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey.shade300),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<CategoryInfo>(
+                                    value: selectedCategory,
+                                    isExpanded: true,
+                                    icon: const Icon(Icons.arrow_drop_down),
+                                    items: widget.categories.map((category) {
+                                      return DropdownMenuItem<CategoryInfo>(
+                                        value: category,
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              width: 16,
+                                              height: 16,
+                                              decoration: BoxDecoration(
+                                                color: category.color,
+                                                shape: BoxShape.circle,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Text(
+                                              category.name,
+                                              style: const TextStyle(fontSize: 14),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    }).toList(),
+                                    onChanged: (CategoryInfo? newValue) {
+                                      setState(() {
+                                        selectedCategory = newValue;
+                                      });
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const Padding(padding: EdgeInsets.only(left: 10)),
+                            // 카테고리 관리 버튼
+                            IconButton(
+                              onPressed: () {
+                                final scheduleCategoryManager = ScheduleCategoryManager(
+                                  categoryRepository: ScheduleCategoryRepository(),
+                                );
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => CategoryManagementPage(
+                                      categoryManager: scheduleCategoryManager,
+                                      title: '일정 카테고리',
+                                    ),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.settings_outlined, color: Colors.black),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
                 if (isRoutine)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -279,7 +379,11 @@ class _AddScheduleState extends State<AddSchedule> {
           top: 15,
           right: 20,
           child: isLoading
-              ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.green)))
+              ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.green)))
               : IconButton(
                   onPressed: _saveSchedule,
                   icon: const Icon(Icons.check, color: Colors.green, size: 32),
@@ -433,6 +537,7 @@ class _AddScheduleState extends State<AddSchedule> {
       endHour: null,
       endMinute: null,
       colorValue: selectedColor.value,
+      categoryId: selectedCategory?.id,
     );
 
     await scheduleRepository.addItem(newSchedule);
@@ -470,7 +575,8 @@ class _AddScheduleState extends State<AddSchedule> {
       final linkRepo = ScheduleLinkRepository();
       await linkRepo.init();
 
-      final newLink = ScheduleLinkItem(scheduleId: latestSchedule.id, isRoutine: false, linkedItemId: todoId, linkedItemType: LinkItemType.todo);
+      final newLink = ScheduleLinkItem(
+          scheduleId: latestSchedule.id, isRoutine: false, linkedItemId: todoId, linkedItemType: LinkItemType.todo);
 
       await linkRepo.addItem(newLink);
     }
@@ -547,6 +653,7 @@ class _AddScheduleState extends State<AddSchedule> {
       endHour: end.hour,
       endMinute: end.minute,
       colorValue: selectedColor.value,
+      categoryId: selectedCategory?.id,
     );
 
     await scheduleRepository.addItem(newSchedule);
@@ -583,6 +690,7 @@ class _AddScheduleState extends State<AddSchedule> {
       colorValue: selectedColor.value,
       startDate: date,
       endDate: endDate,
+      categoryId: selectedCategory?.id,
     );
 
     await routineRepository.addItem(newRoutine);

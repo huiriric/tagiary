@@ -1,21 +1,20 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:hive/hive.dart';
+import 'package:mrplando/shared/widgets/category_management_page.dart';
 import 'package:mrplando/shared/widgets/color_picker.dart';
 import 'package:mrplando/shared/widgets/day_picker.dart';
-import 'package:mrplando/core/constants/colors.dart';
-import 'package:mrplando/main.dart';
+import 'package:mrplando/shared/models/category_manager_interface.dart';
 import 'package:mrplando/features/home/screens/home_screen.dart';
 import 'package:mrplando/shared/models/event.dart';
 import 'package:mrplando/features/schedule/models/schedule_item.dart';
 import 'package:mrplando/features/schedule/models/schedule_routine_item.dart';
+import 'package:mrplando/features/schedule/models/schedule_category.dart';
+import 'package:mrplando/features/schedule/models/schedule_category_manager.dart';
 import 'package:mrplando/features/todo/models/check_item.dart';
 import 'package:mrplando/features/routine/models/check_routine_item.dart';
 import 'package:mrplando/features/schedule/models/schedule_link_item.dart';
 import 'package:mrplando/features/schedule/widgets/add_schedule.dart';
-import 'package:mrplando/features/home/widgets/home_widget_provider.dart';
-import 'package:mrplando/features/settings/screens/color_management_page.dart';
 
 class ScheduleDetails extends StatefulWidget {
   final Event event;
@@ -50,6 +49,11 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
   double colorPadding = 20;
   double colorSize = 35;
 
+  // 카테고리 관련
+  late ScheduleCategoryManager _categoryManager;
+  List<CategoryInfo> _categories = [];
+  CategoryInfo? _selectedCategory;
+
   late FixedExtentScrollController _startHourController;
   late FixedExtentScrollController _startMinuteController;
   late FixedExtentScrollController _endHourController;
@@ -77,12 +81,36 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
     selectedDays = widget.event.daysOfWeek;
     _dayPickerKey = UniqueKey();
     _initializeControllers();
+
+    // 카테고리 초기화
+    _categoryManager = ScheduleCategoryManager(
+      categoryRepository: ScheduleCategoryRepository(),
+    );
+    _loadCategories();
+  }
+
+  Future<void> _loadCategories() async {
+    await _categoryManager.init();
+    setState(() {
+      _categories = _categoryManager.getAllCategories();
+      // 기존 카테고리 설정
+      if (widget.event.categoryId != null) {
+        _selectedCategory = _categories.firstWhere(
+          (cat) => cat.id == widget.event.categoryId,
+          orElse: () =>
+              _categories.isNotEmpty ? _categories.first : CategoryInfo(id: 0, name: '미분류', color: Colors.grey),
+        );
+      } else if (_categories.isNotEmpty) {
+        _selectedCategory = _categories.first;
+      }
+    });
   }
 
   void _initializeControllers() {
     // print(_startTime);
     // print(_endTime);
-    _startHourController = FixedExtentScrollController(initialItem: _startTime != null ? _startTime!.hour : now.hour + 1);
+    _startHourController =
+        FixedExtentScrollController(initialItem: _startTime != null ? _startTime!.hour : now.hour + 1);
     _startMinuteController = FixedExtentScrollController(initialItem: _startTime != null ? _startTime!.minute ~/ 5 : 0);
     _endHourController = FixedExtentScrollController(initialItem: _endTime != null ? _endTime!.hour : now.hour + 2);
     _endMinuteController = FixedExtentScrollController(initialItem: _endTime != null ? _endTime!.minute ~/ 5 : 0);
@@ -209,6 +237,17 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
                               _endTime = widget.event.endTime;
                               _isRoutine = widget.event.isRoutine;
                               _selectedColor = widget.event.color;
+                              // 카테고리도 복원
+                              if (widget.event.categoryId != null) {
+                                _selectedCategory = _categories.firstWhere(
+                                  (cat) => cat.id == widget.event.categoryId,
+                                  orElse: () => _categories.isNotEmpty
+                                      ? _categories.first
+                                      : CategoryInfo(id: 0, name: '미분류', color: Colors.grey),
+                                );
+                              } else if (_categories.isNotEmpty) {
+                                _selectedCategory = _categories.first;
+                              }
                               _isEditing = false;
                               _dayPickerKey = UniqueKey(); // DayPicker 새로고침
                               if (_hasTimeSet) {
@@ -318,7 +357,8 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
                         _hasTimeSet = value!;
                         if (_hasTimeSet) {
                           // 시간 설정 활성화 시 기본값 설정
-                          _startTime = _startTime ?? (widget.event.startTime ?? TimeOfDay(hour: now.hour + 1, minute: 0));
+                          _startTime =
+                              _startTime ?? (widget.event.startTime ?? TimeOfDay(hour: now.hour + 1, minute: 0));
                           _endTime = _endTime ?? (widget.event.endTime ?? TimeOfDay(hour: now.hour + 2, minute: 0));
                         }
                       });
@@ -398,6 +438,84 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
                 ),
               // 시간 설정이 활성화된 경우 시간 피커 표시 (일반 일정과 루틴 동일)
               if (_hasTimeSet) timePicker(),
+              // 카테고리 선택
+              if (_categories.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('카테고리', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey.shade300),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<CategoryInfo>(
+                                  value: _selectedCategory,
+                                  isExpanded: true,
+                                  icon: const Icon(Icons.arrow_drop_down),
+                                  items: _categories.map((category) {
+                                    return DropdownMenuItem<CategoryInfo>(
+                                      value: category,
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            width: 16,
+                                            height: 16,
+                                            decoration: BoxDecoration(
+                                              color: category.color,
+                                              shape: BoxShape.circle,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Text(
+                                            category.name,
+                                            style: const TextStyle(fontSize: 14),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  }).toList(),
+                                  onChanged: (CategoryInfo? newValue) {
+                                    setState(() {
+                                      _selectedCategory = newValue;
+                                    });
+                                  },
+                                ),
+                              ),
+                            ),
+                          ),
+                          const Padding(padding: EdgeInsets.only(left: 10)),
+                          // 카테고리 관리 버튼
+                          IconButton(
+                            onPressed: () {
+                              final scheduleCategoryManager = ScheduleCategoryManager(
+                                categoryRepository: ScheduleCategoryRepository(),
+                              );
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => CategoryManagementPage(
+                                    categoryManager: scheduleCategoryManager,
+                                    title: '일정 카테고리',
+                                  ),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.settings_outlined, color: Colors.black),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               // 색상 선택
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -426,7 +544,7 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
   }
 
   bool detectDiff() {
-    // 제목, 설명, 시간, 색상 변경 여부 확인
+    // 제목, 설명, 시간, 색상, 카테고리 변경 여부 확인
     final isTimeSetChanged = _hasTimeSet != widget.event.hasTimeSet;
     final isTitleChanged = _titleController.text != widget.event.title;
     final isDescriptionChanged = _descriptionController.text != widget.event.description;
@@ -436,6 +554,7 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
     final isStartTimeChanged = _startTime != widget.event.startTime;
     final isEndTimeChanged = _endTime != widget.event.endTime;
     final isColorChanged = _selectedColor != widget.event.color;
+    final isCategoryChanged = _selectedCategory?.id != widget.event.categoryId;
 
     return isTimeSetChanged ||
         isTitleChanged ||
@@ -445,7 +564,8 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
         isRoutineChanged ||
         isStartTimeChanged ||
         isEndTimeChanged ||
-        isColorChanged;
+        isColorChanged ||
+        isCategoryChanged;
   }
 
   Widget timePicker() {
@@ -476,7 +596,8 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
                   onSelectedItemChanged: (i) => setState(() {
                     // print(_startTime);
                     _startTime = TimeOfDay(hour: i, minute: _startTime!.minute);
-                    _startHourController = FixedExtentScrollController(initialItem: _startTime != null ? _startTime!.hour : now.hour + 1);
+                    _startHourController =
+                        FixedExtentScrollController(initialItem: _startTime != null ? _startTime!.hour : now.hour + 1);
                   }),
                   children: List.generate(
                     24,
@@ -506,7 +627,8 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
                   scrollController: _startMinuteController,
                   onSelectedItemChanged: (i) => setState(() {
                     _startTime = TimeOfDay(hour: _startTime!.hour, minute: i * 5);
-                    _startMinuteController = FixedExtentScrollController(initialItem: _startTime != null ? _startTime!.minute ~/ 5 : 0);
+                    _startMinuteController =
+                        FixedExtentScrollController(initialItem: _startTime != null ? _startTime!.minute ~/ 5 : 0);
                   }),
                   children: List.generate(
                     12,
@@ -540,7 +662,8 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
                   scrollController: _endHourController,
                   onSelectedItemChanged: (i) => setState(() {
                     _endTime = TimeOfDay(hour: i, minute: _endTime!.minute);
-                    _endHourController = FixedExtentScrollController(initialItem: _endTime != null ? _endTime!.hour : now.hour + 2);
+                    _endHourController =
+                        FixedExtentScrollController(initialItem: _endTime != null ? _endTime!.hour : now.hour + 2);
                   }),
                   children: List.generate(
                     24,
@@ -570,7 +693,8 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
                   scrollController: _endMinuteController,
                   onSelectedItemChanged: (i) => setState(() {
                     _endTime = TimeOfDay(hour: _endTime!.hour, minute: i * 5);
-                    _endMinuteController = FixedExtentScrollController(initialItem: _endTime != null ? _endTime!.minute ~/ 5 : 0);
+                    _endMinuteController =
+                        FixedExtentScrollController(initialItem: _endTime != null ? _endTime!.minute ~/ 5 : 0);
                   }),
                   children: List.generate(
                     12,
@@ -1015,6 +1139,7 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
       endHour: _hasTimeSet ? _endTime!.hour : null,
       endMinute: _hasTimeSet ? _endTime!.minute : null,
       colorValue: _selectedColor.value,
+      categoryId: _selectedCategory?.id,
     );
 
     // ID 설정 (Hive에서 필요)
@@ -1053,6 +1178,7 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
       colorValue: _selectedColor.value,
       startDate: _date, // UI에서 선택한 시작일
       endDate: _endDate, // UI에서 선택한 종료일
+      categoryId: _selectedCategory?.id,
     );
 
     // ID 설정 (Hive에서 필요)

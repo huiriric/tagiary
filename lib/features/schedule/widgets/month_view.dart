@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
 import 'package:mrplando/shared/widgets/slide_up_container.dart';
+import 'package:mrplando/shared/models/category_manager_interface.dart';
 import 'package:mrplando/core/providers/provider.dart';
 import 'package:mrplando/shared/models/event.dart';
 import 'package:mrplando/features/schedule/models/schedule_item.dart';
@@ -11,10 +12,14 @@ import 'package:mrplando/features/schedule/widgets/schedule_details.dart';
 
 class MonthView extends StatefulWidget {
   final DateTime selectedDate;
+  final int? selectedCategoryId; // 선택된 카테고리 ID
+  final List<CategoryInfo> categories; // 카테고리 목록
 
   const MonthView({
     super.key,
     required this.selectedDate,
+    this.selectedCategoryId,
+    this.categories = const [],
   });
 
   @override
@@ -180,7 +185,7 @@ class _MonthViewState extends State<MonthView> {
                                 },
                                 onLongPress: () async {
                                   // 일정 추가 다이얼로그 표시
-                                  void asdf = await _showAddScheduleDialog(context, day);
+                                  await _showAddScheduleDialog(context, day);
                                   setState(() {
                                     _selectedDay = day;
                                     // 일정 추가 후 월간 일정 다시 로드
@@ -351,11 +356,18 @@ class _MonthViewState extends State<MonthView> {
       }).toList();
 
       // 모든 일정 합치기 (시간 있는/없는 일정 모두 포함)
-      monthEvents[dateKey] = [
+      List<Event> allDayEvents = [
         ...dateEvents,
         ...routineNoTimeEvents,
         ...routineEvents,
       ];
+
+      // 카테고리 필터링 적용
+      if (widget.selectedCategoryId != null) {
+        allDayEvents = allDayEvents.where((event) => event.categoryId == widget.selectedCategoryId).toList();
+      }
+
+      monthEvents[dateKey] = allDayEvents;
 
       // 일정 정렬 (시간 없는 루틴 우선, 시간 있는 루틴 우선, 그 다음 시간순)
       monthEvents[dateKey]!.sort((a, b) {
@@ -885,6 +897,7 @@ class _MonthViewState extends State<MonthView> {
         for (Event routine in [...routineEvents, ...routineNoTimeEvents]) {
           Event dayRoutine = Event(
             id: routine.id,
+            categoryId: routine.categoryId,
             title: routine.title,
             description: routine.description,
             date: day, // 해당 날짜로 설정
@@ -900,6 +913,11 @@ class _MonthViewState extends State<MonthView> {
           allEvents.add(dayRoutine);
         }
       }
+    }
+
+    // 카테고리 필터링 적용
+    if (widget.selectedCategoryId != null) {
+      allEvents = allEvents.where((event) => event.categoryId == widget.selectedCategoryId).toList();
     }
 
     return allEvents;

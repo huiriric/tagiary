@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
 import 'package:mrplando/shared/widgets/slide_up_container.dart';
+import 'package:mrplando/shared/models/category_manager_interface.dart';
 import 'package:mrplando/core/providers/provider.dart';
 import 'package:mrplando/shared/models/event.dart';
 import 'package:mrplando/features/schedule/models/schedule_item.dart';
@@ -13,12 +14,16 @@ class TimeLine extends StatefulWidget {
   final DateTime date;
   final bool fromScreen;
   final VoidCallback? onEventsLoaded; // 이벤트 로드 완료 시 호출할 콜백
+  final int? selectedCategoryId; // 선택된 카테고리 ID
+  final List<CategoryInfo> categories; // 카테고리 목록
 
   const TimeLine({
     super.key,
     required this.date,
     required this.fromScreen,
     this.onEventsLoaded,
+    this.selectedCategoryId,
+    this.categories = const [],
   });
 
   @override
@@ -166,11 +171,22 @@ class _TimeLineState extends State<TimeLine> {
       setState(() {
         // 시간 정보가 있는 일정만 타임라인에 표시
         _events = [...timeRoutineEvents, ...timeEvents];
+
+        // 카테고리 필터링 적용
+        if (widget.selectedCategoryId != null) {
+          _events = _events.where((event) => event.categoryId == widget.selectedCategoryId).toList();
+        }
+
         // 이벤트를 시작 시간순으로 정렬
         _events.sort((a, b) => a.startMinutes.compareTo(b.startMinutes));
 
         // 시간 정보가 없는 일정
         _noTimeEvents = [...noTimeRoutineEvents, ...noTimeEvents];
+
+        // 카테고리 필터링 적용
+        if (widget.selectedCategoryId != null) {
+          _noTimeEvents = _noTimeEvents.where((event) => event.categoryId == widget.selectedCategoryId).toList();
+        }
       });
 
       // 콜백 호출 (이벤트 로드 완료)

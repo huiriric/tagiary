@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
 import 'package:mrplando/shared/widgets/slide_up_container.dart';
+import 'package:mrplando/shared/models/category_manager_interface.dart';
 import 'package:mrplando/core/providers/provider.dart';
 import 'package:mrplando/shared/models/event.dart';
 import 'package:mrplando/features/schedule/models/schedule_item.dart';
@@ -11,10 +12,14 @@ import 'package:mrplando/features/schedule/widgets/schedule_details.dart';
 
 class WeekView extends StatefulWidget {
   final DateTime selectedDate;
+  final int? selectedCategoryId; // 선택된 카테고리 ID
+  final List<CategoryInfo> categories; // 카테고리 목록
 
   const WeekView({
     super.key,
     required this.selectedDate,
+    this.selectedCategoryId,
+    this.categories = const [],
   });
 
   @override
@@ -167,11 +172,18 @@ class _WeekViewState extends State<WeekView> {
       }).toList();
 
       // 시간 있는 일정과 없는 일정 모두 포함
-      weekEvents[dayOfWeek] = [
+      List<Event> allDayEvents = [
         ...dateEvents,
         ...noTimeRoutineEvents,
         ...routineEvents,
       ];
+
+      // 카테고리 필터링 적용
+      if (widget.selectedCategoryId != null) {
+        allDayEvents = allDayEvents.where((event) => event.categoryId == widget.selectedCategoryId).toList();
+      }
+
+      weekEvents[dayOfWeek] = allDayEvents;
 
       // 시간 기준으로 정렬
       weekEvents[dayOfWeek]!.sort((a, b) {
