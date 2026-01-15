@@ -3,7 +3,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:mrplando/shared/widgets/color_picker.dart';
 import 'package:mrplando/shared/widgets/slide_up_container.dart';
 import 'package:mrplando/core/constants/colors.dart';
-import 'package:mrplando/features/diary/screens/category_management_page.dart';
+import 'package:mrplando/features/diary/screens/diary_category_management_page.dart';
 import 'package:mrplando/features/diary/widgets/tag_selector.dart';
 import 'package:mrplando/features/diary/models/diary_item.dart';
 import 'package:mrplando/features/diary/models/tag.dart';
@@ -407,7 +407,7 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
                           await Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => CategoryManagementPage(
+                              builder: (context) => DiaryCategoryManagementPage(
                                 tagManager: widget.tagManager,
                               ),
                             ),

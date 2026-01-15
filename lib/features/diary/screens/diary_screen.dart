@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
-import 'package:mrplando/features/diary/screens/category_management_page.dart';
+import 'package:mrplando/features/diary/screens/diary_category_management_page.dart';
 import 'package:mrplando/features/diary/widgets/diary_editor.dart';
 import 'package:mrplando/features/diary/screens/diary_list_screen.dart';
 import 'package:mrplando/features/diary/models/diary_item.dart';
@@ -303,7 +303,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
                   await Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => CategoryManagementPage(
+                      builder: (context) => DiaryCategoryManagementPage(
                         tagManager: _tagManager,
                       ),
                     ),
