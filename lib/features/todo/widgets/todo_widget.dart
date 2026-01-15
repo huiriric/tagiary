@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:mrplando/shared/widgets/slide_up_container.dart';
-import 'package:mrplando/core/constants/colors.dart';
 import 'package:mrplando/shared/models/check_enum.dart';
 import 'package:mrplando/features/todo/models/check_item.dart';
 import 'package:mrplando/features/todo/widgets/add_todo.dart';
-import 'package:mrplando/features/home/widgets/home_widget_provider.dart';
 
 class TodoWidget extends StatefulWidget {
   const TodoWidget({super.key});

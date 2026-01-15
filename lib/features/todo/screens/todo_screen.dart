@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:mrplando/shared/models/category_manager_interface.dart';
 import 'package:mrplando/shared/widgets/slide_up_container.dart';
 import 'package:mrplando/shared/models/check_enum.dart';
 import 'package:mrplando/features/todo/models/check_item.dart';
+import 'package:mrplando/features/todo/models/todo_category.dart';
+import 'package:mrplando/features/todo/models/todo_category_manager.dart';
 import 'package:mrplando/features/todo/widgets/add_todo.dart';
-import 'package:mrplando/features/todo/widgets/todo_widget.dart';
+import 'package:mrplando/features/todo/screens/category_todo_detail_screen.dart';
 
 class TodoScreen extends StatefulWidget {
   const TodoScreen({super.key});
@@ -16,18 +19,32 @@ class TodoScreen extends StatefulWidget {
 
 class _TodoScreenState extends State<TodoScreen> {
   late CheckRepository _repository;
+  late TodoCategoryManager _categoryManager;
+  List<CategoryInfo> _categories = [];
 
   @override
   void initState() {
     super.initState();
     _repository = CheckRepository();
     _repository.init();
+
+    _categoryManager = TodoCategoryManager(
+      categoryRepository: TodoCategoryRepository(),
+    );
+    _loadCategories();
+  }
+
+  Future<void> _loadCategories() async {
+    await _categoryManager.init();
+    setState(() {
+      _categories = _categoryManager.getAllCategories();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
         title: const Text(
           '할 일',
@@ -49,41 +66,19 @@ class _TodoScreenState extends State<TodoScreen> {
       body: ValueListenableBuilder(
         valueListenable: Hive.box<CheckItem>('checkBox').listenable(),
         builder: (context, Box<CheckItem> box, _) {
-          final todos = box.values.toList();
-
-          // Get unchecked items sorted by end date (closest first)
-          final pendingTodos = todos.where((todo) => todo.check == CheckEnum.pending).toList()
-            ..sort((a, b) {
-              if (a.dueDate == null && b.dueDate == null) {
-                return b.id.compareTo(a.id); // Newer tasks first if no end date
-              } else if (a.dueDate == null) {
-                return 1; // b comes first
-              } else if (b.dueDate == null) {
-                return -1; // a comes first
-              } else {
-                return a.dueDate!.compareTo(b.dueDate!);
-              }
-            });
-
-          final inProgressTodos = todos.where((todo) => todo.check == CheckEnum.inProgress).toList()..sort((a, b) => b.id.compareTo(a.id)); // Newer tasks first
-
-          // Get checked items sorted by updated (most recent first)
-          final doneTodos = todos.where((todo) => todo.check == CheckEnum.done).toList()
-            ..sort((a, b) => b.id.compareTo(a.id)); // Using id as proxy for update time
-
-          if (todos.isEmpty) {
+          if (_categories.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    Icons.check_box_outline_blank,
+                    Icons.category_outlined,
                     size: 48,
                     color: Colors.grey[300],
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    '할 일을 추가해보세요',
+                    '카테고리를 추가해보세요',
                     style: TextStyle(
                       color: Colors.grey[600],
                       fontSize: 16,
@@ -95,204 +90,13 @@ class _TodoScreenState extends State<TodoScreen> {
           }
 
           return SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (pendingTodos.isNotEmpty) ...[
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 4,
-                          height: 20,
-                          decoration: BoxDecoration(
-                            color: Colors.blue.shade400,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '할 일',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.grey.shade800,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.blue.shade50,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            '${pendingTodos.length}',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.blue.shade700,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: ListView.separated(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: pendingTodos.length,
-                      separatorBuilder: (context, index) => const SizedBox(height: 8),
-                      itemBuilder: (context, index) => _buildTodoItem(pendingTodos[index]),
-                    ),
-                  ),
-                ],
-                // if (pendingTodos.isNotEmpty && inProgressTodos.isNotEmpty)
-                //   const Padding(
-                //     padding: EdgeInsets.symmetric(horizontal: 16.0),
-                //     child: Divider(
-                //       thickness: 1,
-                //     ),
-                //   )
-                // else if (pendingTodos.isNotEmpty && doneTodos.isNotEmpty)
-                //   const Padding(
-                //     padding: EdgeInsets.symmetric(horizontal: 16.0),
-                //     child: Divider(
-                //       thickness: 1,
-                //     ),
-                //   ),
-                if (inProgressTodos.isNotEmpty) ...[
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 4,
-                          height: 20,
-                          decoration: BoxDecoration(
-                            color: Colors.orange.shade400,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '진행 중',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.grey.shade800,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.orange.shade50,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            '${inProgressTodos.length}',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.orange.shade700,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: ListView.separated(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: inProgressTodos.length,
-                      separatorBuilder: (context, index) => const SizedBox(height: 8),
-                      itemBuilder: (context, index) => _buildTodoItem(inProgressTodos[index]),
-                    ),
-                  ),
-                ],
-                // if (pendingTodos.isNotEmpty && doneTodos.isNotEmpty)
-                //   const Padding(
-                //     padding: EdgeInsets.symmetric(horizontal: 16.0),
-                //     child: Divider(
-                //       thickness: 1,
-                //     ),
-                //   ),
-                // if (inProgressTodos.isNotEmpty && doneTodos.isNotEmpty)
-                //   const Padding(
-                //     padding: EdgeInsets.symmetric(horizontal: 16.0),
-                //     child: Divider(
-                //       thickness: 1,
-                //     ),
-                //   ),
-                if (doneTodos.isNotEmpty) ...[
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 4,
-                          height: 20,
-                          decoration: BoxDecoration(
-                            color: Colors.green.shade400,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '완료',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.grey.shade800,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.green.shade50,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            '${doneTodos.length}',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.green.shade700,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: ListView.separated(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: doneTodos.length,
-                      separatorBuilder: (context, index) => const SizedBox(height: 8),
-                      itemBuilder: (context, index) => _buildTodoItem(doneTodos[index]),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                ],
-              ],
+            padding: const EdgeInsets.all(16.0),
+            child: Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              children: _categories.map((category) {
+                return _buildCategoryCard(context, category, box);
+              }).toList(),
             ),
           );
         },
@@ -300,196 +104,237 @@ class _TodoScreenState extends State<TodoScreen> {
     );
   }
 
-  CheckEnum _getNextStatus(CheckEnum currentStatus) {
-    switch (currentStatus) {
-      case CheckEnum.pending:
-        return CheckEnum.inProgress; // false → null
-      case CheckEnum.inProgress:
-        return CheckEnum.done; // null → true
-      case CheckEnum.done:
-        return CheckEnum.pending; // true → false
-    }
-  }
+  Widget _buildCategoryCard(BuildContext context, CategoryInfo category, Box<CheckItem> box) {
+    // 해당 카테고리의 할 일들 필터링
+    final categoryTodos = box.values.where((todo) => todo.categoryId == category.id).toList();
+    final pendingCount = categoryTodos.where((todo) => todo.check == CheckEnum.pending).length;
+    final inProgressCount = categoryTodos.where((todo) => todo.check == CheckEnum.inProgress).length;
+    final doneCount = categoryTodos.where((todo) => todo.check == CheckEnum.done).length;
 
-  Widget _buildTodoItem(CheckItem todo) {
-    final Color itemColor = Color(todo.colorValue);
-    final bool isDone = todo.check == CheckEnum.done;
-    final bool isInProgress = todo.check == CheckEnum.inProgress;
+    // 최근 3개의 미완료/진행중 항목 미리보기
+    final activeTodos = categoryTodos.where((todo) => todo.check != CheckEnum.done).toList()
+      ..sort((a, b) {
+        // 진행중 우선, 그 다음 마감일 가까운 순
+        if (a.check != b.check) {
+          return a.check == CheckEnum.inProgress ? -1 : 1;
+        }
+        if (a.dueDate == null && b.dueDate == null) {
+          return b.id.compareTo(a.id);
+        } else if (a.dueDate == null) {
+          return 1;
+        } else if (b.dueDate == null) {
+          return -1;
+        } else {
+          return a.dueDate!.compareTo(b.dueDate!);
+        }
+      });
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDone ? Colors.grey.shade200 : itemColor.withOpacity(0.3),
-          width: 2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDone ? Colors.black.withOpacity(0.03) : itemColor.withOpacity(0.15),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => _showEditTodoDialog(context, todo),
-          borderRadius: BorderRadius.circular(16),
-          child: Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Row(
-              children: [
-                // 좌측 색상 바
-                Container(
-                  width: 4,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: isDone ? Colors.grey.shade300 : itemColor,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                // 체크박스
-                Transform.scale(
-                  scale: 1.1,
-                  child: Checkbox(
-                    tristate: true,
-                    value: getCheckboxValue(todo.check),
-                    onChanged: (value) {
-                      _updateTodoCheckEnum(todo, _getNextStatus(todo.check));
+    final previewTodos = activeTodos.take(3).toList();
+    final screenWidth = MediaQuery.of(context).size.width;
+    final cardWidth = (screenWidth - 48) / 2;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // 화면 너비에 따라 카드 크기 조정
+
+        return SizedBox(
+          width: cardWidth,
+          height: cardWidth,
+          child: Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            elevation: 2,
+            color: Colors.white,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: categoryTodos.isEmpty
+                  ? null
+                  : () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => CategoryTodoDetailScreen(
+                            category: category,
+                            allCategories: _categories,
+                          ),
+                        ),
+                      );
                     },
-                    shape: const CircleBorder(),
-                    activeColor: itemColor,
-                    side: BorderSide(
-                      color: todo.check != CheckEnum.pending ? Colors.transparent : itemColor,
-                      width: 2.5,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // 헤더: 카테고리 이름과 카운터
+                  Padding(
+                    padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 16.0, bottom: 4.0),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 12,
+                          height: 12,
+                          decoration: BoxDecoration(
+                            color: category.color,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            category.name,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: category.color.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '$pendingCount',
+                            style: TextStyle(
+                              color: category.color,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                // 할 일 내용
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        todo.content,
-                        style: TextStyle(
-                          color: isDone ? Colors.grey.shade500 : Colors.black87,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          decoration: isDone ? TextDecoration.lineThrough : null,
-                          decorationColor: Colors.grey.shade400,
-                          decorationThickness: 2,
+                  // const SizedBox(height: 6),
+                  // 상태별 카운터
+                  // Row(
+                  //   children: [
+                  //     _buildStatusChip('진행중', inProgressCount, Colors.orange),
+                  //     const SizedBox(width: 8),
+                  //     _buildStatusChip('완료', doneCount, Colors.green),
+                  //   ],
+                  // ),
+                  // const SizedBox(height: 12),
+                  // const Divider(height: 1),
+                  // const SizedBox(height: 12),
+                  // 할 일 미리보기
+                  if (categoryTodos.isEmpty)
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16.0),
+                        child: Text(
+                          '할 일이 없습니다',
+                          style: TextStyle(
+                            color: Colors.grey[400],
+                            fontSize: 14,
+                          ),
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                      // 진행 중 표시
-                      //   if (isInProgress) ...[
-                      //     const SizedBox(height: 6),
-                      //     Row(
-                      //       children: [
-                      //         Container(
-                      //           width: 6,
-                      //           height: 6,
-                      //           decoration: BoxDecoration(
-                      //             color: itemColor,
-                      //             shape: BoxShape.circle,
-                      //           ),
-                      //         ),
-                      //         const SizedBox(width: 6),
-                      //         Text(
-                      //           '진행중',
-                      //           style: TextStyle(
-                      //             color: itemColor,
-                      //             fontSize: 13,
-                      //             fontWeight: FontWeight.w600,
-                      //           ),
-                      //         ),
-                      //       ],
-                      //     ),
-                      //   ],
-                    ],
-                  ),
-                ),
-                // D-Day 배지
-                if (todo.dueDate != null) ...[
-                  const SizedBox(width: 12),
-                  _buildDDay(todo.dueDate!),
+                    )
+                  else if (previewTodos.isEmpty && doneCount > 0)
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16.0),
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.check_circle_outline,
+                              color: Colors.green[300],
+                              size: 32,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '모두 완료!',
+                              style: TextStyle(
+                                color: Colors.green[700],
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  else
+                    ...previewTodos.map((todo) {
+                      final Color itemColor = Color(todo.colorValue);
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: Row(
+                          children: [
+                            Checkbox(
+                              tristate: true,
+                              value: _getCheckboxValue(todo.check),
+                              onChanged: (value) {
+                                _updateTodoCheckEnum(todo, _getNextStatus(todo.check));
+                              },
+                              shape: const CircleBorder(),
+                              activeColor: itemColor,
+                              side: BorderSide(
+                                color: todo.check != CheckEnum.pending ? Colors.transparent : itemColor,
+                                width: 2.0,
+                              ),
+                              visualDensity: VisualDensity.compact,
+                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            Expanded(
+                              child: Text(
+                                todo.content,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey[700],
+                                  decoration: todo.check == CheckEnum.done ? TextDecoration.lineThrough : null,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
                 ],
-              ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildDDay(String dateStr) {
-    final endDate = DateTime.parse(dateStr);
-    final today = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
-    final difference = endDate.difference(today).inDays;
-
-    String text;
-    Color bgColor;
-    Color textColor;
-    IconData? icon;
-
-    if (difference < 0) {
-      text = '${-difference}일 지남';
-      bgColor = Colors.red.shade50;
-      textColor = Colors.red.shade700;
-      icon = Icons.warning_rounded;
-    } else if (difference == 0) {
-      text = 'D-Day';
-      bgColor = Colors.red.shade100;
-      textColor = Colors.red.shade900;
-      icon = Icons.notifications_active_rounded;
-    } else if (difference <= 3) {
-      text = 'D-$difference';
-      bgColor = Colors.orange.shade50;
-      textColor = Colors.orange.shade700;
-      icon = Icons.access_time_rounded;
-    } else if (difference <= 7) {
-      text = 'D-$difference';
-      bgColor = Colors.blue.shade50;
-      textColor = Colors.blue.shade700;
-    } else {
-      text = 'D-$difference';
-      bgColor = Colors.grey.shade100;
-      textColor = Colors.grey.shade700;
-    }
-
+  Widget _buildStatusChip(String label, int count, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: bgColor,
+        color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: textColor.withOpacity(0.2),
+          color: color.withOpacity(0.3),
           width: 1,
         ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (icon != null) ...[
-            Icon(
-              icon,
-              size: 12,
-              color: textColor,
-            ),
-            const SizedBox(width: 4),
-          ],
           Text(
-            text,
+            label,
             style: TextStyle(
-              color: textColor,
+              color: color,
               fontSize: 11,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            '$count',
+            style: TextStyle(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ],
@@ -497,18 +342,26 @@ class _TodoScreenState extends State<TodoScreen> {
     );
   }
 
-  void _updateTodoCheck(CheckItem todo, bool? value) {
-    CheckEnum newCheckValue;
-
-    if (value == true) {
-      newCheckValue = CheckEnum.done;
-    } else if (value == false) {
-      newCheckValue = CheckEnum.pending;
-    } else {
-      newCheckValue = CheckEnum.inProgress;
+  bool? _getCheckboxValue(CheckEnum status) {
+    switch (status) {
+      case CheckEnum.pending:
+        return false;
+      case CheckEnum.inProgress:
+        return null;
+      case CheckEnum.done:
+        return true;
     }
+  }
 
-    _updateTodoCheckEnum(todo, newCheckValue);
+  CheckEnum _getNextStatus(CheckEnum currentStatus) {
+    switch (currentStatus) {
+      case CheckEnum.pending:
+        return CheckEnum.inProgress;
+      case CheckEnum.inProgress:
+        return CheckEnum.done;
+      case CheckEnum.done:
+        return CheckEnum.pending;
+    }
   }
 
   void _updateTodoCheckEnum(CheckItem todo, CheckEnum value) {
@@ -520,32 +373,10 @@ class _TodoScreenState extends State<TodoScreen> {
       doneDate: todo.doneDate,
       colorValue: todo.colorValue,
       check: value,
+      categoryId: todo.categoryId,
     );
 
     _repository.updateItem(updatedTodo);
-  }
-
-  void _deleteTodo(CheckItem todo) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('할 일 삭제'),
-        content: const Text('이 할 일을 삭제하시겠습니까?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () {
-              _repository.deleteItem(todo.id);
-              Navigator.pop(context);
-            },
-            child: const Text('삭제'),
-          ),
-        ],
-      ),
-    );
   }
 
   void _showAddTodoDialog(BuildContext context) {
@@ -559,28 +390,7 @@ class _TodoScreenState extends State<TodoScreen> {
         child: SingleChildScrollView(
           child: SlideUpContainer(
             child: AddTodo(
-              onTodoAdded: () {
-                setState(() {});
-              },
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showEditTodoDialog(BuildContext context, CheckItem todo) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => AnimatedPadding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-        duration: const Duration(milliseconds: 0),
-        curve: Curves.decelerate,
-        child: SingleChildScrollView(
-          child: SlideUpContainer(
-            child: AddTodo(
-              todoToEdit: todo,
+              categories: _categories,
               onTodoAdded: () {
                 setState(() {});
               },

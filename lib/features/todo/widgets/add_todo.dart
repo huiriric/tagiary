@@ -1,18 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:mrplando/core/constants/colors.dart';
+import 'package:mrplando/features/todo/models/todo_category.dart';
+import 'package:mrplando/features/todo/models/todo_category_manager.dart';
 import 'package:mrplando/shared/models/check_enum.dart';
+import 'package:mrplando/shared/models/category_manager_interface.dart';
 import 'package:mrplando/features/todo/models/check_item.dart';
 import 'package:mrplando/features/schedule/models/schedule_item.dart';
 import 'package:mrplando/features/schedule/models/schedule_link_item.dart';
 import 'package:mrplando/features/settings/screens/color_management_page.dart';
+import 'package:mrplando/shared/widgets/category_management_page.dart';
 import 'package:mrplando/shared/widgets/color_picker.dart';
 
 class AddTodo extends StatefulWidget {
   final VoidCallback? onTodoAdded; // 할 일 추가 후 호출할 콜백 함수
   final CheckItem? todoToEdit; // 수정할 할 일 (없으면 새로 추가)
+  final List<CategoryInfo> categories; // 카테고리 목록
 
-  const AddTodo({super.key, this.onTodoAdded, this.todoToEdit});
+  const AddTodo({
+    super.key,
+    this.onTodoAdded,
+    this.todoToEdit,
+    this.categories = const [],
+  });
 
   @override
   State<AddTodo> createState() => _AddTodoState();
@@ -34,6 +44,9 @@ class _AddTodoState extends State<AddTodo> {
   double colorPadding = 20;
   double colorSize = 35;
 
+  // 카테고리 선택
+  CategoryInfo? selectedCategory;
+
   @override
   void initState() {
     super.initState();
@@ -43,8 +56,24 @@ class _AddTodoState extends State<AddTodo> {
       content = widget.todoToEdit!.content;
       selectedDate = widget.todoToEdit!.dueDate != null ? DateTime.parse(widget.todoToEdit!.dueDate!) : null;
       selectedColor = Color(widget.todoToEdit!.colorValue);
+
+      // 기존 카테고리 설정
+      if (widget.todoToEdit!.categoryId != null) {
+        selectedCategory = widget.categories.firstWhere(
+          (cat) => cat.id == widget.todoToEdit!.categoryId,
+          orElse: () => widget.categories.isNotEmpty
+              ? widget.categories.first
+              : CategoryInfo(id: 0, name: '미분류', color: Colors.grey),
+        );
+      } else if (widget.categories.isNotEmpty) {
+        selectedCategory = widget.categories.first;
+      }
     } else {
       selectedColor = scheduleColors[0];
+      // 새로 추가하는 경우 첫 번째 카테고리 선택
+      if (widget.categories.isNotEmpty) {
+        selectedCategory = widget.categories.first;
+      }
     }
 
     contentCont = TextEditingController(text: content);
@@ -94,6 +123,84 @@ class _AddTodoState extends State<AddTodo> {
 
                 Divider(height: 20, thickness: 1, color: Colors.grey.shade300),
 
+                // 카테고리 선택
+                if (widget.categories.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('카테고리', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey.shade300),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<CategoryInfo>(
+                                    value: selectedCategory,
+                                    isExpanded: true,
+                                    icon: const Icon(Icons.arrow_drop_down),
+                                    items: widget.categories.map((category) {
+                                      return DropdownMenuItem<CategoryInfo>(
+                                        value: category,
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              width: 16,
+                                              height: 16,
+                                              decoration: BoxDecoration(
+                                                color: category.color,
+                                                shape: BoxShape.circle,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Text(
+                                              category.name,
+                                              style: const TextStyle(fontSize: 14),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    }).toList(),
+                                    onChanged: (CategoryInfo? newValue) {
+                                      setState(() {
+                                        selectedCategory = newValue;
+                                      });
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const Padding(padding: EdgeInsets.only(left: 10)),
+                            IconButton(
+                              icon: const Icon(Icons.settings_outlined, size: 20),
+                              onPressed: () {
+                                final todoCategoryManager = TodoCategoryManager(
+                                  categoryRepository: TodoCategoryRepository(),
+                                );
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => CategoryManagementPage(
+                                      categoryManager: todoCategoryManager,
+                                      title: '할 일 카테고리',
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
                 // 마감일 선택
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 10.0),
@@ -130,10 +237,14 @@ class _AddTodoState extends State<AddTodo> {
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
-                                      selectedDate != null ? '${selectedDate!.year}년 ${selectedDate!.month}월 ${selectedDate!.day}일' : '마감일 선택 (선택사항)',
-                                      style: TextStyle(color: selectedDate != null ? Colors.black : Colors.grey, fontSize: 14),
+                                      selectedDate != null
+                                          ? '${selectedDate!.year}년 ${selectedDate!.month}월 ${selectedDate!.day}일'
+                                          : '마감일 선택 (선택사항)',
+                                      style: TextStyle(
+                                          color: selectedDate != null ? Colors.black : Colors.grey, fontSize: 14),
                                     ),
-                                    Icon(Icons.calendar_today, size: 16, color: selectedDate != null ? Colors.black : Colors.grey),
+                                    Icon(Icons.calendar_today,
+                                        size: 16, color: selectedDate != null ? Colors.black : Colors.grey),
                                   ],
                                 ),
                               ),
@@ -182,7 +293,8 @@ class _AddTodoState extends State<AddTodo> {
                     const SizedBox(
                       width: 24,
                       height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.green)),
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.green)),
                     )
                   else
                     IconButton(
@@ -232,6 +344,7 @@ class _AddTodoState extends State<AddTodo> {
           doneDate: widget.todoToEdit!.doneDate, // 기존 완료일 그대로 유지
           colorValue: selectedColor.value,
           check: widget.todoToEdit!.check, // 기존 완료 상태 그대로 유지
+          categoryId: selectedCategory?.id,
         );
 
         await repository.updateItem(updatedTodo);
@@ -246,6 +359,7 @@ class _AddTodoState extends State<AddTodo> {
           doneDate: null, // 신규 추가 시 완료일은 null로 설정
           colorValue: selectedColor.value,
           check: CheckEnum.pending, // 신규 추가 시 항상 false로 설정
+          categoryId: selectedCategory?.id,
         );
 
         todoId = await repository.addItem(newTodo);
@@ -315,7 +429,8 @@ class _AddTodoState extends State<AddTodo> {
     final linkRepo = ScheduleLinkRepository();
     await linkRepo.init();
 
-    final newLink = ScheduleLinkItem(scheduleId: scheduleId, isRoutine: false, linkedItemId: todoId, linkedItemType: LinkItemType.todo);
+    final newLink = ScheduleLinkItem(
+        scheduleId: scheduleId, isRoutine: false, linkedItemId: todoId, linkedItemType: LinkItemType.todo);
 
     await linkRepo.addItem(newLink);
   }
