@@ -2,15 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:mrplando/shared/widgets/color_picker.dart';
 import 'package:mrplando/shared/widgets/slide_up_container.dart';
 import 'package:mrplando/core/constants/colors.dart';
-import 'package:mrplando/features/diary/models/tag_manager.dart';
-import 'package:mrplando/features/settings/screens/color_management_page.dart';
+import 'package:mrplando/shared/models/category_manager_interface.dart';
 
 class CategoryManagementPage extends StatefulWidget {
-  final TagManager tagManager;
+  final CategoryManagerInterface categoryManager;
+  final String title;
 
   const CategoryManagementPage({
     super.key,
-    required this.tagManager,
+    required this.categoryManager,
+    this.title = '카테고리 관리',
   });
 
   @override
@@ -21,16 +22,35 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
   List<CategoryInfo> _categories = [];
   double colorPadding = 20;
   double colorSize = 35;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
+    _initializeAndLoadCategories();
+  }
+
+  Future<void> _initializeAndLoadCategories() async {
+    try {
+      // CategoryManager가 TodoCategoryManager, RoutineCategoryManager 등의 인스턴스인 경우
+      // init() 메서드를 호출하여 Repository를 초기화
+      if (widget.categoryManager is dynamic) {
+        final manager = widget.categoryManager as dynamic;
+        if (manager.init != null) {
+          await manager.init();
+        }
+      }
+    } catch (e) {
+      // init 메서드가 없거나 이미 초기화된 경우 무시
+    }
+
     _loadCategories();
   }
 
   void _loadCategories() {
     setState(() {
-      _categories = widget.tagManager.getAllCategories();
+      _categories = widget.categoryManager.getAllCategories();
+      _isLoading = false;
     });
   }
 
@@ -38,9 +58,9 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          '카테고리 관리',
-          style: TextStyle(
+        title: Text(
+          widget.title,
+          style: const TextStyle(
             color: Colors.black,
             fontWeight: FontWeight.bold,
           ),
@@ -52,95 +72,99 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
           ),
         ],
       ),
-      body: _categories.isEmpty
+      body: _isLoading
           ? const Center(
-              child: Text(
-                '카테고리가 없습니다',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                ),
-              ),
+              child: CircularProgressIndicator(),
             )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _categories.length,
-              itemBuilder: (context, index) {
-                final category = _categories[index];
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(16),
-                      onTap: () => _showEditDialog(category),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 16,
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                color: category.color.withOpacity(0.2),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Center(
-                                child: Container(
-                                  width: 24,
-                                  height: 24,
-                                  decoration: BoxDecoration(
-                                    color: category.color,
-                                    shape: BoxShape.circle,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: category.color.withOpacity(0.4),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Text(
-                                category.name,
-                                style: const TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                            ),
-                            Icon(
-                              Icons.chevron_right,
-                              color: Colors.grey.shade400,
-                              size: 24,
-                            ),
-                          ],
-                        ),
-                      ),
+          : _categories.isEmpty
+              ? const Center(
+                  child: Text(
+                    '카테고리가 없습니다',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey,
                     ),
                   ),
-                );
-              },
-            ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _categories.length,
+                  itemBuilder: (context, index) {
+                    final category = _categories[index];
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(16),
+                          onTap: () => _showEditDialog(category),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 14,
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    color: category.color.withOpacity(0.2),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Center(
+                                    child: Container(
+                                      width: 20,
+                                      height: 20,
+                                      decoration: BoxDecoration(
+                                        color: category.color,
+                                        shape: BoxShape.circle,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: category.color.withOpacity(0.4),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Text(
+                                    category.name,
+                                    style: const TextStyle(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.chevron_right,
+                                  color: Colors.grey.shade400,
+                                  size: 24,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
     );
   }
 
@@ -221,7 +245,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
                               final name = nameController.text.trim();
                               if (name.isNotEmpty) {
                                 // 새 카테고리 추가
-                                await widget.tagManager.addCategory(name, selectedColor);
+                                await widget.categoryManager.addCategory(name, selectedColor);
                                 Navigator.pop(context);
                                 _loadCategories();
                                 if (mounted) {
@@ -256,7 +280,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('카테고리 삭제'),
-        content: Text('${category.name} 카테고리를 삭제하시겠습니까?\n\n이 카테고리를 사용하는 기록은 남아있지만, 카테고리 목록에서는 보이지 않습니다.'),
+        content: Text('${category.name} 카테고리를 삭제하시겠습니까?\n\n이 카테고리를 사용하는 항목은 남아있지만, 카테고리 목록에서는 보이지 않습니다.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -264,7 +288,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
           ),
           TextButton(
             onPressed: () async {
-              await widget.tagManager.softDeleteCategory(category.id);
+              await widget.categoryManager.softDeleteCategory(category.id);
               Navigator.pop(context);
               _loadCategories();
               if (mounted) {
@@ -296,8 +320,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
         return StatefulBuilder(
           builder: (context, setModalState) {
             // 변경사항 확인
-            hasChanges = nameController.text.trim() != category.name ||
-                         selectedColor != category.color;
+            hasChanges = nameController.text.trim() != category.name || selectedColor != category.color;
 
             return AnimatedPadding(
               padding: MediaQuery.of(context).viewInsets,
@@ -372,16 +395,20 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
                                   onPressed: () async {
                                     final name = nameController.text.trim();
                                     if (name.isNotEmpty) {
-                                      await widget.tagManager.updateCategory(
+                                      await widget.categoryManager.updateCategory(
                                         category.id,
                                         name,
                                         selectedColor,
                                       );
-                                      Navigator.pop(context);
+                                      if (mounted) {
+                                        Navigator.pop(context);
+                                      }
                                       _loadCategories();
                                       if (mounted) {
                                         ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(content: Text('카테고리가 수정되었습니다')),
+                                          const SnackBar(
+                                            content: Text('카테고리가 수정되었습니다'),
+                                          ),
                                         );
                                       }
                                     }
