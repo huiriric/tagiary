@@ -228,20 +228,116 @@ Future<DateTime?> showBlackWhiteDatePicker({
     locale: const Locale('ko', 'KR'),
     builder: (context, child) {
       return Theme(
-        data: Theme.of(context).copyWith(
-          // 흑백 테마 설정
-          colorScheme: const ColorScheme.light(
-            primary: Colors.black, // 헤더 배경 색상
-            onPrimary: Colors.white, // 헤더 텍스트 색상
-            onSurface: Colors.black, // 달력 텍스트 색상
-            surface: Colors.white, // 배경 색상
+        data: ThemeData.light().copyWith(
+          colorScheme: ColorScheme.light(
+            primary: const Color(0xFF6750A4), // Material 3 primary color
+            onPrimary: Colors.white,
+            surface: Colors.white,
+            onSurface: const Color(0xFF1C1B1F),
+            surfaceContainerHighest: const Color(0xFFF3EDF7),
+          ),
+          datePickerTheme: DatePickerThemeData(
+            backgroundColor: Colors.white,
+            elevation: 3,
+            shadowColor: Colors.black.withOpacity(0.1),
+            headerBackgroundColor: const Color(0xFF6750A4),
+            headerForegroundColor: Colors.white,
+            headerHeadlineStyle: const TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0,
+            ),
+            weekdayStyle: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey.shade600,
+            ),
+            dayStyle: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+            todayBorder: BorderSide(
+              color: const Color(0xFF6750A4).withOpacity(0.6),
+              width: 1.5,
+            ),
+            todayForegroundColor: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.selected)) {
+                return Colors.white;
+              }
+              return const Color(0xFF6750A4);
+            }),
+            todayBackgroundColor: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.selected)) {
+                return const Color(0xFF6750A4);
+              }
+              return Colors.transparent;
+            }),
+            dayForegroundColor: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.selected)) {
+                return Colors.white;
+              }
+              if (states.contains(WidgetState.disabled)) {
+                return Colors.grey.shade300;
+              }
+              return const Color(0xFF1C1B1F);
+            }),
+            dayBackgroundColor: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.selected)) {
+                return const Color(0xFF6750A4);
+              }
+              if (states.contains(WidgetState.hovered)) {
+                return const Color(0xFFF3EDF7);
+              }
+              return Colors.transparent;
+            }),
+            dayOverlayColor: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.hovered)) {
+                return const Color(0xFFF3EDF7);
+              }
+              if (states.contains(WidgetState.focused)) {
+                return const Color(0xFFF3EDF7);
+              }
+              return null;
+            }),
+            yearStyle: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+            yearForegroundColor: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.selected)) {
+                return Colors.white;
+              }
+              return const Color(0xFF1C1B1F);
+            }),
+            yearBackgroundColor: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.selected)) {
+                return const Color(0xFF6750A4);
+              }
+              if (states.contains(WidgetState.hovered)) {
+                return const Color(0xFFF3EDF7);
+              }
+              return Colors.transparent;
+            }),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(28),
+            ),
+            rangePickerElevation: 4,
+            rangePickerShadowColor: Colors.black.withOpacity(0.15),
           ),
           textButtonTheme: TextButtonThemeData(
             style: TextButton.styleFrom(
-              foregroundColor: Colors.black, // 버튼 텍스트 색상
+              foregroundColor: const Color(0xFF6750A4),
+              textStyle: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+                letterSpacing: 0.1,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
             ),
           ),
-          dialogTheme: const DialogThemeData(backgroundColor: Colors.white),
         ),
         child: child!,
       );

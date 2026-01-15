@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:mrplando/core/providers/provider.dart';
+import 'package:mrplando/shared/widgets/category_management_page.dart';
+import 'package:mrplando/features/todo/models/todo_category.dart';
+import 'package:mrplando/features/todo/models/todo_category_manager.dart';
+import 'package:mrplando/features/routine/models/routine_category.dart';
+import 'package:mrplando/features/routine/models/routine_category_manager.dart';
+import 'package:mrplando/features/schedule/models/schedule_category.dart';
+import 'package:mrplando/features/schedule/models/schedule_category_manager.dart';
 
 class Settings extends StatefulWidget {
   const Settings({super.key});
@@ -48,6 +55,9 @@ class _SettingsState extends State<Settings> {
                     children: [
                       // 확장 가능한 타임라인 설정
                       _buildExpandableTimelineSettings(),
+
+                      // 카테고리 관리 섹션
+                      _buildCategoryManagementSection(),
 
                       // 여기에 다른 설정 섹션들을 추가할 수 있습니다
                       // 예: 알림 설정, 테마 설정, 계정 설정 등
@@ -310,6 +320,146 @@ class _SettingsState extends State<Settings> {
           ],
         );
       },
+    );
+  }
+
+  // 카테고리 관리 섹션
+  Widget _buildCategoryManagementSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '카테고리 관리',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 12),
+
+        // 할 일 카테고리 관리
+        _buildCategoryManagementItem(
+          title: '할 일 카테고리',
+          icon: Icons.check_circle_outline,
+          color: Colors.blue,
+          onTap: () {
+            final todoCategoryManager = TodoCategoryManager(
+              categoryRepository: TodoCategoryRepository(),
+            );
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => CategoryManagementPage(
+                  categoryManager: todoCategoryManager,
+                  title: '할 일 카테고리',
+                ),
+              ),
+            );
+          },
+        ),
+
+        const SizedBox(height: 8),
+
+        // 루틴 카테고리 관리
+        _buildCategoryManagementItem(
+          title: '루틴 카테고리',
+          icon: Icons.loop,
+          color: Colors.green,
+          onTap: () {
+            final routineCategoryManager = RoutineCategoryManager(
+              categoryRepository: RoutineCategoryRepository(),
+            );
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => CategoryManagementPage(
+                  categoryManager: routineCategoryManager,
+                  title: '루틴 카테고리',
+                ),
+              ),
+            );
+          },
+        ),
+
+        const SizedBox(height: 8),
+
+        // 일정 카테고리 관리
+        _buildCategoryManagementItem(
+          title: '일정 카테고리',
+          icon: Icons.event_note,
+          color: Colors.orange,
+          onTap: () {
+            final scheduleCategoryManager = ScheduleCategoryManager(
+              categoryRepository: ScheduleCategoryRepository(),
+            );
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => CategoryManagementPage(
+                  categoryManager: scheduleCategoryManager,
+                  title: '일정 카테고리',
+                ),
+              ),
+            );
+          },
+        ),
+
+        // 구분선
+        Divider(color: Colors.grey.shade300, height: 32),
+      ],
+    );
+  }
+
+  // 카테고리 관리 항목 위젯
+  Widget _buildCategoryManagementItem({
+    required String title,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(left: 8),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+          child: Row(
+            children: [
+              // 아이콘
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  icon,
+                  color: color,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+
+              // 텍스트
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+
+              // 화살표
+              Icon(
+                Icons.chevron_right,
+                size: 20,
+                color: Colors.grey.shade600,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

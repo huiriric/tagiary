@@ -16,6 +16,12 @@ import 'package:mrplando/features/diary/models/tag.dart';
 import 'package:mrplando/features/diary/models/tag_group.dart';
 import 'package:mrplando/features/diary/models/tag_group_adapter.dart';
 import 'package:mrplando/features/settings/models/color_item.dart';
+import 'package:mrplando/features/todo/models/todo_category.dart';
+import 'package:mrplando/features/todo/models/todo_category_manager.dart';
+import 'package:mrplando/features/routine/models/routine_category.dart';
+import 'package:mrplando/features/routine/models/routine_category_manager.dart';
+import 'package:mrplando/features/schedule/models/schedule_category.dart';
+import 'package:mrplando/features/schedule/models/schedule_category_manager.dart';
 import 'package:mrplando/core/constants/colors.dart';
 import 'package:mrplando/features/home/screens/main_screen.dart';
 
@@ -59,6 +65,9 @@ Future<void> main() async {
   Hive.registerAdapter(TagAdapter());
   Hive.registerAdapter(TagGroupAdapterWithMigration());
   Hive.registerAdapter(ColorItemAdapter());
+  Hive.registerAdapter(TodoCategoryAdapter());
+  Hive.registerAdapter(RoutineCategoryAdapter());
+  Hive.registerAdapter(ScheduleCategoryAdapter());
 
   // 박스 열기
   await Hive.openBox<ScheduleItem>('scheduleBox');
@@ -72,11 +81,49 @@ Future<void> main() async {
   await Hive.openBox<Tag>('tagBox');
   await Hive.openBox<TagGroup>('tagGroupBox');
   await Hive.openBox<ColorItem>('colorBox');
+  await Hive.openBox<TodoCategory>('todoCategoryBox');
+  await Hive.openBox<RoutineCategory>('routineCategoryBox');
+  await Hive.openBox<ScheduleCategory>('scheduleCategoryBox');
+  await Hive.openBox<int>('counterBox'); // 카운터 박스 추가
 
   // 색상 초기화
   final colorRepo = ColorRepository();
   await colorRepo.init();
   await colorRepo.initializeDefaultColors();
+
+  // 카테고리 초기화 및 마이그레이션
+  final todoCategoryManager = TodoCategoryManager(
+    categoryRepository: TodoCategoryRepository(),
+  );
+  await todoCategoryManager.init(); // 기본 카테고리 생성
+
+  final routineCategoryManager = RoutineCategoryManager(
+    categoryRepository: RoutineCategoryRepository(),
+  );
+  await routineCategoryManager.init(); // 기본 카테고리 생성
+
+  // 기존 데이터 마이그레이션
+  final checkRepo = CheckRepository();
+  await checkRepo.init();
+  await checkRepo.migrateToCategorySystem();
+
+  final checkRoutineRepo = CheckRoutineRepository();
+  await checkRoutineRepo.init();
+  await checkRoutineRepo.migrateToCategorySystem();
+
+  final scheduleCategoryManager = ScheduleCategoryManager(
+    categoryRepository: ScheduleCategoryRepository(),
+  );
+  await scheduleCategoryManager.init(); // 기본 카테고리 생성
+
+  // 기존 일정 데이터 마이그레이션
+  final scheduleRepo = ScheduleRepository();
+  await scheduleRepo.init();
+  await scheduleRepo.migrateToCategorySystem();
+
+  final scheduleRoutineRepo = ScheduleRoutineRepository();
+  await scheduleRoutineRepo.init();
+  await scheduleRoutineRepo.migrateToCategorySystem();
 
   // 색상 리스트 로드
   await loadScheduleColors();

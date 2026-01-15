@@ -4,8 +4,6 @@ import 'package:mrplando/features/todo/screens/todo_screen.dart';
 import 'package:mrplando/features/home/screens/home_screen.dart';
 import 'package:mrplando/features/routine/screens/routine_screen.dart';
 import 'package:mrplando/features/diary/screens/diary_screen.dart';
-import 'package:mrplando/features/settings/screens/settings.dart';
-import 'package:mrplando/features/home/widgets/home_widget_provider.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -50,7 +48,7 @@ class _MainScreenState extends State<MainScreen> {
         },
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.timeline),
+            icon: Icon(Icons.event_note),
             label: '일정',
           ),
           BottomNavigationBarItem(
