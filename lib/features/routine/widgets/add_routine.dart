@@ -2,8 +2,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:hive/hive.dart';
+import 'package:mrplando/features/routine/models/routine_category.dart';
+import 'package:mrplando/features/routine/models/routine_category_manager.dart';
+import 'package:mrplando/shared/widgets/category_management_page.dart';
 import 'package:mrplando/shared/widgets/day_picker.dart';
 import 'package:mrplando/shared/widgets/color_picker.dart';
+import 'package:mrplando/shared/models/category_manager_interface.dart';
 import 'package:mrplando/core/constants/colors.dart';
 import 'package:mrplando/features/home/screens/home_screen.dart';
 import 'package:mrplando/features/routine/models/check_routine_item.dart';
@@ -11,6 +15,7 @@ import 'package:mrplando/features/schedule/widgets/add_schedule.dart';
 
 class AddRoutine extends StatefulWidget {
   final VoidCallback? onRoutineAdded; // 루틴 추가 후 호출할 콜백 함수
+  final List<CategoryInfo> categories; // 카테고리 목록
   DateTime selectedDate;
   TimeOfDay start;
   TimeOfDay end;
@@ -18,6 +23,7 @@ class AddRoutine extends StatefulWidget {
   AddRoutine({
     super.key,
     this.onRoutineAdded,
+    this.categories = const [],
     required this.selectedDate,
     required this.start,
     required this.end,
@@ -55,6 +61,9 @@ class _AddRoutineState extends State<AddRoutine> {
   double colorPadding = 20;
   double colorSize = 35;
 
+  // 카테고리 선택
+  CategoryInfo? selectedCategory;
+
   @override
   void initState() {
     super.initState();
@@ -63,6 +72,11 @@ class _AddRoutineState extends State<AddRoutine> {
     selectedColor = scheduleColors[0];
     start = widget.start;
     end = widget.end;
+
+    // 첫 번째 카테고리를 기본값으로 설정
+    if (widget.categories.isNotEmpty) {
+      selectedCategory = widget.categories.first;
+    }
   }
 
   @override
@@ -244,6 +258,83 @@ class _AddRoutineState extends State<AddRoutine> {
                     ),
                   ],
                 ),
+                // 카테고리 선택
+                if (widget.categories.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('카테고리', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey.shade300),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<CategoryInfo>(
+                                    value: selectedCategory,
+                                    isExpanded: true,
+                                    icon: const Icon(Icons.arrow_drop_down),
+                                    items: widget.categories.map((category) {
+                                      return DropdownMenuItem<CategoryInfo>(
+                                        value: category,
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              width: 16,
+                                              height: 16,
+                                              decoration: BoxDecoration(
+                                                color: category.color,
+                                                shape: BoxShape.circle,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Text(
+                                              category.name,
+                                              style: const TextStyle(fontSize: 14),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    }).toList(),
+                                    onChanged: (CategoryInfo? newValue) {
+                                      setState(() {
+                                        selectedCategory = newValue;
+                                      });
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const Padding(padding: EdgeInsets.only(left: 10)),
+                            IconButton(
+                                onPressed: () {
+                                  final routineCategoryManager = RoutineCategoryManager(
+                                    categoryRepository: RoutineCategoryRepository(),
+                                  );
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => CategoryManagementPage(
+                                        categoryManager: routineCategoryManager,
+                                        title: '루틴 카테고리',
+                                      ),
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(Icons.settings_outlined))
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
                 // 요일 선택
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 10.0),
@@ -349,6 +440,7 @@ class _AddRoutineState extends State<AddRoutine> {
       updated: DateTime.now(),
       daysOfWeek: selectedDays,
       endDate: endDate, // 종료일 추가 (null 가능)
+      categoryId: selectedCategory?.id,
     );
 
     await routineRepository.addItem(newRoutine);

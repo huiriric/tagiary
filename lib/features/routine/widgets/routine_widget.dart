@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:mrplando/shared/widgets/slide_up_container.dart';
+import 'package:mrplando/shared/models/category_manager_interface.dart';
 import 'package:mrplando/features/routine/models/check_routine_item.dart';
 import 'package:mrplando/features/routine/models/routine_history.dart';
+import 'package:mrplando/features/routine/models/routine_category.dart';
+import 'package:mrplando/features/routine/models/routine_category_manager.dart';
 import 'package:mrplando/features/routine/widgets/add_routine.dart';
 import 'package:mrplando/features/routine/widgets/routine_detail.dart';
 
@@ -11,12 +14,16 @@ class TodoRoutineWidget extends StatefulWidget {
   final DateTime? date; // 표시할 날짜 (null이면 오늘 날짜)
   final bool fromMain; // 메인 화면에서 호출된 경우 true
   final VoidCallback? onRoutineChanged; // 루틴 변경 시 호출되는 콜백
+  final int? selectedCategoryId; // 선택된 카테고리 ID (null이면 전체)
+  final List<dynamic>? categories; // 카테고리 목록 (CategoryInfo 타입이지만 import 없이 dynamic으로)
 
   const TodoRoutineWidget({
     super.key,
     this.date,
     this.fromMain = false,
     this.onRoutineChanged,
+    this.selectedCategoryId,
+    this.categories,
   });
 
   @override
@@ -26,6 +33,7 @@ class TodoRoutineWidget extends StatefulWidget {
 class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
   late CheckRoutineRepository _repository;
   late RoutineHistoryRepository _historyRepository;
+  late RoutineCategoryManager _categoryManager;
   late DateTime _displayDate; // 표시할 날짜
   bool _isToday = true; // 오늘 날짜인지 여부
   bool _isRepositoryInitialized = false; // Repository 초기화 상태
@@ -35,6 +43,9 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
     super.initState();
     _repository = CheckRoutineRepository();
     _historyRepository = RoutineHistoryRepository();
+    _categoryManager = RoutineCategoryManager(
+      categoryRepository: RoutineCategoryRepository(),
+    );
     _initRepositories();
     _updateDisplayDate();
   }
@@ -60,13 +71,16 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
     } else {
       _displayDate = widget.date!;
       // 선택된 날짜가 오늘인지 비교 (년, 월, 일만 비교)
-      _isToday = (_displayDate.year == todayDate.year && _displayDate.month == todayDate.month && _displayDate.day == todayDate.day);
+      _isToday = (_displayDate.year == todayDate.year &&
+          _displayDate.month == todayDate.month &&
+          _displayDate.day == todayDate.day);
     }
   }
 
   Future<void> _initRepositories() async {
     await _repository.init();
     await _historyRepository.init();
+    await _categoryManager.init();
     // 새로운 날짜가 시작될 때 루틴 초기화
     _repository.initializeRoutine();
     // Repository 초기화 완료 플래그 설정
@@ -92,6 +106,11 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
 
     // 선택된 요일에 해당하고 루틴 시작일/종료일을 고려한 루틴만 필터링
     final filteredRoutines = allRoutines.where((routine) {
+      // 카테고리 필터 적용
+      if (widget.selectedCategoryId != null && routine.categoryId != widget.selectedCategoryId) {
+        return false;
+      }
+
       // 루틴 시작일 체크 (시간 정보 제거)
       final routineStartDate = DateTime(
         routine.startDate.year,
@@ -276,14 +295,44 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
           title: Row(
             children: [
               Expanded(
-                child: Text(
-                  routine.content,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: _isToday && routine.check ? Colors.grey : Colors.black,
-                    fontSize: 13,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      routine.content,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: _isToday && routine.check ? Colors.grey : Colors.black,
+                        fontSize: 13,
+                      ),
+                    ),
+                    // 카테고리 표시
+                    // if (routine.categoryId != null) ...[
+                    //   const SizedBox(height: 2),
+                    //   Row(
+                    //     children: [
+                    //       Container(
+                    //         width: 4,
+                    //         height: 4,
+                    //         decoration: BoxDecoration(
+                    //           color: _getCategoryColor(routine.categoryId!),
+                    //           shape: BoxShape.circle,
+                    //         ),
+                    //       ),
+                    //       const SizedBox(width: 4),
+                    //       Text(
+                    //         _getCategoryName(routine.categoryId!),
+                    //         style: TextStyle(
+                    //           color: _isToday && routine.check ? Colors.grey.shade400 : Colors.grey.shade600,
+                    //           fontSize: 10,
+                    //           fontWeight: FontWeight.w500,
+                    //         ),
+                    //       ),
+                    //     ],
+                    //   ),
+                    // ],
+                  ],
                 ),
               ),
               if (widget.fromMain == false && _isRepositoryInitialized)
@@ -513,7 +562,8 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
           history.completedDate.month,
           history.completedDate.day,
         );
-        return historyDate.isAfter(firstDayOfWeek.subtract(const Duration(days: 1))) && historyDate.isBefore(lastDayOfWeek.add(const Duration(days: 1)));
+        return historyDate.isAfter(firstDayOfWeek.subtract(const Duration(days: 1))) &&
+            historyDate.isBefore(lastDayOfWeek.add(const Duration(days: 1)));
       }).toList();
 
       totalCompleted += weekHistory.length;
@@ -570,7 +620,8 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
         history.completedDate.month,
         history.completedDate.day,
       );
-      return historyDate.isAfter(firstDayOfWeek.subtract(const Duration(days: 1))) && historyDate.isBefore(lastDayOfWeek.add(const Duration(days: 1)));
+      return historyDate.isAfter(firstDayOfWeek.subtract(const Duration(days: 1))) &&
+          historyDate.isBefore(lastDayOfWeek.add(const Duration(days: 1)));
     }).toList();
 
     // 이번 주에 루틴이 예정된 날짜 수 계산 (오늘까지)
@@ -625,7 +676,8 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
         history.completedDate.month,
         history.completedDate.day,
       );
-      return historyDate.isAfter(firstDayOfMonth.subtract(const Duration(days: 1))) && historyDate.isBefore(lastDayOfMonth.add(const Duration(days: 1)));
+      return historyDate.isAfter(firstDayOfMonth.subtract(const Duration(days: 1))) &&
+          historyDate.isBefore(lastDayOfMonth.add(const Duration(days: 1)));
     }).toList();
 
     // 루틴 시작일 (시간 정보 제거)
@@ -758,7 +810,8 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
           history.completedDate.month,
           history.completedDate.day,
         );
-        return historyDate.isAfter(firstDayOfMonth.subtract(const Duration(days: 1))) && historyDate.isBefore(lastDayOfMonth.add(const Duration(days: 1)));
+        return historyDate.isAfter(firstDayOfMonth.subtract(const Duration(days: 1))) &&
+            historyDate.isBefore(lastDayOfMonth.add(const Duration(days: 1)));
       }).toList();
 
       totalCompleted += monthlyHistory.length;
@@ -852,6 +905,7 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
         child: SingleChildScrollView(
           child: SlideUpContainer(
             child: AddRoutine(
+              categories: widget.categories?.cast() ?? [],
               onRoutineAdded: onRoutineChanged,
               selectedDate: _displayDate,
               start: start,
@@ -891,5 +945,17 @@ class _TodoRoutineWidgetState extends State<TodoRoutineWidget> {
       backgroundColor: Colors.black87,
       textColor: Colors.white,
     );
+  }
+
+  // 카테고리 이름 가져오기
+  String _getCategoryName(int categoryId) {
+    final categoryInfo = _categoryManager.getCategoryInfo(categoryId);
+    return categoryInfo?.name ?? '미분류';
+  }
+
+  // 카테고리 색상 가져오기
+  Color _getCategoryColor(int categoryId) {
+    final categoryInfo = _categoryManager.getCategoryInfo(categoryId);
+    return categoryInfo?.color ?? Colors.grey;
   }
 }

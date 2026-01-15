@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:mrplando/shared/models/category_manager_interface.dart';
 import 'package:mrplando/shared/widgets/slide_up_container.dart';
 import 'package:mrplando/features/routine/models/check_routine_item.dart';
 import 'package:mrplando/features/routine/models/routine_history.dart';
+import 'package:mrplando/features/routine/models/routine_category.dart';
+import 'package:mrplando/features/routine/models/routine_category_manager.dart';
 import 'package:mrplando/features/routine/widgets/add_routine.dart';
 import 'package:mrplando/features/routine/widgets/routine_widget.dart';
 import 'package:mrplando/features/routine/widgets/routine_history_view.dart';
@@ -19,6 +22,9 @@ class RoutineScreen extends StatefulWidget {
 class _RoutineScreenState extends State<RoutineScreen> {
   late CheckRoutineRepository _repository;
   late RoutineHistoryRepository _historyRepository;
+  late RoutineCategoryManager _categoryManager;
+  List<CategoryInfo> _categories = [];
+  int? _selectedCategoryId; // null이면 전체 보기
   final int _selectedDayIndex = DateTime.now().weekday % 7; // 오늘 요일 (0: 일요일, 1: 월요일, ... 6: 토요일)
 
   //날짜별 루틴 기록
@@ -40,6 +46,9 @@ class _RoutineScreenState extends State<RoutineScreen> {
     super.initState();
     _repository = CheckRoutineRepository();
     _historyRepository = RoutineHistoryRepository();
+    _categoryManager = RoutineCategoryManager(
+      categoryRepository: RoutineCategoryRepository(),
+    );
 
     // 현재 날짜로 초기화
     final now = DateTime.now();
@@ -69,10 +78,12 @@ class _RoutineScreenState extends State<RoutineScreen> {
   Future<void> _initRepositories() async {
     await _repository.init();
     await _historyRepository.init();
+    await _categoryManager.init();
     // 새로운 날짜가 시작될 때 루틴 초기화
     _repository.initializeRoutine();
 
     setState(() {
+      _categories = _categoryManager.getAllCategories();
       _isRepositoryInitialized = true;
     });
   }
@@ -201,13 +212,96 @@ class _RoutineScreenState extends State<RoutineScreen> {
                     _calculateMonthDays();
                   }),
                   fromMain: false,
+                  selectedCategoryId: null,
+                  categories: _categories,
+                ),
+
+              // 카테고리 필터 (가로 스크롤 ChoiceChip)
+              if (_categories.isNotEmpty)
+                Container(
+                  margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  height: 44,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: [
+                      // 전체 카테고리
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ChoiceChip(
+                          label: const Text('전체'),
+                          selected: _selectedCategoryId == -1,
+                          onSelected: (selected) {
+                            setState(() {
+                              _selectedCategoryId = -1;
+                            });
+                          },
+                          selectedColor: Colors.blue.shade100,
+                          labelStyle: TextStyle(
+                            color: _selectedCategoryId == -1 ? Colors.blue.shade700 : Colors.grey.shade700,
+                            fontWeight: _selectedCategoryId == -1 ? FontWeight.bold : FontWeight.normal,
+                          ),
+                          backgroundColor: Colors.grey.shade100,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            side: BorderSide(
+                              color: _selectedCategoryId == -1 ? Colors.blue.shade300 : Colors.transparent,
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
+                      ),
+                      // 각 카테고리
+                      ..._categories.map((category) {
+                        final isSelected = _selectedCategoryId == category.id;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: ChoiceChip(
+                            label: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    color: category.color,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(category.name),
+                              ],
+                            ),
+                            selected: isSelected,
+                            onSelected: (selected) {
+                              setState(() {
+                                _selectedCategoryId = category.id;
+                              });
+                            },
+                            selectedColor: category.color.withOpacity(0.2),
+                            labelStyle: TextStyle(
+                              color: isSelected ? category.color : Colors.grey.shade700,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            ),
+                            backgroundColor: Colors.grey.shade100,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              side: BorderSide(
+                                color: isSelected ? category.color : Colors.transparent,
+                                width: 1.5,
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
                 ),
 
               // 달력 또는 주간 뷰 표시
               Expanded(
                 child: Align(
                   alignment: AlignmentGeometry.topLeft,
-                  child: routineCalendar(),
+                  child: routineCalendar(_selectedCategoryId ?? -1),
                 ),
               ),
             ]),
@@ -286,12 +380,12 @@ class _RoutineScreenState extends State<RoutineScreen> {
     return selectedDate.year == now.year && selectedDate.month == now.month;
   }
 
-  Widget routineCalendar() {
+  Widget routineCalendar(int categoryId) {
     return ValueListenableBuilder(
       valueListenable: Hive.box<RoutineHistory>('routineHistoryBox').listenable(),
       builder: (context, Box<RoutineHistory> historyBox, _) {
         // 해당 달에 활성화된 루틴 필터링
-        final activeRoutines = _getActiveRoutinesForMonth();
+        final activeRoutines = _getActiveRoutinesForMonth(categoryId);
 
         if (activeRoutines.isEmpty) {
           return Center(
@@ -326,8 +420,8 @@ class _RoutineScreenState extends State<RoutineScreen> {
   }
 
   // 해당 달에 활성화된 루틴 가져오기
-  List<CheckRoutineItem> _getActiveRoutinesForMonth() {
-    final allRoutines = _repository.getAllItems();
+  List<CheckRoutineItem> _getActiveRoutinesForMonth(int categoryId) {
+    final allRoutines = categoryId == -1 ? _repository.getAllItems() : _repository.getCategoryItems(categoryId);
     final firstDayOfMonth = DateTime(selectedDate.year, selectedDate.month, 1);
     final lastDayOfMonth = DateTime(selectedDate.year, selectedDate.month + 1, 0);
 
@@ -838,6 +932,7 @@ class _RoutineScreenState extends State<RoutineScreen> {
         child: SingleChildScrollView(
           child: SlideUpContainer(
             child: AddRoutine(
+              categories: _categories,
               onRoutineAdded: () {
                 setState(() {});
               },

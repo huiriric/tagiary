@@ -1,20 +1,20 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:mrplando/shared/widgets/category_management_page.dart';
 import 'package:mrplando/shared/widgets/color_picker.dart';
 import 'package:mrplando/shared/widgets/day_picker.dart';
-import 'package:mrplando/core/constants/colors.dart';
+import 'package:mrplando/shared/models/category_manager_interface.dart';
 import 'package:mrplando/features/home/screens/home_screen.dart';
 import 'package:mrplando/features/routine/models/check_routine_item.dart';
 import 'package:mrplando/features/routine/models/routine_history.dart';
+import 'package:mrplando/features/routine/models/routine_category.dart';
+import 'package:mrplando/features/routine/models/routine_category_manager.dart';
 import 'package:mrplando/features/schedule/widgets/add_schedule.dart';
-import 'package:mrplando/features/settings/screens/color_management_page.dart';
 
 class RoutineDetail extends StatefulWidget {
-  CheckRoutineItem item;
-  VoidCallback? onUpdated; // 루틴 업데이트 후 호출할 콜백 함수
-  RoutineDetail({super.key, required this.item, this.onUpdated});
+  final CheckRoutineItem item;
+  final VoidCallback? onUpdated; // 루틴 업데이트 후 호출할 콜백 함수
+  const RoutineDetail({super.key, required this.item, this.onUpdated});
 
   @override
   State<RoutineDetail> createState() => _RoutineDetailState();
@@ -35,6 +35,11 @@ class _RoutineDetailState extends State<RoutineDetail> {
   double colorPadding = 20;
   double colorSize = 35;
 
+  // 카테고리 관련
+  late RoutineCategoryManager _categoryManager;
+  List<CategoryInfo> _categories = [];
+  CategoryInfo? _selectedCategory;
+
   @override
   void initState() {
     super.initState();
@@ -45,6 +50,29 @@ class _RoutineDetailState extends State<RoutineDetail> {
     _endDate = widget.item.endDate;
     _contentController = TextEditingController(text: _content);
     _contentFocusNode = FocusNode();
+
+    // 카테고리 초기화
+    _categoryManager = RoutineCategoryManager(
+      categoryRepository: RoutineCategoryRepository(),
+    );
+    _loadCategories();
+  }
+
+  Future<void> _loadCategories() async {
+    await _categoryManager.init();
+    setState(() {
+      _categories = _categoryManager.getAllCategories();
+      // 기존 카테고리 설정
+      if (widget.item.categoryId != null) {
+        _selectedCategory = _categories.firstWhere(
+          (cat) => cat.id == widget.item.categoryId,
+          orElse: () =>
+              _categories.isNotEmpty ? _categories.first : CategoryInfo(id: 0, name: '미분류', color: Colors.grey),
+        );
+      } else if (_categories.isNotEmpty) {
+        _selectedCategory = _categories.first;
+      }
+    });
   }
 
   @override
@@ -127,6 +155,17 @@ class _RoutineDetailState extends State<RoutineDetail> {
                                 _daysOfWeek = widget.item.daysOfWeek; // 원래 요일로 되돌리기
                                 _startDate = widget.item.startDate; // 원래 시작일로 되돌리기
                                 _endDate = widget.item.endDate; // 원래 종료일로 되돌리기
+                                // 카테고리도 복원
+                                if (widget.item.categoryId != null) {
+                                  _selectedCategory = _categories.firstWhere(
+                                    (cat) => cat.id == widget.item.categoryId,
+                                    orElse: () => _categories.isNotEmpty
+                                        ? _categories.first
+                                        : CategoryInfo(id: 0, name: '미분류', color: Colors.grey),
+                                  );
+                                } else if (_categories.isNotEmpty) {
+                                  _selectedCategory = _categories.first;
+                                }
                                 _isEditing = false;
                                 _dayPickerKey = UniqueKey(); // DayPicker 상태 초기화
                               });
@@ -313,6 +352,81 @@ class _RoutineDetailState extends State<RoutineDetail> {
                     },
                   ),
                 ),
+                // 카테고리 선택
+                if (_categories.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('카테고리', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey.shade300),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<CategoryInfo>(
+                                    value: _selectedCategory,
+                                    isExpanded: true,
+                                    icon: const Icon(Icons.arrow_drop_down),
+                                    items: _categories.map((category) {
+                                      return DropdownMenuItem<CategoryInfo>(
+                                        value: category,
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              width: 16,
+                                              height: 16,
+                                              decoration: BoxDecoration(
+                                                color: category.color,
+                                                shape: BoxShape.circle,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Text(
+                                              category.name,
+                                              style: const TextStyle(fontSize: 14),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    }).toList(),
+                                    onChanged: (CategoryInfo? newValue) {
+                                      setState(() {
+                                        _selectedCategory = newValue;
+                                      });
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                                onPressed: () {
+                                  final routineCategoryManager = RoutineCategoryManager(
+                                    categoryRepository: RoutineCategoryRepository(),
+                                  );
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => CategoryManagementPage(
+                                        categoryManager: routineCategoryManager,
+                                        title: '루틴 카테고리',
+                                      ),
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(Icons.settings_outlined))
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                 // 색상 선택
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -364,7 +478,13 @@ class _RoutineDetailState extends State<RoutineDetail> {
     final isDaysOfWeekChanged = _daysOfWeek != widget.item.daysOfWeek;
     final isStartDateChanged = _startDate != widget.item.startDate;
     final isEndDateChanged = _endDate != widget.item.endDate;
-    return isContentChanged || isColorChanged || isDaysOfWeekChanged || isStartDateChanged || isEndDateChanged;
+    final isCategoryChanged = _selectedCategory?.id != widget.item.categoryId;
+    return isContentChanged ||
+        isColorChanged ||
+        isDaysOfWeekChanged ||
+        isStartDateChanged ||
+        isEndDateChanged ||
+        isCategoryChanged;
   }
 
   Future<void> _editRoutine(VoidCallback? onRoutineEdited) async {
@@ -399,6 +519,7 @@ class _RoutineDetailState extends State<RoutineDetail> {
         updated: widget.item.updated,
         daysOfWeek: _daysOfWeek,
         endDate: _endDate,
+        categoryId: _selectedCategory?.id,
       );
 
       // 예시: 데이터베이스에 저장하는 코드
@@ -439,7 +560,10 @@ class _RoutineDetailState extends State<RoutineDetail> {
               // 해당 루틴의 모든 기록 삭제
               await historyRepository.deleteHistoryForRoutine(routine.id);
               onRoutineChanged!(); // 루틴 변경 콜백 호출
-              Navigator.pop(context);
+              if (mounted) {
+                Navigator.pop(context);
+                Navigator.pop(context);
+              }
             },
             child: const Text('삭제'),
           ),
