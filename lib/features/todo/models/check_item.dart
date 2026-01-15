@@ -25,6 +25,9 @@ class CheckItem extends HiveObject {
   @HiveField(6)
   final CheckEnum check;
 
+  @HiveField(7)
+  final int? categoryId;
+
   CheckItem({
     required this.id,
     required this.content,
@@ -33,6 +36,7 @@ class CheckItem extends HiveObject {
     required this.doneDate,
     required this.colorValue,
     required this.check,
+    this.categoryId,
   });
 }
 
@@ -84,5 +88,30 @@ class CheckRepository {
 
   Future<void> deleteItem(int id) async {
     await _item.delete(id);
+  }
+
+  // 마이그레이션: categoryId가 null인 항목을 기본 카테고리(1)로 업데이트
+  Future<void> migrateToCategorySystem() async {
+    final items = getAllItems();
+    bool hasNullCategory = items.any((item) => item.categoryId == null);
+
+    if (hasNullCategory) {
+      for (var item in items) {
+        if (item.categoryId == null) {
+          // 새 CheckItem 생성 (categoryId를 1로 설정)
+          final updatedItem = CheckItem(
+            id: item.id,
+            content: item.content,
+            dueDate: item.dueDate,
+            startDate: item.startDate,
+            doneDate: item.doneDate,
+            colorValue: item.colorValue,
+            check: item.check,
+            categoryId: 1, // 기본 카테고리 ID
+          );
+          await _item.put(item.id, updatedItem);
+        }
+      }
+    }
   }
 }

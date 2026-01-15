@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 class Event {
   final int id;
+  final int categoryId;
   final String title;
   final String description;
   final DateTime? createdAt;
@@ -17,6 +18,7 @@ class Event {
 
   const Event({
     required this.id,
+    required this.categoryId,
     required this.title,
     required this.description,
     this.createdAt,

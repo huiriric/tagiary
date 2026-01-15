@@ -28,6 +28,9 @@ class CheckRoutineItem extends HiveObject {
   @HiveField(7)
   final DateTime? endDate; // 루틴 종료일 (null이면 무기한)
 
+  @HiveField(8)
+  final int? categoryId;
+
   CheckRoutineItem({
     required this.id,
     required this.content,
@@ -37,6 +40,7 @@ class CheckRoutineItem extends HiveObject {
     required this.updated,
     required this.daysOfWeek,
     this.endDate,
+    this.categoryId,
   });
 
   // copyWith 메서드 - 일부 필드만 변경할 때 사용
@@ -49,6 +53,7 @@ class CheckRoutineItem extends HiveObject {
     DateTime? updated,
     List<bool>? daysOfWeek,
     DateTime? endDate,
+    int? categoryId,
   }) {
     return CheckRoutineItem(
       id: id ?? this.id,
@@ -59,6 +64,7 @@ class CheckRoutineItem extends HiveObject {
       updated: updated ?? this.updated,
       daysOfWeek: daysOfWeek ?? this.daysOfWeek,
       endDate: endDate ?? this.endDate,
+      categoryId: categoryId ?? this.categoryId,
     );
   }
 
@@ -112,6 +118,10 @@ class CheckRoutineRepository {
 
   List<CheckRoutineItem> getAllItems() {
     return _item.values.toList();
+  }
+
+  List<CheckRoutineItem> getCategoryItems(int categoryId) {
+    return _item.values.where((item) => item.categoryId == categoryId).toList();
   }
 
   List<CheckRoutineItem> getCheckedItems() {
@@ -170,5 +180,21 @@ class CheckRoutineRepository {
     final compareDate = DateTime(date.year, date.month, date.day);
 
     return compareDate.isBefore(today);
+  }
+
+  // 마이그레이션: categoryId가 null인 항목을 기본 카테고리(1)로 업데이트
+  Future<void> migrateToCategorySystem() async {
+    final items = getAllItems();
+    bool hasNullCategory = items.any((item) => item.categoryId == null);
+
+    if (hasNullCategory) {
+      for (var item in items) {
+        if (item.categoryId == null) {
+          // copyWith를 사용하여 categoryId만 업데이트
+          final updatedItem = item.copyWith(categoryId: 1); // 기본 카테고리 ID
+          await updateItem(updatedItem);
+        }
+      }
+    }
   }
 }

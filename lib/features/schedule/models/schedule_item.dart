@@ -48,6 +48,9 @@ class ScheduleItem extends HiveObject {
   @HiveField(13)
   final int colorValue;
 
+  @HiveField(14)
+  final int? categoryId;
+
   bool get hasMultiDay => endYear != null && endMonth != null && endDate != null;
 
   ScheduleItem({
@@ -64,6 +67,7 @@ class ScheduleItem extends HiveObject {
     this.endHour,
     this.endMinute,
     required this.colorValue,
+    this.categoryId,
   });
 
   // 시간 정보가 있는지 확인하는 getter
@@ -72,6 +76,7 @@ class ScheduleItem extends HiveObject {
   Event toEvent() {
     return Event(
       id: id,
+      categoryId: categoryId ?? -1, // categoryId가 null인 경우 -1
       title: title,
       description: description,
       date: DateTime(year, month, date), // 날짜 정보
@@ -196,5 +201,37 @@ class ScheduleRepository {
 
   Future<void> deleteItem(int id) async {
     await _item.delete(id);
+  }
+
+  // 마이그레이션: categoryId가 null인 항목을 기본 카테고리(1)로 업데이트
+  Future<void> migrateToCategorySystem() async {
+    final items = getAllItems();
+    bool hasNullCategory = items.any((item) => item.categoryId == null);
+
+    if (hasNullCategory) {
+      for (var item in items) {
+        if (item.categoryId == null) {
+          // 새 ScheduleItem 생성 (categoryId를 1로 설정)
+          final updatedItem = ScheduleItem(
+            year: item.year,
+            month: item.month,
+            date: item.date,
+            endYear: item.endYear,
+            endMonth: item.endMonth,
+            endDate: item.endDate,
+            title: item.title,
+            description: item.description,
+            startHour: item.startHour,
+            startMinute: item.startMinute,
+            endHour: item.endHour,
+            endMinute: item.endMinute,
+            colorValue: item.colorValue,
+            categoryId: 1, // 기본 카테고리 ID
+          );
+          updatedItem.id = item.id;
+          await _item.put(item.id, updatedItem);
+        }
+      }
+    }
   }
 }
