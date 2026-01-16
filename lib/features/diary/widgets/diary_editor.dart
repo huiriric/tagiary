@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:mrplando/features/home/screens/home_screen.dart';
 import 'package:mrplando/shared/widgets/color_picker.dart';
 import 'package:mrplando/shared/widgets/slide_up_container.dart';
 import 'package:mrplando/core/constants/colors.dart';
@@ -159,7 +160,8 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
                                               const SizedBox(width: 8),
                                               Text(
                                                 '${_selectedDate.year}년 ${_selectedDate.month}월 ${_selectedDate.day}일',
-                                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
+                                                style: const TextStyle(
+                                                    fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
                                               ),
                                             ],
                                           ),
@@ -179,7 +181,9 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
                                 label: ConstrainedBox(
                                   constraints: const BoxConstraints(maxWidth: 100),
                                   child: Text(
-                                    _selectedCategoryId != null ? widget.tagManager.groupRepository.getGroup(_selectedCategoryId!)!.name : '카테고리',
+                                    _selectedCategoryId != null
+                                        ? widget.tagManager.groupRepository.getGroup(_selectedCategoryId!)!.name
+                                        : '카테고리',
                                     overflow: TextOverflow.ellipsis,
                                     maxLines: 1,
                                   ),
@@ -187,7 +191,8 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
                                 labelStyle: TextStyle(color: _selectedCategoryId != null ? Colors.white : Colors.black),
                                 onPressed: _buildCategorySelector,
                                 backgroundColor: _selectedCategoryId != null
-                                    ? Color(widget.tagManager.groupRepository.getGroup(_selectedCategoryId!)!.colorValue)
+                                    ? Color(
+                                        widget.tagManager.groupRepository.getGroup(_selectedCategoryId!)!.colorValue)
                                     : Colors.grey[300],
                               ),
                             ],
@@ -209,10 +214,16 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
                                       autofocus: widget.isEdit ? false : true,
                                       onChanged: (value) => setState(() {}),
                                       decoration: const InputDecoration(
-                                        border: OutlineInputBorder(borderSide: BorderSide.none, borderRadius: BorderRadius.all(Radius.circular(16))),
-                                        enabledBorder: OutlineInputBorder(borderSide: BorderSide.none, borderRadius: BorderRadius.all(Radius.circular(16))),
+                                        border: OutlineInputBorder(
+                                            borderSide: BorderSide.none,
+                                            borderRadius: BorderRadius.all(Radius.circular(16))),
+                                        enabledBorder: OutlineInputBorder(
+                                            borderSide: BorderSide.none,
+                                            borderRadius: BorderRadius.all(Radius.circular(16))),
                                         labelText: '기록',
-                                        focusedBorder: OutlineInputBorder(borderSide: BorderSide.none, borderRadius: BorderRadius.all(Radius.circular(16))),
+                                        focusedBorder: OutlineInputBorder(
+                                            borderSide: BorderSide.none,
+                                            borderRadius: BorderRadius.all(Radius.circular(16))),
                                         hintText: '오늘의 기록을 남겨보세요',
                                         alignLabelWithHint: true,
                                         filled: true,
@@ -261,7 +272,8 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
                                   ),
                                   child: Text(
                                     widget.isEdit ? '수정하기' : '기록하기',
-                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                                    style:
+                                        const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                                   ),
                                 ),
                               ),
@@ -342,31 +354,37 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
 
   // 날짜 선택 다이얼로그 표시
   Future<void> _selectDate() async {
-    final DateTime? picked = await showDatePicker(
+    final DateTime? picked = await showBlackWhiteDatePicker(
       context: context,
       initialDate: _selectedDate,
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Colors.black, // 헤더 배경 색상
-              onPrimary: Colors.white, // 헤더 텍스트 색상
-              onSurface: Colors.black, // 달력 텍스트 색상
-              surface: Colors.white, // 배경 색상
-            ),
-            textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.black, // 버튼 텍스트 색상
-              ),
-            ),
-            dialogTheme: const DialogThemeData(backgroundColor: Colors.white),
-          ),
-          child: child!,
-        );
-      },
     );
+    // final DateTime? picked = await showDatePicker(
+    //   context: context,
+    //   initialDate: _selectedDate,
+    //   firstDate: DateTime(2000),
+    //   lastDate: DateTime(2100),
+    //   builder: (context, child) {
+    //     return Theme(
+    //       data: Theme.of(context).copyWith(
+    //         colorScheme: const ColorScheme.light(
+    //           primary: Colors.black, // 헤더 배경 색상
+    //           onPrimary: Colors.white, // 헤더 텍스트 색상
+    //           onSurface: Colors.black, // 달력 텍스트 색상
+    //           surface: Colors.white, // 배경 색상
+    //         ),
+    //         textButtonTheme: TextButtonThemeData(
+    //           style: TextButton.styleFrom(
+    //             foregroundColor: Colors.black, // 버튼 텍스트 색상
+    //           ),
+    //         ),
+    //         dialogTheme: const DialogThemeData(backgroundColor: Colors.white),
+    //       ),
+    //       child: child!,
+    //     );
+    //   },
+    // );
 
     if (picked != null && picked != _selectedDate) {
       setState(() {
