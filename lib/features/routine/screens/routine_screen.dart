@@ -229,22 +229,23 @@ class _RoutineScreenState extends State<RoutineScreen> {
                         padding: const EdgeInsets.only(right: 8),
                         child: ChoiceChip(
                           label: const Text('전체'),
-                          selected: _selectedCategoryId == -1,
+                          selected: _selectedCategoryId == null,
                           onSelected: (selected) {
                             setState(() {
                               _selectedCategoryId = -1;
                             });
                           },
+                          showCheckmark: false,
                           selectedColor: Colors.blue.shade100,
                           labelStyle: TextStyle(
-                            color: _selectedCategoryId == -1 ? Colors.blue.shade700 : Colors.grey.shade700,
-                            fontWeight: _selectedCategoryId == -1 ? FontWeight.bold : FontWeight.normal,
+                            color: _selectedCategoryId == null ? Colors.blue.shade700 : Colors.grey.shade700,
+                            fontWeight: _selectedCategoryId == null ? FontWeight.bold : FontWeight.normal,
                           ),
                           backgroundColor: Colors.grey.shade100,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
                             side: BorderSide(
-                              color: _selectedCategoryId == -1 ? Colors.blue.shade300 : Colors.transparent,
+                              color: _selectedCategoryId == null ? Colors.blue.shade300 : Colors.transparent,
                               width: 1.5,
                             ),
                           ),
@@ -277,6 +278,7 @@ class _RoutineScreenState extends State<RoutineScreen> {
                                 _selectedCategoryId = category.id;
                               });
                             },
+                            showCheckmark: false,
                             selectedColor: category.color.withOpacity(0.2),
                             labelStyle: TextStyle(
                               color: isSelected ? category.color : Colors.grey.shade700,
@@ -429,7 +431,8 @@ class _RoutineScreenState extends State<RoutineScreen> {
       // startDate가 해당 달 이전 또는 해당 달에 있고
       final startBeforeOrInMonth = routine.startDate.isBefore(lastDayOfMonth.add(const Duration(days: 1)));
       // endDate가 null이거나 해당 달 이후 또는 해당 달에 있는 경우
-      final endAfterOrInMonth = routine.endDate == null || routine.endDate!.isAfter(firstDayOfMonth.subtract(const Duration(days: 1)));
+      final endAfterOrInMonth =
+          routine.endDate == null || routine.endDate!.isAfter(firstDayOfMonth.subtract(const Duration(days: 1)));
 
       return startBeforeOrInMonth && endAfterOrInMonth;
     }).toList();
@@ -596,7 +599,8 @@ class _RoutineScreenState extends State<RoutineScreen> {
     }
 
     // endDate 이후면 비활성화
-    if (routine.endDate != null && date.isAfter(DateTime(routine.endDate!.year, routine.endDate!.month, routine.endDate!.day))) {
+    if (routine.endDate != null &&
+        date.isAfter(DateTime(routine.endDate!.year, routine.endDate!.month, routine.endDate!.day))) {
       return false;
     }
 
@@ -936,6 +940,11 @@ class _RoutineScreenState extends State<RoutineScreen> {
               onRoutineAdded: () {
                 setState(() {});
               },
+              onCategoryUpdated: () {
+                setState(() {
+                  _categories = _categoryManager.getAllCategories();
+                });
+              },
               selectedDate: selectedDate,
               start: start,
               end: end,
@@ -966,6 +975,11 @@ class _RoutineScreenState extends State<RoutineScreen> {
               item: routine,
               onUpdated: () {
                 setState(() {});
+              },
+              onCategoryUpdated: () {
+                setState(() {
+                  _categories = _categoryManager.getAllCategories();
+                });
               },
             ),
           ),

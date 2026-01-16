@@ -14,12 +14,14 @@ class WeekView extends StatefulWidget {
   final DateTime selectedDate;
   final int? selectedCategoryId; // 선택된 카테고리 ID
   final List<CategoryInfo> categories; // 카테고리 목록
+  final VoidCallback? onCategoryUpdated; // 카테고리 변경 콜백
 
   const WeekView({
     super.key,
     required this.selectedDate,
     this.selectedCategoryId,
     this.categories = const [],
+    this.onCategoryUpdated,
   });
 
   @override
@@ -140,7 +142,8 @@ class _WeekViewState extends State<WeekView> {
 
         // startDate 체크 (startDate가 있으면 해당 날짜 이후만 표시)
         if (routineItem.startDate != null) {
-          final startDateOnly = DateTime(routineItem.startDate!.year, routineItem.startDate!.month, routineItem.startDate!.day);
+          final startDateOnly =
+              DateTime(routineItem.startDate!.year, routineItem.startDate!.month, routineItem.startDate!.day);
           if (dateKey.isBefore(startDateOnly)) return false;
         }
 
@@ -158,7 +161,8 @@ class _WeekViewState extends State<WeekView> {
 
         // startDate 체크 (startDate가 있으면 해당 날짜 이후만 표시)
         if (routineItem.startDate != null) {
-          final startDateOnly = DateTime(routineItem.startDate!.year, routineItem.startDate!.month, routineItem.startDate!.day);
+          final startDateOnly =
+              DateTime(routineItem.startDate!.year, routineItem.startDate!.month, routineItem.startDate!.day);
           if (dateKey.isBefore(startDateOnly)) return false;
         }
 
@@ -404,7 +408,9 @@ class _WeekViewState extends State<WeekView> {
   // 주간 일정 목록 뷰
   Widget _buildWeekEventsView(int pageIndex) {
     // 해당 주의 시작일
-    final weekStart = (_weekStarts.length > pageIndex) ? _weekStarts[pageIndex] : DateTime.now().subtract(Duration(days: DateTime.now().weekday % 7));
+    final weekStart = (_weekStarts.length > pageIndex)
+        ? _weekStarts[pageIndex]
+        : DateTime.now().subtract(Duration(days: DateTime.now().weekday % 7));
 
     // 해당 주의 이벤트 데이터
     final weekEvents = (_weeklyEvents.length > pageIndex) ? _weeklyEvents[pageIndex] : <int, List<Event>>{};
@@ -562,6 +568,10 @@ class _WeekViewState extends State<WeekView> {
             onUpdate: () {
               // 일정이 수정되거나 삭제되었을 때 데이터를 다시 로드
               _loadAllWeeksEvents();
+            },
+            onCategoryUpdated: () {
+              // 카테고리 정보가 변경되었을 때 데이터를 다시 로드
+              widget.onCategoryUpdated?.call();
             },
           ),
         ),

@@ -394,6 +394,11 @@ class _TodoScreenState extends State<TodoScreen> {
               onTodoAdded: () {
                 setState(() {});
               },
+              onCategoryUpdated: () {
+                setState(() {
+                  _loadCategories();
+                });
+              },
             ),
           ),
         ),

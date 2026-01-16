@@ -19,11 +19,13 @@ import 'package:mrplando/features/schedule/widgets/add_schedule.dart';
 class ScheduleDetails extends StatefulWidget {
   final Event event;
   final Function onUpdate; // 일정 변경시 호출할 콜백 함수
+  final VoidCallback? onCategoryUpdated;
 
   const ScheduleDetails({
     super.key,
     required this.event,
     required this.onUpdate,
+    this.onCategoryUpdated,
   });
 
   @override
@@ -94,15 +96,16 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
     setState(() {
       _categories = _categoryManager.getAllCategories();
       // 기존 카테고리 설정
-      if (widget.event.categoryId != null) {
-        _selectedCategory = _categories.firstWhere(
-          (cat) => cat.id == widget.event.categoryId,
-          orElse: () =>
-              _categories.isNotEmpty ? _categories.first : CategoryInfo(id: 0, name: '미분류', color: Colors.grey),
-        );
-      } else if (_categories.isNotEmpty) {
-        _selectedCategory = _categories.first;
-      }
+      _selectedCategory = _categories.firstWhere(
+        (cat) => cat.id == widget.event.categoryId,
+        orElse: () => _categories.isNotEmpty
+            ? _categories.first
+            : CategoryInfo(
+                id: 0,
+                name: '미분류',
+                color: Colors.grey,
+              ),
+      );
     });
   }
 
@@ -238,16 +241,12 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
                               _isRoutine = widget.event.isRoutine;
                               _selectedColor = widget.event.color;
                               // 카테고리도 복원
-                              if (widget.event.categoryId != null) {
-                                _selectedCategory = _categories.firstWhere(
-                                  (cat) => cat.id == widget.event.categoryId,
-                                  orElse: () => _categories.isNotEmpty
-                                      ? _categories.first
-                                      : CategoryInfo(id: 0, name: '미분류', color: Colors.grey),
-                                );
-                              } else if (_categories.isNotEmpty) {
-                                _selectedCategory = _categories.first;
-                              }
+                              _selectedCategory = _categories.firstWhere(
+                                (cat) => cat.id == widget.event.categoryId,
+                                orElse: () => _categories.isNotEmpty
+                                    ? _categories.first
+                                    : CategoryInfo(id: 0, name: '미분류', color: Colors.grey),
+                              );
                               _isEditing = false;
                               _dayPickerKey = UniqueKey(); // DayPicker 새로고침
                               if (_hasTimeSet) {
@@ -505,6 +504,13 @@ class _ScheduleDetailsState extends State<ScheduleDetails> {
                                   builder: (context) => CategoryManagementPage(
                                     categoryManager: scheduleCategoryManager,
                                     title: '일정 카테고리',
+                                    onCategoriesUpdated: () {
+                                      setState(() {
+                                        // 카테고리 목록 다시 가져오기
+                                        _categories = scheduleCategoryManager.getAllCategories();
+                                        widget.onCategoryUpdated?.call();
+                                      });
+                                    },
                                   ),
                                 ),
                               );

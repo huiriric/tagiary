@@ -21,6 +21,7 @@ class AddSchedule extends StatefulWidget {
   final TimeOfDay start;
   final TimeOfDay end;
   final VoidCallback? onScheduleAdded; // 일정 추가 후 호출할 콜백 함수
+  final VoidCallback? onCategoryAdded;
   final List<CategoryInfo> categories; // 카테고리 목록
 
   const AddSchedule(
@@ -29,6 +30,7 @@ class AddSchedule extends StatefulWidget {
       required this.start,
       required this.end,
       this.onScheduleAdded,
+      this.onCategoryAdded,
       this.categories = const []});
 
   @override
@@ -76,6 +78,7 @@ class _AddScheduleState extends State<AddSchedule> {
   double colorSize = 35;
 
   // 카테고리 선택
+  List<CategoryInfo> categories = [];
   CategoryInfo? selectedCategory;
 
   // 충돌 감지를 위한 변수
@@ -90,10 +93,11 @@ class _AddScheduleState extends State<AddSchedule> {
     start = widget.start;
     end = widget.end;
     selectedColor = scheduleColors[0];
+    categories = widget.categories;
 
     // 첫 번째 카테고리를 기본값으로 설정
-    if (widget.categories.isNotEmpty) {
-      selectedCategory = widget.categories.first;
+    if (categories.isNotEmpty) {
+      selectedCategory = categories.first;
     }
   }
 
@@ -265,7 +269,7 @@ class _AddScheduleState extends State<AddSchedule> {
                   ],
                 ),
                 // 카테고리 선택
-                if (widget.categories.isNotEmpty)
+                if (categories.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 10.0),
                     child: Column(
@@ -287,7 +291,7 @@ class _AddScheduleState extends State<AddSchedule> {
                                     value: selectedCategory,
                                     isExpanded: true,
                                     icon: const Icon(Icons.arrow_drop_down),
-                                    items: widget.categories.map((category) {
+                                    items: categories.map((category) {
                                       return DropdownMenuItem<CategoryInfo>(
                                         value: category,
                                         child: Row(
@@ -331,6 +335,13 @@ class _AddScheduleState extends State<AddSchedule> {
                                     builder: (context) => CategoryManagementPage(
                                       categoryManager: scheduleCategoryManager,
                                       title: '일정 카테고리',
+                                      onCategoriesUpdated: () {
+                                        setState(() {
+                                          // 카테고리 목록 다시 가져오기
+                                          categories = scheduleCategoryManager.getAllCategories();
+                                          widget.onCategoryAdded?.call();
+                                        });
+                                      },
                                     ),
                                   ),
                                 );

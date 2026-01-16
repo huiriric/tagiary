@@ -16,6 +16,7 @@ class TimeLine extends StatefulWidget {
   final VoidCallback? onEventsLoaded; // 이벤트 로드 완료 시 호출할 콜백
   final int? selectedCategoryId; // 선택된 카테고리 ID
   final List<CategoryInfo> categories; // 카테고리 목록
+  final VoidCallback? onCategoryUpdated; // 카테고리 업데이트 콜백
 
   const TimeLine({
     super.key,
@@ -24,6 +25,7 @@ class TimeLine extends StatefulWidget {
     this.onEventsLoaded,
     this.selectedCategoryId,
     this.categories = const [],
+    this.onCategoryUpdated,
   });
 
   @override
@@ -133,7 +135,8 @@ class _TimeLineState extends State<TimeLine> {
 
         // startDate 체크 (startDate가 있으면 해당 날짜 이후만 표시)
         if (routineItem.startDate != null) {
-          final startDateOnly = DateTime(routineItem.startDate!.year, routineItem.startDate!.month, routineItem.startDate!.day);
+          final startDateOnly =
+              DateTime(routineItem.startDate!.year, routineItem.startDate!.month, routineItem.startDate!.day);
           if (dateKey.isBefore(startDateOnly)) return false;
         }
 
@@ -151,7 +154,8 @@ class _TimeLineState extends State<TimeLine> {
 
         // startDate 체크 (startDate가 있으면 해당 날짜 이후만 표시)
         if (routineItem.startDate != null) {
-          final startDateOnly = DateTime(routineItem.startDate!.year, routineItem.startDate!.month, routineItem.startDate!.day);
+          final startDateOnly =
+              DateTime(routineItem.startDate!.year, routineItem.startDate!.month, routineItem.startDate!.day);
           if (dateKey.isBefore(startDateOnly)) return false;
         }
 
@@ -284,7 +288,8 @@ class _TimeLineState extends State<TimeLine> {
                           child: Text(
                             '$hour',
                             textAlign: TextAlign.center,
-                            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey.shade700, fontSize: eventFontSize),
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, color: Colors.grey.shade700, fontSize: eventFontSize),
                           ),
                         ),
                         Container(
@@ -360,7 +365,8 @@ class _TimeLineState extends State<TimeLine> {
                       child: Stack(
                         children: [
                           // 드래그 중에는 원래 이벤트 위에 그림자 표시
-                          if (_draggingEvent == event && _dragCurrentY != null && _dragStartY != null) _buildDragShadow(event, eventWidth, height),
+                          if (_draggingEvent == event && _dragCurrentY != null && _dragStartY != null)
+                            _buildDragShadow(event, eventWidth, height),
 
                           // 기존 컨테이너 (실제 이벤트 표시)
                           Container(
@@ -598,12 +604,12 @@ class _TimeLineState extends State<TimeLine> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text("길게 눌렀음"),
+          title: const Text('길게 눌렀음'),
           content: Text('$hour - ${hour + 1}'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text("닫기"),
+              child: const Text('닫기'),
             ),
           ],
         );
@@ -904,6 +910,10 @@ class _TimeLineState extends State<TimeLine> {
             onUpdate: () {
               // 일정이 수정되거나 삭제되었을 때 데이터를 다시 로드
               loadEventsForDate();
+            },
+            onCategoryUpdated: () {
+              // 카테고리 정보가 변경되었을 때 데이터를 다시 로드
+              widget.onCategoryUpdated?.call();
             },
           ),
         ),

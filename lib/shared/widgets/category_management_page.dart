@@ -7,10 +7,12 @@ import 'package:mrplando/shared/models/category_manager_interface.dart';
 class CategoryManagementPage extends StatefulWidget {
   final CategoryManagerInterface categoryManager;
   final String title;
+  final VoidCallback? onCategoriesUpdated;
 
   const CategoryManagementPage({
     super.key,
     required this.categoryManager,
+    this.onCategoriesUpdated,
     this.title = '카테고리 관리',
   });
 
@@ -34,11 +36,9 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
     try {
       // CategoryManager가 TodoCategoryManager, RoutineCategoryManager 등의 인스턴스인 경우
       // init() 메서드를 호출하여 Repository를 초기화
-      if (widget.categoryManager is dynamic) {
-        final manager = widget.categoryManager as dynamic;
-        if (manager.init != null) {
-          await manager.init();
-        }
+      final manager = widget.categoryManager as dynamic;
+      if (manager.init != null) {
+        await manager.init();
       }
     } catch (e) {
       // init 메서드가 없거나 이미 초기화된 경우 무시
@@ -68,7 +68,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.add, size: 28),
-            onPressed: _showAddCategoryDialog,
+            onPressed: () => _showAddCategoryDialog(widget.onCategoriesUpdated),
           ),
         ],
       ),
@@ -169,7 +169,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
   }
 
   // 카테고리 추가 다이얼로그
-  void _showAddCategoryDialog() {
+  void _showAddCategoryDialog(VoidCallback? onCategoriesUpdated) {
     final TextEditingController nameController = TextEditingController();
     Color selectedColor = scheduleColors.first;
 
@@ -248,6 +248,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
                                 await widget.categoryManager.addCategory(name, selectedColor);
                                 Navigator.pop(context);
                                 _loadCategories();
+                                onCategoriesUpdated?.call();
                                 if (mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(content: Text('카테고리가 추가되었습니다')),
@@ -275,7 +276,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
   }
 
   // 카테고리 삭제 확인 다이얼로그
-  void _showDeleteDialog(CategoryInfo category) {
+  void _showDeleteDialog(CategoryInfo category, {VoidCallback? onCategoriesUpdated}) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -291,6 +292,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
               await widget.categoryManager.softDeleteCategory(category.id);
               Navigator.pop(context);
               _loadCategories();
+              onCategoriesUpdated?.call();
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('카테고리가 삭제되었습니다')),
@@ -404,6 +406,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
                                         Navigator.pop(context);
                                       }
                                       _loadCategories();
+                                      widget.onCategoriesUpdated?.call();
                                       if (mounted) {
                                         ScaffoldMessenger.of(context).showSnackBar(
                                           const SnackBar(
@@ -422,7 +425,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
                               IconButton(
                                 onPressed: () {
                                   Navigator.pop(context);
-                                  _showDeleteDialog(category);
+                                  _showDeleteDialog(category, onCategoriesUpdated: widget.onCategoriesUpdated);
                                 },
                                 icon: const Icon(
                                   Icons.delete_outline,

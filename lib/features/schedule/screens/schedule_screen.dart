@@ -144,6 +144,7 @@ class _TimelineScreenState extends State<TimelineScreen> {
                               _timelineKey = UniqueKey(); // 필터 변경 시 위젯 새로고침
                             });
                           },
+                          showCheckmark: false,
                           selectedColor: Colors.blue.shade100,
                           backgroundColor: Colors.grey.shade200,
                           labelStyle: TextStyle(
@@ -188,6 +189,7 @@ class _TimelineScreenState extends State<TimelineScreen> {
                                 _timelineKey = UniqueKey(); // 필터 변경 시 위젯 새로고침
                               });
                             },
+                            showCheckmark: false,
                             selectedColor: category.color.withOpacity(0.2),
                             backgroundColor: Colors.grey.shade200,
                             labelStyle: TextStyle(
@@ -204,7 +206,7 @@ class _TimelineScreenState extends State<TimelineScreen> {
                             ),
                           ),
                         );
-                      }).toList(),
+                      }),
                     ],
                   ),
                 )
@@ -293,6 +295,11 @@ class _TimelineScreenState extends State<TimelineScreen> {
                     start: TimeOfDay(hour: TimeOfDay.now().hour + 1, minute: 0),
                     end: TimeOfDay(hour: TimeOfDay.now().hour + 2, minute: 0),
                     onScheduleAdded: () => _loadEvents,
+                    onCategoryAdded: () {
+                      setState(() {
+                        _categories = _categoryManager.getAllCategories();
+                      });
+                    },
                     categories: _categories,
                   ),
                 ),
@@ -319,6 +326,11 @@ class _TimelineScreenState extends State<TimelineScreen> {
           date: date,
           selectedCategoryId: _selectedCategoryId,
           categories: _categories,
+          onCategoryUpdated: () {
+            setState(() {
+              _categories = _categoryManager.getAllCategories();
+            });
+          },
         );
       case TimelineViewMode.week:
         return WeekView(
@@ -326,12 +338,22 @@ class _TimelineScreenState extends State<TimelineScreen> {
           selectedDate: date,
           selectedCategoryId: _selectedCategoryId,
           categories: _categories,
+          onCategoryUpdated: () {
+            setState(() {
+              _categories = _categoryManager.getAllCategories();
+            });
+          },
         );
       case TimelineViewMode.month:
         return MonthView(
           key: _timelineKey,
           selectedDate: date,
           selectedCategoryId: _selectedCategoryId,
+          onCategoryUpdated: () {
+            setState(() {
+              _categories = _categoryManager.getAllCategories();
+            });
+          },
           categories: _categories,
         );
     }

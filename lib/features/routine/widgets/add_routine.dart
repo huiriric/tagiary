@@ -19,6 +19,7 @@ class AddRoutine extends StatefulWidget {
   DateTime selectedDate;
   TimeOfDay start;
   TimeOfDay end;
+  final VoidCallback? onCategoryUpdated;
 
   AddRoutine({
     super.key,
@@ -27,6 +28,7 @@ class AddRoutine extends StatefulWidget {
     required this.selectedDate,
     required this.start,
     required this.end,
+    this.onCategoryUpdated,
   });
 
   @override
@@ -62,6 +64,7 @@ class _AddRoutineState extends State<AddRoutine> {
   double colorSize = 35;
 
   // 카테고리 선택
+  List<CategoryInfo> categories = [];
   CategoryInfo? selectedCategory;
 
   @override
@@ -73,9 +76,10 @@ class _AddRoutineState extends State<AddRoutine> {
     start = widget.start;
     end = widget.end;
 
+    categories = widget.categories;
     // 첫 번째 카테고리를 기본값으로 설정
-    if (widget.categories.isNotEmpty) {
-      selectedCategory = widget.categories.first;
+    if (categories.isNotEmpty) {
+      selectedCategory = categories.first;
     }
   }
 
@@ -259,7 +263,7 @@ class _AddRoutineState extends State<AddRoutine> {
                   ],
                 ),
                 // 카테고리 선택
-                if (widget.categories.isNotEmpty)
+                if (categories.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 10.0),
                     child: Column(
@@ -281,7 +285,7 @@ class _AddRoutineState extends State<AddRoutine> {
                                     value: selectedCategory,
                                     isExpanded: true,
                                     icon: const Icon(Icons.arrow_drop_down),
-                                    items: widget.categories.map((category) {
+                                    items: categories.map((category) {
                                       return DropdownMenuItem<CategoryInfo>(
                                         value: category,
                                         child: Row(
@@ -324,6 +328,13 @@ class _AddRoutineState extends State<AddRoutine> {
                                       builder: (context) => CategoryManagementPage(
                                         categoryManager: routineCategoryManager,
                                         title: '루틴 카테고리',
+                                        onCategoriesUpdated: () {
+                                          setState(() {
+                                            // 카테고리 목록 다시 가져오기
+                                            categories = routineCategoryManager.getAllCategories();
+                                            widget.onCategoryUpdated?.call();
+                                          });
+                                        },
                                       ),
                                     ),
                                   );

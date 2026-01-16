@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:mrplando/core/constants/colors.dart';
+import 'package:mrplando/features/home/screens/home_screen.dart';
 import 'package:mrplando/features/todo/models/todo_category.dart';
 import 'package:mrplando/features/todo/models/todo_category_manager.dart';
 import 'package:mrplando/shared/models/check_enum.dart';
@@ -16,12 +17,14 @@ class AddTodo extends StatefulWidget {
   final VoidCallback? onTodoAdded; // 할 일 추가 후 호출할 콜백 함수
   final CheckItem? todoToEdit; // 수정할 할 일 (없으면 새로 추가)
   final List<CategoryInfo> categories; // 카테고리 목록
+  final VoidCallback? onCategoryUpdated; // 카테고리 업데이트 후 호출할 콜백 함수
 
   const AddTodo({
     super.key,
     this.onTodoAdded,
     this.todoToEdit,
     this.categories = const [],
+    this.onCategoryUpdated,
   });
 
   @override
@@ -45,12 +48,14 @@ class _AddTodoState extends State<AddTodo> {
   double colorSize = 35;
 
   // 카테고리 선택
+  List<CategoryInfo> categories = [];
   CategoryInfo? selectedCategory;
 
   @override
   void initState() {
     super.initState();
 
+    categories = widget.categories;
     // 수정 모드인 경우 기존 데이터로 초기화
     if (widget.todoToEdit != null) {
       content = widget.todoToEdit!.content;
@@ -59,20 +64,18 @@ class _AddTodoState extends State<AddTodo> {
 
       // 기존 카테고리 설정
       if (widget.todoToEdit!.categoryId != null) {
-        selectedCategory = widget.categories.firstWhere(
+        selectedCategory = categories.firstWhere(
           (cat) => cat.id == widget.todoToEdit!.categoryId,
-          orElse: () => widget.categories.isNotEmpty
-              ? widget.categories.first
-              : CategoryInfo(id: 0, name: '미분류', color: Colors.grey),
+          orElse: () => categories.isNotEmpty ? categories.first : CategoryInfo(id: 0, name: '미분류', color: Colors.grey),
         );
-      } else if (widget.categories.isNotEmpty) {
-        selectedCategory = widget.categories.first;
+      } else if (categories.isNotEmpty) {
+        selectedCategory = categories.first;
       }
     } else {
       selectedColor = scheduleColors[0];
       // 새로 추가하는 경우 첫 번째 카테고리 선택
-      if (widget.categories.isNotEmpty) {
-        selectedCategory = widget.categories.first;
+      if (categories.isNotEmpty) {
+        selectedCategory = categories.first;
       }
     }
 
@@ -124,7 +127,7 @@ class _AddTodoState extends State<AddTodo> {
                 Divider(height: 20, thickness: 1, color: Colors.grey.shade300),
 
                 // 카테고리 선택
-                if (widget.categories.isNotEmpty)
+                if (categories.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 10.0),
                     child: Column(
@@ -146,7 +149,7 @@ class _AddTodoState extends State<AddTodo> {
                                     value: selectedCategory,
                                     isExpanded: true,
                                     icon: const Icon(Icons.arrow_drop_down),
-                                    items: widget.categories.map((category) {
+                                    items: categories.map((category) {
                                       return DropdownMenuItem<CategoryInfo>(
                                         value: category,
                                         child: Row(
@@ -190,6 +193,13 @@ class _AddTodoState extends State<AddTodo> {
                                     builder: (context) => CategoryManagementPage(
                                       categoryManager: todoCategoryManager,
                                       title: '할 일 카테고리',
+                                      onCategoriesUpdated: () {
+                                        setState(() {
+                                          // 카테고리 목록 다시 가져오기
+                                          categories = todoCategoryManager.getAllCategories();
+                                          widget.onCategoryUpdated?.call();
+                                        });
+                                      },
                                     ),
                                   ),
                                 );
@@ -214,7 +224,7 @@ class _AddTodoState extends State<AddTodo> {
                           Expanded(
                             child: GestureDetector(
                               onTap: () async {
-                                final date = await showDatePicker(
+                                final date = await showBlackWhiteDatePicker(
                                   context: context,
                                   initialDate: selectedDate ?? DateTime.now(),
                                   firstDate: DateTime.now().subtract(const Duration(days: 365)),

@@ -14,11 +14,13 @@ class MonthView extends StatefulWidget {
   final DateTime selectedDate;
   final int? selectedCategoryId; // 선택된 카테고리 ID
   final List<CategoryInfo> categories; // 카테고리 목록
+  final VoidCallback? onCategoryUpdated;
 
   const MonthView({
     super.key,
     required this.selectedDate,
     this.selectedCategoryId,
+    this.onCategoryUpdated,
     this.categories = const [],
   });
 
@@ -55,7 +57,8 @@ class _MonthViewState extends State<MonthView> {
   @override
   void didUpdateWidget(MonthView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.selectedDate.month != widget.selectedDate.month || oldWidget.selectedDate.year != widget.selectedDate.year) {
+    if (oldWidget.selectedDate.month != widget.selectedDate.month ||
+        oldWidget.selectedDate.year != widget.selectedDate.year) {
       setState(() {
         _selectedDay = widget.selectedDate;
       });
@@ -195,7 +198,9 @@ class _MonthViewState extends State<MonthView> {
                                 child: Container(
                                   decoration: BoxDecoration(
                                     border: Border.all(
-                                      color: isSelected ? Theme.of(context).primaryColor.withOpacity(0.7) : Colors.transparent,
+                                      color: isSelected
+                                          ? Theme.of(context).primaryColor.withOpacity(0.7)
+                                          : Colors.transparent,
                                       width: isSelected ? 1.5 : 1.0,
                                     ),
                                     borderRadius: BorderRadius.circular(4),
@@ -224,7 +229,8 @@ class _MonthViewState extends State<MonthView> {
                                               child: Text(
                                                 '${day.day}',
                                                 style: TextStyle(
-                                                  fontWeight: isToday || isSelected ? FontWeight.bold : FontWeight.normal,
+                                                  fontWeight:
+                                                      isToday || isSelected ? FontWeight.bold : FontWeight.normal,
                                                   color: !isCurrentMonth
                                                       ? Colors.grey.shade400
                                                       : isToday
@@ -324,7 +330,8 @@ class _MonthViewState extends State<MonthView> {
 
         // startDate 체크 (startDate가 있으면 해당 날짜 이후만 표시)
         if (routineItem.startDate != null) {
-          final startDateOnly = DateTime(routineItem.startDate!.year, routineItem.startDate!.month, routineItem.startDate!.day);
+          final startDateOnly =
+              DateTime(routineItem.startDate!.year, routineItem.startDate!.month, routineItem.startDate!.day);
           if (dateKey.isBefore(startDateOnly)) return false;
         }
 
@@ -342,7 +349,8 @@ class _MonthViewState extends State<MonthView> {
 
         // startDate 체크 (startDate가 있으면 해당 날짜 이후만 표시)
         if (routineItem.startDate != null) {
-          final startDateOnly = DateTime(routineItem.startDate!.year, routineItem.startDate!.month, routineItem.startDate!.day);
+          final startDateOnly =
+              DateTime(routineItem.startDate!.year, routineItem.startDate!.month, routineItem.startDate!.day);
           if (dateKey.isBefore(startDateOnly)) return false;
         }
 
@@ -408,7 +416,8 @@ class _MonthViewState extends State<MonthView> {
 
     for (ScheduleItem schedule in allSchedules) {
       DateTime startDate = DateTime(schedule.year, schedule.month, schedule.date);
-      DateTime? endDate = schedule.hasMultiDay ? DateTime(schedule.endYear!, schedule.endMonth!, schedule.endDate!) : null;
+      DateTime? endDate =
+          schedule.hasMultiDay ? DateTime(schedule.endYear!, schedule.endMonth!, schedule.endDate!) : null;
 
       // 해당 날짜가 일정 기간에 포함되는지 확인
       if (_isDateInRange(day, startDate, endDate ?? startDate)) {
@@ -425,7 +434,8 @@ class _MonthViewState extends State<MonthView> {
     DateTime startOnly = DateTime(startDate.year, startDate.month, startDate.day);
     DateTime endOnly = DateTime(endDate.year, endDate.month, endDate.day);
 
-    return (dateOnly.isAtSameMomentAs(startOnly) || dateOnly.isAfter(startOnly)) && (dateOnly.isAtSameMomentAs(endOnly) || dateOnly.isBefore(endOnly));
+    return (dateOnly.isAtSameMomentAs(startOnly) || dateOnly.isAfter(startOnly)) &&
+        (dateOnly.isAtSameMomentAs(endOnly) || dateOnly.isBefore(endOnly));
   }
 
   // 월 변경 메서드
@@ -518,7 +528,9 @@ class _MonthViewState extends State<MonthView> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        subtitle: event.hasTimeSet ? Text('${_formatTime(event.startTime!)} - ${_formatTime(event.endTime!)}') : const Text('하루 종일'),
+                        subtitle: event.hasTimeSet
+                            ? Text('${_formatTime(event.startTime!)} - ${_formatTime(event.endTime!)}')
+                            : const Text('하루 종일'),
                         trailing: event.isRoutine ? const Icon(Icons.repeat, size: 16, color: Colors.grey) : null,
                         onTap: () {
                           Navigator.pop(context);
@@ -606,6 +618,9 @@ class _MonthViewState extends State<MonthView> {
             onUpdate: () {
               // 일정이 수정되거나 삭제되었을 때 데이터를 다시 로드
               _loadMonthEvents();
+            },
+            onCategoryUpdated: () {
+              widget.onCategoryUpdated?.call();
             },
           ),
         ),
@@ -840,7 +855,8 @@ class _MonthViewState extends State<MonthView> {
         DateTime eventEnd = DateTime(schedule.endYear!, schedule.endMonth!, schedule.endDate!);
 
         // 이벤트가 현재 월과 겹치는지 확인
-        if (eventStart.isBefore(monthEnd.add(const Duration(days: 1))) && eventEnd.isAfter(monthStart.subtract(const Duration(days: 1)))) {
+        if (eventStart.isBefore(monthEnd.add(const Duration(days: 1))) &&
+            eventEnd.isAfter(monthStart.subtract(const Duration(days: 1)))) {
           allEvents.add(schedule.toEvent());
         }
       } else {
@@ -861,13 +877,15 @@ class _MonthViewState extends State<MonthView> {
 
           // startDate 체크 (startDate가 있으면 해당 날짜 이후만 표시)
           if (routineItem.startDate != null) {
-            final startDateOnly = DateTime(routineItem.startDate!.year, routineItem.startDate!.month, routineItem.startDate!.day);
+            final startDateOnly =
+                DateTime(routineItem.startDate!.year, routineItem.startDate!.month, routineItem.startDate!.day);
             if (day.isBefore(startDateOnly)) return false;
           }
 
           // endDate 체크 (endDate가 있으면 해당 날짜 이전만 표시)
           if (routineItem.endDate != null) {
-            final endDateOnly = DateTime(routineItem.endDate!.year, routineItem.endDate!.month, routineItem.endDate!.day);
+            final endDateOnly =
+                DateTime(routineItem.endDate!.year, routineItem.endDate!.month, routineItem.endDate!.day);
             if (day.isAfter(endDateOnly)) return false;
           }
 
@@ -880,13 +898,15 @@ class _MonthViewState extends State<MonthView> {
 
           // startDate 체크 (startDate가 있으면 해당 날짜 이후만 표시)
           if (routineItem.startDate != null) {
-            final startDateOnly = DateTime(routineItem.startDate!.year, routineItem.startDate!.month, routineItem.startDate!.day);
+            final startDateOnly =
+                DateTime(routineItem.startDate!.year, routineItem.startDate!.month, routineItem.startDate!.day);
             if (day.isBefore(startDateOnly)) return false;
           }
 
           // endDate 체크 (endDate가 있으면 해당 날짜 이전만 표시)
           if (routineItem.endDate != null) {
-            final endDateOnly = DateTime(routineItem.endDate!.year, routineItem.endDate!.month, routineItem.endDate!.day);
+            final endDateOnly =
+                DateTime(routineItem.endDate!.year, routineItem.endDate!.month, routineItem.endDate!.day);
             if (day.isAfter(endDateOnly)) return false;
           }
 

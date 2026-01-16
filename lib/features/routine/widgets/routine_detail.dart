@@ -14,7 +14,14 @@ import 'package:mrplando/features/schedule/widgets/add_schedule.dart';
 class RoutineDetail extends StatefulWidget {
   final CheckRoutineItem item;
   final VoidCallback? onUpdated; // 루틴 업데이트 후 호출할 콜백 함수
-  const RoutineDetail({super.key, required this.item, this.onUpdated});
+  final VoidCallback? onCategoryUpdated;
+
+  const RoutineDetail({
+    super.key,
+    required this.item,
+    this.onUpdated,
+    this.onCategoryUpdated,
+  });
 
   @override
   State<RoutineDetail> createState() => _RoutineDetailState();
@@ -417,6 +424,13 @@ class _RoutineDetailState extends State<RoutineDetail> {
                                       builder: (context) => CategoryManagementPage(
                                         categoryManager: routineCategoryManager,
                                         title: '루틴 카테고리',
+                                        onCategoriesUpdated: () {
+                                          setState(() {
+                                            // 카테고리 목록 다시 가져오기
+                                            _categories = routineCategoryManager.getAllCategories();
+                                            widget.onCategoryUpdated?.call();
+                                          });
+                                        },
                                       ),
                                     ),
                                   );
