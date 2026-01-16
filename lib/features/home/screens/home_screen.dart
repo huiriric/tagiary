@@ -191,7 +191,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             const SizedBox(height: 12),
                             Expanded(
                               child: DiaryWidget(
-                                key: ValueKey<DateTime>(DateTime(date.year, date.month, date.day)), // 시간을 제외한 날짜만으로 키를 생성
+                                key: ValueKey<DateTime>(
+                                    DateTime(date.year, date.month, date.day)), // 시간을 제외한 날짜만으로 키를 생성
                                 date: date,
                               ),
                             ),
@@ -229,12 +230,12 @@ Future<DateTime?> showBlackWhiteDatePicker({
     builder: (context, child) {
       return Theme(
         data: ThemeData.light().copyWith(
-          colorScheme: ColorScheme.light(
-            primary: const Color(0xFF6750A4), // Material 3 primary color
+          colorScheme: const ColorScheme.light(
+            primary: Color(0xFF6750A4), // Material 3 primary color
             onPrimary: Colors.white,
             surface: Colors.white,
-            onSurface: const Color(0xFF1C1B1F),
-            surfaceContainerHighest: const Color(0xFFF3EDF7),
+            onSurface: Color(0xFF1C1B1F),
+            surfaceContainerHighest: Color(0xFFF3EDF7),
           ),
           datePickerTheme: DatePickerThemeData(
             backgroundColor: Colors.white,
