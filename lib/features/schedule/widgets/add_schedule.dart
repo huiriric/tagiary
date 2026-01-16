@@ -23,15 +23,18 @@ class AddSchedule extends StatefulWidget {
   final VoidCallback? onScheduleAdded; // 일정 추가 후 호출할 콜백 함수
   final VoidCallback? onCategoryAdded;
   final List<CategoryInfo> categories; // 카테고리 목록
+  final int? categoryId;
 
-  const AddSchedule(
-      {super.key,
-      required this.date,
-      required this.start,
-      required this.end,
-      this.onScheduleAdded,
-      this.onCategoryAdded,
-      this.categories = const []});
+  const AddSchedule({
+    super.key,
+    required this.date,
+    required this.start,
+    required this.end,
+    this.onScheduleAdded,
+    this.onCategoryAdded,
+    this.categories = const [],
+    this.categoryId,
+  });
 
   @override
   State<AddSchedule> createState() => _AddScheduleState();
@@ -82,7 +85,7 @@ class _AddScheduleState extends State<AddSchedule> {
   CategoryInfo? selectedCategory;
 
   // 충돌 감지를 위한 변수
-  Event? _conflictEvent;
+  // Event? _conflictEvent;
 
   @override
   void initState() {
@@ -96,8 +99,11 @@ class _AddScheduleState extends State<AddSchedule> {
     categories = widget.categories;
 
     // 첫 번째 카테고리를 기본값으로 설정
-    if (categories.isNotEmpty) {
-      selectedCategory = categories.first;
+    if (widget.categoryId != null) {
+      selectedCategory = categories.firstWhere(
+        (category) => category.id == widget.categoryId,
+        orElse: () => categories.first,
+      );
     }
   }
 

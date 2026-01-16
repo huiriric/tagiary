@@ -480,6 +480,7 @@ class _CategoryTodoDetailScreenState extends State<CategoryTodoDetailScreen> {
               onTodoAdded: () {
                 setState(() {});
               },
+              category: widget.category,
             ),
           ),
         ),

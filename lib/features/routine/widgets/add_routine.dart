@@ -20,6 +20,7 @@ class AddRoutine extends StatefulWidget {
   TimeOfDay start;
   TimeOfDay end;
   final VoidCallback? onCategoryUpdated;
+  CategoryInfo? category;
 
   AddRoutine({
     super.key,
@@ -29,6 +30,7 @@ class AddRoutine extends StatefulWidget {
     required this.start,
     required this.end,
     this.onCategoryUpdated,
+    this.category,
   });
 
   @override
@@ -77,9 +79,12 @@ class _AddRoutineState extends State<AddRoutine> {
     end = widget.end;
 
     categories = widget.categories;
-    // 첫 번째 카테고리를 기본값으로 설정
-    if (categories.isNotEmpty) {
-      selectedCategory = categories.first;
+
+    // 전달된 카테고리가 있으면 선택 상태로 설정
+    if (widget.category != null) {
+      selectedCategory = widget.category;
+    } else {
+      selectedCategory = categories.isNotEmpty ? categories[0] : null;
     }
   }
 

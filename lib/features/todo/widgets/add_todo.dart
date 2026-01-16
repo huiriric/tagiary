@@ -18,6 +18,7 @@ class AddTodo extends StatefulWidget {
   final CheckItem? todoToEdit; // 수정할 할 일 (없으면 새로 추가)
   final List<CategoryInfo> categories; // 카테고리 목록
   final VoidCallback? onCategoryUpdated; // 카테고리 업데이트 후 호출할 콜백 함수
+  final CategoryInfo? category;
 
   const AddTodo({
     super.key,
@@ -25,6 +26,7 @@ class AddTodo extends StatefulWidget {
     this.todoToEdit,
     this.categories = const [],
     this.onCategoryUpdated,
+    this.category,
   });
 
   @override
@@ -73,9 +75,13 @@ class _AddTodoState extends State<AddTodo> {
       }
     } else {
       selectedColor = scheduleColors[0];
-      // 새로 추가하는 경우 첫 번째 카테고리 선택
-      if (categories.isNotEmpty) {
-        selectedCategory = categories.first;
+
+      // 새로 추가하는 경우 전달된 categoryId로 초기화
+      if (widget.category != null) {
+        selectedCategory = categories.firstWhere(
+          (cat) => cat == widget.category,
+          orElse: () => categories.first,
+        );
       }
     }
 
