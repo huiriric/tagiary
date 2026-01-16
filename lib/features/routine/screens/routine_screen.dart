@@ -24,7 +24,7 @@ class _RoutineScreenState extends State<RoutineScreen> {
   late RoutineHistoryRepository _historyRepository;
   late RoutineCategoryManager _categoryManager;
   List<CategoryInfo> _categories = [];
-  int? _selectedCategoryId; // null이면 전체 보기
+  CategoryInfo? _selectedCategory; // null이면 전체 보기
   final int _selectedDayIndex = DateTime.now().weekday % 7; // 오늘 요일 (0: 일요일, 1: 월요일, ... 6: 토요일)
 
   //날짜별 루틴 기록
@@ -153,52 +153,6 @@ class _RoutineScreenState extends State<RoutineScreen> {
                             icon: const Icon(Icons.chevron_right),
                             onPressed: _goToNextMonth,
                           ),
-                    // 달력/주간 뷰 전환 버튼
-                    // Row(
-                    //   children: [
-                    //     GestureDetector(
-                    //       onTap: () {
-                    //         setState(() {
-                    //           _isMonthView = true;
-                    //         });
-                    //       },
-                    //       child: Container(
-                    //         padding: const EdgeInsets.all(8),
-                    //         decoration: BoxDecoration(
-                    //           color: _isMonthView ? Colors.black : Colors.transparent,
-                    //           borderRadius: BorderRadius.circular(8),
-                    //           border: Border.all(color: Colors.grey),
-                    //         ),
-                    //         child: Icon(
-                    //           Icons.calendar_month,
-                    //           size: 20,
-                    //           color: _isMonthView ? Colors.white : Colors.grey,
-                    //         ),
-                    //       ),
-                    //     ),
-                    //     const SizedBox(width: 8),
-                    //     GestureDetector(
-                    //       onTap: () {
-                    //         setState(() {
-                    //           _isMonthView = false;
-                    //         });
-                    //       },
-                    //       child: Container(
-                    //         padding: const EdgeInsets.all(8),
-                    //         decoration: BoxDecoration(
-                    //           color: !_isMonthView ? Colors.black : Colors.transparent,
-                    //           borderRadius: BorderRadius.circular(8),
-                    //           border: Border.all(color: Colors.grey),
-                    //         ),
-                    //         child: Icon(
-                    //           Icons.view_week,
-                    //           size: 20,
-                    //           color: !_isMonthView ? Colors.white : Colors.grey,
-                    //         ),
-                    //       ),
-                    //     ),
-                    //   ],
-                    // ),
                   ],
                 ),
               ),
@@ -219,33 +173,33 @@ class _RoutineScreenState extends State<RoutineScreen> {
               // 카테고리 필터 (가로 스크롤 ChoiceChip)
               if (_categories.isNotEmpty)
                 Container(
-                  margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  margin: const EdgeInsets.symmetric(vertical: 12),
                   height: 44,
                   child: ListView(
                     scrollDirection: Axis.horizontal,
                     children: [
                       // 전체 카테고리
                       Padding(
-                        padding: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
                         child: ChoiceChip(
                           label: const Text('전체'),
-                          selected: _selectedCategoryId == null,
+                          selected: _selectedCategory == null,
                           onSelected: (selected) {
                             setState(() {
-                              _selectedCategoryId = -1;
+                              _selectedCategory = null;
                             });
                           },
                           showCheckmark: false,
                           selectedColor: Colors.blue.shade100,
                           labelStyle: TextStyle(
-                            color: _selectedCategoryId == null ? Colors.blue.shade700 : Colors.grey.shade700,
-                            fontWeight: _selectedCategoryId == null ? FontWeight.bold : FontWeight.normal,
+                            color: _selectedCategory == null ? Colors.blue.shade700 : Colors.grey.shade700,
+                            fontWeight: _selectedCategory == null ? FontWeight.bold : FontWeight.normal,
                           ),
                           backgroundColor: Colors.grey.shade100,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
                             side: BorderSide(
-                              color: _selectedCategoryId == null ? Colors.blue.shade300 : Colors.transparent,
+                              color: _selectedCategory == null ? Colors.blue.shade300 : Colors.transparent,
                               width: 1.5,
                             ),
                           ),
@@ -253,7 +207,7 @@ class _RoutineScreenState extends State<RoutineScreen> {
                       ),
                       // 각 카테고리
                       ..._categories.map((category) {
-                        final isSelected = _selectedCategoryId == category.id;
+                        final isSelected = _selectedCategory == category;
                         return Padding(
                           padding: const EdgeInsets.only(right: 8),
                           child: ChoiceChip(
@@ -275,7 +229,7 @@ class _RoutineScreenState extends State<RoutineScreen> {
                             selected: isSelected,
                             onSelected: (selected) {
                               setState(() {
-                                _selectedCategoryId = category.id;
+                                _selectedCategory = category;
                               });
                             },
                             showCheckmark: false,
@@ -303,7 +257,7 @@ class _RoutineScreenState extends State<RoutineScreen> {
               Expanded(
                 child: Align(
                   alignment: AlignmentGeometry.topLeft,
-                  child: routineCalendar(_selectedCategoryId ?? -1),
+                  child: routineCalendar(_selectedCategory?.id ?? -1),
                 ),
               ),
             ]),
@@ -948,6 +902,7 @@ class _RoutineScreenState extends State<RoutineScreen> {
               selectedDate: selectedDate,
               start: start,
               end: end,
+              category: _selectedCategory,
             ),
           ),
         ),

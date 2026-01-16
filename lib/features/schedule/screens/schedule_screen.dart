@@ -127,14 +127,14 @@ class _TimelineScreenState extends State<TimelineScreen> {
           preferredSize: Size.fromHeight(_categories.isNotEmpty ? 56 : 0),
           child: _categories.isNotEmpty
               ? Container(
-                  margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                  margin: const EdgeInsets.symmetric(vertical: 8),
                   height: 44,
                   child: ListView(
                     scrollDirection: Axis.horizontal,
                     children: [
                       // 전체 카테고리
                       Padding(
-                        padding: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
                         child: ChoiceChip(
                           label: const Text('전체'),
                           selected: _selectedCategoryId == null,
@@ -301,6 +301,7 @@ class _TimelineScreenState extends State<TimelineScreen> {
                       });
                     },
                     categories: _categories,
+                    categoryId: _selectedCategoryId,
                   ),
                 ),
               ),
