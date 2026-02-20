@@ -69,22 +69,34 @@ Future<void> main() async {
   Hive.registerAdapter(RoutineCategoryAdapter());
   Hive.registerAdapter(ScheduleCategoryAdapter());
 
-  // 박스 열기
-  await Hive.openBox<ScheduleItem>('scheduleBox');
-  await Hive.openBox<ScheduleRoutineItem>('scheduleRoutineBox');
-  await Hive.openBox<CheckItem>('checkBox');
-  await Hive.openBox<CheckEnum>('checkEnumBox');
-  await Hive.openBox<CheckRoutineItem>('checkRoutineBox');
-  await Hive.openBox<RoutineHistory>('routineHistoryBox');
-  await Hive.openBox<ScheduleLinkItem>('scheduleLinkBox');
-  await Hive.openBox<DiaryItem>('diaryBox');
-  await Hive.openBox<Tag>('tagBox');
-  await Hive.openBox<TagGroup>('tagGroupBox');
-  await Hive.openBox<ColorItem>('colorBox');
-  await Hive.openBox<TodoCategory>('todoCategoryBox');
-  await Hive.openBox<RoutineCategory>('routineCategoryBox');
-  await Hive.openBox<ScheduleCategory>('scheduleCategoryBox');
-  await Hive.openBox<int>('counterBox'); // 카운터 박스 추가
+  // 박스 열기 (락 충돌 시 최대 5회 재시도)
+  Future<Box<T>> openBoxWithRetry<T>(String name, {int retries = 5}) async {
+    for (int i = 0; i < retries; i++) {
+      try {
+        return await Hive.openBox<T>(name);
+      } catch (e) {
+        if (i == retries - 1) rethrow;
+        await Future.delayed(const Duration(milliseconds: 500));
+      }
+    }
+    throw StateError('Failed to open box: $name');
+  }
+
+  await openBoxWithRetry<ScheduleItem>('scheduleBox');
+  await openBoxWithRetry<ScheduleRoutineItem>('scheduleRoutineBox');
+  await openBoxWithRetry<CheckItem>('checkBox');
+  await openBoxWithRetry<CheckEnum>('checkEnumBox');
+  await openBoxWithRetry<CheckRoutineItem>('checkRoutineBox');
+  await openBoxWithRetry<RoutineHistory>('routineHistoryBox');
+  await openBoxWithRetry<ScheduleLinkItem>('scheduleLinkBox');
+  await openBoxWithRetry<DiaryItem>('diaryBox');
+  await openBoxWithRetry<Tag>('tagBox');
+  await openBoxWithRetry<TagGroup>('tagGroupBox');
+  await openBoxWithRetry<ColorItem>('colorBox');
+  await openBoxWithRetry<TodoCategory>('todoCategoryBox');
+  await openBoxWithRetry<RoutineCategory>('routineCategoryBox');
+  await openBoxWithRetry<ScheduleCategory>('scheduleCategoryBox');
+  await openBoxWithRetry<int>('counterBox');
 
   // 색상 초기화
   final colorRepo = ColorRepository();

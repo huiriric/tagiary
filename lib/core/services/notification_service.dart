@@ -173,6 +173,9 @@ class NotificationService {
 
   // 모든 알림 서비스 초기화
   static Future<void> initialize() async {
+    // macOS/Linux/Windows는 Firebase Messaging 미지원
+    if (!Platform.isAndroid && !Platform.isIOS) return;
+
     // Firebase 초기화를 여기서 담당
     await _initializeFirebase();
 
