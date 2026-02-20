@@ -98,12 +98,14 @@ class _AddScheduleState extends State<AddSchedule> {
     selectedColor = scheduleColors[0];
     categories = widget.categories;
 
-    // 첫 번째 카테고리를 기본값으로 설정
-    if (widget.categoryId != null) {
-      selectedCategory = categories.firstWhere(
-        (category) => category.id == widget.categoryId,
-        orElse: () => categories.first,
-      );
+    // 카테고리 기본값 설정
+    if (categories.isNotEmpty) {
+      selectedCategory = widget.categoryId != null
+          ? categories.firstWhere(
+              (category) => category.id == widget.categoryId,
+              orElse: () => categories.first,
+            )
+          : categories.first;
     }
   }
 

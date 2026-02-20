@@ -9,6 +9,7 @@ import 'package:mrplando/features/todo/models/todo_category.dart';
 import 'package:mrplando/features/todo/models/todo_category_manager.dart';
 import 'package:mrplando/features/todo/widgets/add_todo.dart';
 import 'package:mrplando/features/todo/screens/category_todo_detail_screen.dart';
+import 'package:mrplando/shared/widgets/category_management_page.dart';
 
 class TodoScreen extends StatefulWidget {
   const TodoScreen({super.key});
@@ -55,6 +56,32 @@ class _TodoScreenState extends State<TodoScreen> {
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined, size: 22),
+            color: Colors.grey.shade600,
+            tooltip: '카테고리 관리',
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CategoryManagementPage(
+                    categoryManager: _categoryManager,
+                    title: '할 일 카테고리',
+                    onCategoriesUpdated: () {
+                      setState(() {
+                        _categories = _categoryManager.getAllCategories();
+                      });
+                    },
+                  ),
+                ),
+              );
+              setState(() {
+                _categories = _categoryManager.getAllCategories();
+              });
+            },
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.white,

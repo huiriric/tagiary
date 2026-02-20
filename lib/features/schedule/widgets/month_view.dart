@@ -137,12 +137,20 @@ class _MonthViewState extends State<MonthView> {
 
           // 달력 그리드
           Expanded(
-            child: FutureBuilder(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return FutureBuilder(
               future: _initializeData(),
               builder: (context, snapshot) {
-                return !snapshot.hasData
-                    ? const SizedBox()
-                    : Stack(
+                if (!snapshot.hasData) return const SizedBox();
+
+                final numRows = _daysInMonth.isEmpty ? 5 : (_daysInMonth.length ~/ 7);
+                final cellWidth = constraints.maxWidth / 7;
+                final cellHeight = cellWidth / 0.6;
+                final totalHeight = numRows * cellHeight;
+                final grid = SizedBox(
+                  height: totalHeight,
+                  child: Stack(
                         children: [
                           // 기간 일정 오버레이 레이어
                           ..._buildMultiDayEventBars(),
@@ -256,7 +264,15 @@ class _MonthViewState extends State<MonthView> {
                             },
                           ),
                         ],
-                      );
+                      ),
+                    );
+
+                    if (totalHeight > constraints.maxHeight) {
+                      return SingleChildScrollView(child: grid);
+                    }
+                    return grid;
+                  },
+                );
               },
             ),
           ),

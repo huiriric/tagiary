@@ -76,12 +76,14 @@ class _AddTodoState extends State<AddTodo> {
     } else {
       selectedColor = scheduleColors[0];
 
-      // 새로 추가하는 경우 전달된 categoryId로 초기화
-      if (widget.category != null) {
-        selectedCategory = categories.firstWhere(
-          (cat) => cat == widget.category,
-          orElse: () => categories.first,
-        );
+      // 새로 추가하는 경우 전달된 category로 초기화, 없으면 첫 번째 카테고리 기본값
+      if (categories.isNotEmpty) {
+        selectedCategory = widget.category != null
+            ? categories.firstWhere(
+                (cat) => cat == widget.category,
+                orElse: () => categories.first,
+              )
+            : categories.first;
       }
     }
 

@@ -91,7 +91,7 @@ class ScheduleCategoryRepository {
 
   // 기본 카테고리 설정 (앱 첫 실행시 호출)
   Future<void> setupDefaultCategories() async {
-    if (_categories.isEmpty) {
+    if (getAllCategories().isEmpty) {
       await addCategory(ScheduleCategory(
         id: 0,
         name: '일정',

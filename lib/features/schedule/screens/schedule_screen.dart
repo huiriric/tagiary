@@ -9,6 +9,7 @@ import 'package:mrplando/features/schedule/models/schedule_category_manager.dart
 import 'package:mrplando/features/schedule/widgets/time_line.dart';
 import 'package:mrplando/features/schedule/widgets/add_schedule.dart';
 import 'package:mrplando/features/home/screens/home_screen.dart';
+import 'package:mrplando/shared/widgets/category_management_page.dart';
 import 'package:mrplando/features/schedule/widgets/week_view.dart';
 import 'package:mrplando/features/schedule/widgets/month_view.dart';
 
@@ -207,6 +208,34 @@ class _TimelineScreenState extends State<TimelineScreen> {
                           ),
                         );
                       }),
+                      // 카테고리 관리 아이콘
+                      Padding(
+                        padding: const EdgeInsets.only(right: 4),
+                        child: IconButton(
+                          icon: const Icon(Icons.settings_outlined, size: 20),
+                          color: Colors.grey.shade600,
+                          tooltip: '카테고리 관리',
+                          onPressed: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => CategoryManagementPage(
+                                  categoryManager: _categoryManager,
+                                  title: '일정 카테고리',
+                                  onCategoriesUpdated: () {
+                                    setState(() {
+                                      _categories = _categoryManager.getAllCategories();
+                                    });
+                                  },
+                                ),
+                              ),
+                            );
+                            setState(() {
+                              _categories = _categoryManager.getAllCategories();
+                            });
+                          },
+                        ),
+                      ),
                     ],
                   ),
                 )

@@ -277,6 +277,12 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
 
   // 카테고리 삭제 확인 다이얼로그
   void _showDeleteDialog(CategoryInfo category, {VoidCallback? onCategoriesUpdated}) {
+    if (_categories.length <= 1) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('마지막 카테고리는 삭제할 수 없습니다')),
+      );
+      return;
+    }
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -422,17 +428,18 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
                                     size: 32,
                                   ),
                                 ),
-                              IconButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                  _showDeleteDialog(category, onCategoriesUpdated: widget.onCategoriesUpdated);
-                                },
-                                icon: const Icon(
-                                  Icons.delete_outline,
-                                  color: Colors.red,
-                                  size: 28,
+                              if (_categories.length > 1)
+                                IconButton(
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                    _showDeleteDialog(category, onCategoriesUpdated: widget.onCategoriesUpdated);
+                                  },
+                                  icon: const Icon(
+                                    Icons.delete_outline,
+                                    color: Colors.red,
+                                    size: 28,
+                                  ),
                                 ),
-                              ),
                             ],
                           ),
                         ),

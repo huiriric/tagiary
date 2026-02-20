@@ -9,6 +9,7 @@ import 'package:mrplando/features/routine/models/routine_category.dart';
 import 'package:mrplando/features/routine/models/routine_category_manager.dart';
 import 'package:mrplando/features/routine/widgets/add_routine.dart';
 import 'package:mrplando/features/routine/widgets/routine_widget.dart';
+import 'package:mrplando/shared/widgets/category_management_page.dart';
 import 'package:mrplando/features/routine/widgets/routine_history_view.dart';
 import 'package:mrplando/features/routine/widgets/routine_detail.dart';
 
@@ -249,6 +250,34 @@ class _RoutineScreenState extends State<RoutineScreen> {
                           ),
                         );
                       }),
+                      // 카테고리 관리 아이콘
+                      Padding(
+                        padding: const EdgeInsets.only(right: 4),
+                        child: IconButton(
+                          icon: const Icon(Icons.settings_outlined, size: 20),
+                          color: Colors.grey.shade600,
+                          tooltip: '카테고리 관리',
+                          onPressed: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => CategoryManagementPage(
+                                  categoryManager: _categoryManager,
+                                  title: '루틴 카테고리',
+                                  onCategoriesUpdated: () {
+                                    setState(() {
+                                      _categories = _categoryManager.getAllCategories();
+                                    });
+                                  },
+                                ),
+                              ),
+                            );
+                            setState(() {
+                              _categories = _categoryManager.getAllCategories();
+                            });
+                          },
+                        ),
+                      ),
                     ],
                   ),
                 ),
